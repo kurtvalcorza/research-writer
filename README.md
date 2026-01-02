@@ -559,6 +559,6 @@ A: Screening criteria can specify language requirements. Non-English PDFs will b
 
 This orchestration mirrors how experienced researchers actually work, but makes the reasoning explicit, modular, and auditable.
 
-> The goal is not faster writing — the goal is better thinking, expressed clearly.
+The goal is not faster writing — the goal is better thinking, expressed clearly.
 
-**Tool-agnostic by design.** Use the AI coding assistant that works best for your workflow.
+Tool-agnostic by design. Use the AI coding assistant that works best for your workflow.
