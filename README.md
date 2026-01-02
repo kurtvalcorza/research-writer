@@ -121,6 +121,15 @@ research-writer/
 │   ├── PROCESS_AUDIT_REPORT.md (Phase 1 setup audit)
 │   └── PHASES_2-7_AUDIT_REPORT.md (Phases 2-7 docs audit)
 │
+├── interface/                 (Web UI - Optional)
+│   ├── app/                   (Next.js pages and API routes)
+│   ├── components/            (React components)
+│   ├── lib/                   (Utilities and types)
+│   ├── middleware.ts          (Security headers)
+│   ├── SECURITY.md            (Security documentation)
+│   ├── CHANGELOG.md           (Version history)
+│   └── package.json           (Node.js dependencies)
+│
 ├── requirements.txt           (Python dependencies)
 ├── .gitignore                 (Git ignore rules)
 ├── README.md                  (This file)
@@ -373,6 +382,82 @@ This phase validates the integrity of the entire analytical pipeline:
    - [**Gemini CLI**](https://geminicli.com/)
    - [**Codex CLI**](https://developers.openai.com/codex/cli/)
    - Any AI coding assistant with file reading capabilities
+
+---
+
+## 🌐 Web Interface (Optional)
+
+For users who prefer a graphical interface, the Research Writer includes a **production-ready web application** that provides:
+
+### Features
+- **Visual Dashboard**: Real-time progress tracking with phase locking
+- **Corpus Management**: Drag-and-drop PDF upload with validation
+- **Settings Editor**: Visual editor for screening criteria
+- **Prompt Library**: View, copy, or directly execute prompts
+- **Output Viewer**: Beautiful Markdown rendering of generated artifacts
+- **Multi-Provider Support**: Direct integration with Gemini CLI and Claude CLI
+- **Real-Time Execution**: Watch agent execution in an embedded terminal
+
+### Quick Start
+
+```bash
+# Navigate to interface directory
+cd interface
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+
+# Open http://localhost:3000
+```
+
+### Production Deployment
+
+```bash
+# Build for production
+npm run build
+
+# Start production server
+npm run start
+```
+
+### Security & Quality
+
+The web interface is **enterprise-grade** and **production-ready** with:
+- ✅ No critical security vulnerabilities
+- ✅ PDF validation and file size limits
+- ✅ Path traversal protection
+- ✅ Security headers (HSTS, CSP, X-Frame-Options)
+- ✅ 100% TypeScript with full type safety
+- ✅ Accessibility support (WCAG 2.1 AA)
+- ✅ Error boundaries and graceful recovery
+
+**Documentation:**
+- [Interface README](interface/README.md) - Complete setup and usage guide
+- [Security Documentation](interface/SECURITY.md) - Security implementation details
+- [Changelog](interface/CHANGELOG.md) - Version history and improvements
+
+**Technology Stack:** Next.js 16, React 19, TypeScript 5, Tailwind CSS 4
+
+### When to Use the Interface
+
+**Use the web interface if you:**
+- Prefer visual dashboards over CLI
+- Want drag-and-drop file management
+- Need real-time execution monitoring
+- Want to switch between AI providers easily
+- Prefer clicking buttons over typing commands
+
+**Use the CLI workflow if you:**
+- Are comfortable with command-line tools
+- Want maximum flexibility and control
+- Prefer working directly in your AI assistant
+- Need to customize prompts on the fly
+- Want to work entirely in terminal
+
+Both approaches use the same underlying research workflow and produce identical outputs. Choose what works best for your workflow!
 
 ---
 
