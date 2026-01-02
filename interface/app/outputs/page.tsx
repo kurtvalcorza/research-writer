@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FileText, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { ContentResponse } from "@/lib/types";
+
+// Lazy load ReactMarkdown for better performance
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+    loading: () => <p className="text-muted-foreground">Loading markdown renderer...</p>,
+    ssr: false,
+});
+
+const remarkGfm = dynamic(() => import("remark-gfm"));
 
 const OUTPUTS = [
     { id: "screening", label: "Screening Matrix", file: "outputs/literature-screening-matrix.md" },
@@ -27,11 +35,13 @@ export default function OutputsPage() {
     const activeOutput = OUTPUTS.find(o => o.id === activeId);
 
     const fetchContent = async () => {
-        if (!activeOutput) return;
+        if (!activeOutput) {
+            return;
+        }
         setLoading(true);
         try {
             const res = await fetch(`/api/content?path=${activeOutput.file}`);
-            const data = await res.json();
+            const data: ContentResponse = await res.json();
             if (data.content) {
                 setContent(data.content);
             } else {
