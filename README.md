@@ -116,6 +116,11 @@ research-writer/
 │   ├── research-contributions-implications.md (Phase 6)
 │   └── cross-phase-validation-report.md     (Phase 7)
 │
+├── audits/                    (Process audit reports)
+│   ├── README.md              (Audit history and methodology)
+│   ├── PROCESS_AUDIT_REPORT.md (Phase 1 setup audit)
+│   └── PHASES_2-7_AUDIT_REPORT.md (Phases 2-7 docs audit)
+│
 ├── requirements.txt           (Python dependencies)
 ├── .gitignore                 (Git ignore rules)
 ├── README.md                  (This file)
