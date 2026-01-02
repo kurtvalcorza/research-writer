@@ -69,9 +69,12 @@ PHASE 7 — Cross-Phase Validation                  (SKILL - Quality Control)
 ## Repository Structure
 
 ```text
-research-writer-claude-desktop/
+research-writer/
 ├── corpus/                    (Your PDFs - start here!)
 │   └── *.pdf                  (Add your research PDFs to be screened)
+│
+├── scripts/
+│   └── setup.sh               (Automated setup and validation)
 │
 ├── template/
 │   └── screening-criteria-template.md  (Customize before Phase 1)
@@ -113,6 +116,8 @@ research-writer-claude-desktop/
 │   ├── research-contributions-implications.md (Phase 6)
 │   └── cross-phase-validation-report.md     (Phase 7)
 │
+├── requirements.txt           (Python dependencies)
+├── .gitignore                 (Git ignore rules)
 ├── README.md                  (This file)
 └── WORKFLOW_DIAGRAM.md        (Visual workflow)
 ```
@@ -302,12 +307,28 @@ This phase validates the integrity of the entire analytical pipeline:
    cd research-writer
    ```
 
-2. **Install PDF processing dependencies (if needed):**
-   - Recommended: Install `pypdf` and `PyPDF2` libraries for PDF processing
-   - These libraries enable AI assistants to read research papers from your corpus
+2. **Run the setup script:**
+   ```bash
+   bash scripts/setup.sh
+   ```
+
+   This will:
+   - Create required directories (`corpus/`, `outputs/`)
+   - Check Python installation
+   - Install PDF processing dependencies
+   - Validate your environment
+
+   **Or install manually:**
+   ```bash
+   # Create directories
+   mkdir -p corpus outputs
+
+   # Install PDF processing libraries
+   pip install -r requirements.txt
+   ```
 
 3. **Set up your AI coding assistant:**
-   - [**Claude Code**](https://claude.com/product/claude-code)
+   - [**Claude Code**](https://claude.com/product/claude-code) (recommended)
    - [**Gemini CLI**](https://geminicli.com/)
    - [**Codex CLI**](https://developers.openai.com/codex/cli/)
    - Any AI coding assistant with file reading capabilities
@@ -317,12 +338,18 @@ This phase validates the integrity of the entire analytical pipeline:
 ## Step by Step Procedure
 
 ### 1. Prepare Your PDFs
+
+Add your research PDF files to the `corpus/` directory (these are the papers you want to screen).
+
 ```bash
-mkdir -p corpus/ outputs/
-# Add your PDF files to corpus/ (these are papers you want to screen)
+# Example: Copy PDFs to corpus
+cp ~/Downloads/*.pdf corpus/
 ```
 
-Ensure filenames are descriptive and files are text-readable (OCR if needed).
+**Tips:**
+- Ensure filenames are descriptive (e.g., `smith2024_ai_adoption.pdf`)
+- Files must be text-readable (use OCR if needed for scanned PDFs)
+- Directories `corpus/` and `outputs/` are already created if you ran the setup script
 
 ### 2. Define Screening Criteria
 Customize the template for your research topic:
@@ -338,14 +365,22 @@ Please revise template/screening-criteria-template.md accordingly.
 ```
 
 ### 3. Run Phase 1 Screening
-```bash
-Execute Phase 1 using prompts/phase1.md.
+
+**Tell your AI coding assistant (e.g., Claude Code):**
+
+```
+Please execute Phase 1 literature screening using the instructions in prompts/phase1.md.
+
+Process the PDFs in the corpus/ directory and apply the screening criteria from template/screening-criteria-template.md.
 ```
 
-The agent executes a three-pass workflow:
+**What happens:**
+The agent will automatically execute a three-pass workflow:
 - **PASS 1:** Quick triage of all PDFs (lightweight metadata scan)
-- **PASS 2:** Detailed screening one-by-one (resumable)
+- **PASS 2:** Detailed screening one-by-one (resumable if interrupted)
 - **PASS 3:** Generate final screening matrix and PRISMA diagram
+
+**Estimated time:** 5-15 min (1-5 PDFs), 15-40 min (6-20 PDFs), 40-90 min (20-50 PDFs)
 
 ### 4. Review Phase 1 Results
 Open `outputs/literature-screening-matrix.md` and review:

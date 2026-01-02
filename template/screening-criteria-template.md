@@ -1,5 +1,25 @@
 # Screening Criteria Template
 
+---
+
+## ⚠️ IMPORTANT: CUSTOMIZE THIS TEMPLATE BEFORE USE
+
+**This file contains EXAMPLE content for demonstration purposes.**
+
+The current content is customized for a study on "AI adoption in the Philippines" and serves as a reference example.
+
+**YOU MUST:**
+1. Replace the research topic with your own
+2. Customize inclusion/exclusion criteria for your study
+3. Update geographic and temporal scope
+4. Modify example applications to match your context
+
+**DO NOT use this template as-is.** The screening criteria must match your specific research question.
+
+---
+
+## Template Instructions
+
 Use this template to define systematic inclusion and exclusion criteria for Phase 1 literature screening.
 
 ---
