@@ -7,14 +7,13 @@ import { Card } from "@/components/ui/card";
 import { FileText, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { ContentResponse } from "@/lib/types";
+import remarkGfm from "remark-gfm";
 
 // Lazy load ReactMarkdown for better performance
 const ReactMarkdown = dynamic(() => import("react-markdown"), {
     loading: () => <p className="text-muted-foreground">Loading markdown renderer...</p>,
     ssr: false,
 });
-
-const remarkGfm = dynamic(() => import("remark-gfm"));
 
 const OUTPUTS = [
     { id: "screening", label: "Screening Matrix", file: "outputs/literature-screening-matrix.md" },

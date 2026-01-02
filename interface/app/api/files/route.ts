@@ -34,8 +34,8 @@ export async function GET(request: Request) {
 
         const files = await fs.readdir(dirPath);
 
-        const fileStats: FileStat[] = await Promise.all(
-            files.map(async (file) => {
+        const fileStats = await Promise.all(
+            files.map(async (file): Promise<FileStat | null> => {
                 try {
                     const filePath = path.join(dirPath, file);
                     const stats = await fs.stat(filePath);
