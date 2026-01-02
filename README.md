@@ -294,13 +294,30 @@ This phase validates the integrity of the entire analytical pipeline:
 
 ---
 
+## Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/kurtvalcorza/research-writer
+   cd research-writer
+   ```
+
+2. **Install PDF processing dependencies (if needed):**
+   - Recommended: Install `pypdf` and `PyPDF2` libraries for PDF processing
+   - These libraries enable AI assistants to read research papers from your corpus
+
+3. **Set up your AI coding assistant:**
+   - [**Claude Code**](https://claude.com/product/claude-code)
+   - [**Gemini CLI**](https://geminicli.com/)
+   - [**Codex CLI**](https://developers.openai.com/codex/cli/)
+   - Any AI coding assistant with file reading capabilities
+
+---
+
 ## Step by Step Procedure
 
-### 1. Clone the repository and prepare Your PDFs
+### 1. Prepare Your PDFs
 ```bash
-git clone https://github.com/kurtvalcorza/research-writer
-cd research-writer
-
 mkdir -p corpus/ outputs/
 # Add your PDF files to corpus/ (these are papers you want to screen)
 ```
@@ -309,17 +326,16 @@ Ensure filenames are descriptive and files are text-readable (OCR if needed).
 
 ### 2. Define Screening Criteria
 Customize the template for your research topic:
-
-```
-Topic: AI Adoption in the Philippines
-Please revise template/screening-criteria-template.md accordingly.
-```
-
-The template will be customized with:
 - Research context (topic, review type, geographic/temporal scope)
 - Inclusion criteria (topic, study type, publication type, date range, language)
 - Exclusion criteria (out of scope, methodological, quality thresholds)
 - Edge case decision rules and example applications
+
+```
+Topic: AI Adoption in the Philippines
+Please revise template/screening-criteria-template.md accordingly.
+# Add instructions on screen criteria
+```
 
 ### 3. Run Phase 1 Screening
 ```bash
@@ -413,10 +429,9 @@ The agent will:
 
 ### One-Command Workflow Execution (Advanced)
 
-For experienced users who want to run the complete workflow in sequence:
+For experienced users who want to run the complete workflow in sequence, provide this instruction to your AI coding assistant:
 
-```bash
-# Create a prompt to run all phases sequentially
+```
 Execute the complete research writing workflow:
 
 1. Phase 1: Screen PDFs using prompts/phase1.md
