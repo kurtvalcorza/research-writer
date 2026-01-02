@@ -296,8 +296,11 @@ This phase validates the integrity of the entire analytical pipeline:
 
 ## Step by Step Procedure
 
-### 1. Prepare Your PDFs
+### 1. Clone the repository and prepare Your PDFs
 ```bash
+git clone https://github.com/kurtvalcorza/research-writer
+cd research-writer
+
 mkdir -p corpus/ outputs/
 # Add your PDF files to corpus/ (these are papers you want to screen)
 ```
