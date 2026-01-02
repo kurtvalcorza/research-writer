@@ -2,31 +2,24 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Trash2, Upload, FileText, RefreshCw, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
-interface FileStat {
-    name: string;
-    size: number;
-    mtime: string;
-}
+import { FileStat, FilesResponse } from "@/lib/types";
 
 export default function CorpusPage() {
     const [files, setFiles] = useState<FileStat[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
-    const router = useRouter();
 
     const fetchFiles = async () => {
         setLoading(true);
         try {
             const res = await fetch("/api/files?dir=corpus");
-            const data = await res.json();
+            const data: FilesResponse = await res.json();
             if (data.files) {
                 // Filter for PDFs only
-                const pdfs = data.files.filter((f: any) => f.name.toLowerCase().endsWith(".pdf"));
+                const pdfs = data.files.filter((f: FileStat) => f.name.toLowerCase().endsWith(".pdf"));
                 setFiles(pdfs);
             }
         } catch (error) {

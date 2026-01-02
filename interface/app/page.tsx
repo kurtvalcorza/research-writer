@@ -9,9 +9,10 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PHASES } from "@/lib/constants";
+import { DashboardStats, FilesResponse, FileStat } from "@/lib/types";
 
 export default function Home() {
-  const [stats, setStats] = useState({ corpusCount: 0, completedPhases: [] as string[] });
+  const [stats, setStats] = useState<DashboardStats>({ corpusCount: 0, completedPhases: [] });
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
@@ -19,18 +20,18 @@ export default function Home() {
     try {
       // Fetch Corpus Count
       const corpusRes = await fetch("/api/files?dir=corpus");
-      const corpusData = await corpusRes.json();
+      const corpusData: FilesResponse = await corpusRes.json();
       const corpusCount = corpusData.files ? corpusData.files.length : 0;
 
       // Fetch Outputs to determine completion
       const outputsRes = await fetch("/api/files?dir=outputs");
-      const outputsData = await outputsRes.json();
-      const outputFiles = outputsData.files ? outputsData.files.map((f: any) => f.name) : [];
+      const outputsData: FilesResponse = await outputsRes.json();
+      const outputFiles = outputsData.files ? outputsData.files.map((f: FileStat) => f.name) : [];
 
       // Fetch Template properties
       const templateRes = await fetch("/api/files?dir=template");
-      const templateData = await templateRes.json();
-      const templateFiles = templateData.files ? templateData.files.map((f: any) => f.name) : [];
+      const templateData: FilesResponse = await templateRes.json();
+      const templateFiles = templateData.files ? templateData.files.map((f: FileStat) => f.name) : [];
 
       const allFiles = [...outputFiles, ...templateFiles];
 
@@ -66,12 +67,23 @@ export default function Home() {
         </div>
         <div className="flex items-center space-x-4">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" onClick={fetchData} className={loading ? "animate-spin" : ""}>
-            <RefreshCw className="w-5 h-5" />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={fetchData}
+            className={loading ? "animate-spin" : ""}
+            aria-label="Refresh dashboard data"
+            title="Refresh dashboard data"
+          >
+            <RefreshCw className="w-5 h-5" aria-hidden="true" />
           </Button>
 
-          <div className="flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium">
-            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
+          <div
+            className="flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium"
+            role="status"
+            aria-live="polite"
+          >
+            <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" aria-hidden="true" />
             <span>System Ready</span>
           </div>
         </div>

@@ -2,33 +2,77 @@ import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 
-function getSafePath(relativePath: string) {
+// Maximum content size: 10MB
+const MAX_CONTENT_SIZE = 10 * 1024 * 1024;
+
+function getSafePath(relativePath: string, projectRoot: string): string | null {
     // Allow access to specific dirs
     const allowedRoots = ["prompts", "template", "outputs"];
-    const rootDir = relativePath.split("/")[0].split("\\")[0]; // Handle both separators
+
+    // Normalize path and remove leading traversal sequences
+    const normalized = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, "");
+    const rootDir = normalized.split(path.sep)[0];
 
     if (!allowedRoots.includes(rootDir)) {
-        throw new Error("Access denied to this directory");
+        return null;
     }
 
-    // interface is at /.../research-writer/interface
-    return path.join(process.cwd(), "..", relativePath);
+    // Resolve full paths
+    const fullPath = path.resolve(projectRoot, normalized);
+    const allowedPath = path.resolve(projectRoot, rootDir);
+
+    // Ensure resolved path is within allowed directory
+    if (!fullPath.startsWith(allowedPath + path.sep) && fullPath !== allowedPath) {
+        return null;
+    }
+
+    return fullPath;
 }
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const relPath = searchParams.get("path");
 
-    if (!relPath) {
+    if (!relPath || typeof relPath !== "string") {
         return NextResponse.json({ error: "Path required" }, { status: 400 });
     }
 
+    if (relPath.length > 500) {
+        return NextResponse.json({ error: "Path too long" }, { status: 400 });
+    }
+
     try {
-        const fullPath = getSafePath(relPath);
+        const projectRoot = path.join(process.cwd(), "..");
+        const fullPath = getSafePath(relPath, projectRoot);
+
+        if (!fullPath) {
+            return NextResponse.json({ error: "Invalid path or access denied" }, { status: 403 });
+        }
+
+        // Check if file exists
+        const stats = await fs.stat(fullPath);
+
+        if (stats.isDirectory()) {
+            return NextResponse.json({ error: "Cannot read directories" }, { status: 400 });
+        }
+
+        if (stats.size > MAX_CONTENT_SIZE) {
+            return NextResponse.json({ error: "File too large" }, { status: 400 });
+        }
+
         const content = await fs.readFile(fullPath, "utf-8");
         return NextResponse.json({ content });
     } catch (error) {
-        return NextResponse.json({ error: "Failed to read file" }, { status: 500 });
+        console.error("Read error:", error);
+
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return NextResponse.json({ error: "File not found" }, { status: 404 });
+        }
+
+        return NextResponse.json({
+            error: "Failed to read file",
+            message: error instanceof Error ? error.message : "Unknown error"
+        }, { status: 500 });
     }
 }
 
@@ -37,21 +81,51 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { path: relPath, content } = body;
 
-        if (!relPath || typeof content !== "string") {
-            return NextResponse.json({ error: "Path and content required" }, { status: 400 });
+        if (!relPath || typeof relPath !== "string") {
+            return NextResponse.json({ error: "Path required" }, { status: 400 });
         }
 
-        const fullPath = getSafePath(relPath);
+        if (typeof content !== "string") {
+            return NextResponse.json({ error: "Content must be a string" }, { status: 400 });
+        }
 
-        // Safety check: ensure file exists before writing? Or allow new files? 
-        // For prompts/templates, they should exist. For outputs, they might be new.
-        // Let's allow generic write.
+        if (relPath.length > 500) {
+            return NextResponse.json({ error: "Path too long" }, { status: 400 });
+        }
+
+        // Check content size
+        const contentBytes = Buffer.byteLength(content, "utf-8");
+        if (contentBytes > MAX_CONTENT_SIZE) {
+            return NextResponse.json({
+                error: `Content too large. Maximum size is ${MAX_CONTENT_SIZE / 1024 / 1024}MB`
+            }, { status: 400 });
+        }
+
+        const projectRoot = path.join(process.cwd(), "..");
+        const fullPath = getSafePath(relPath, projectRoot);
+
+        if (!fullPath) {
+            return NextResponse.json({ error: "Invalid path or access denied" }, { status: 403 });
+        }
+
+        // Only allow writing to template directory
+        if (!relPath.startsWith("template/")) {
+            return NextResponse.json({
+                error: "Write access only allowed for template directory"
+            }, { status: 403 });
+        }
+
+        // Ensure parent directory exists
+        await fs.mkdir(path.dirname(fullPath), { recursive: true });
 
         await fs.writeFile(fullPath, content, "utf-8");
         return NextResponse.json({ success: true });
 
     } catch (error) {
         console.error("Write error:", error);
-        return NextResponse.json({ error: "Failed to write file" }, { status: 500 });
+        return NextResponse.json({
+            error: "Failed to write file",
+            message: error instanceof Error ? error.message : "Unknown error"
+        }, { status: 500 });
     }
 }
