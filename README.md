@@ -49,7 +49,7 @@ This orchestration is built on five core principles:
 ```text
 PHASE 1 — Literature Discovery & Screening        (SKILL)
         ↓
-PHASE 2 — Literature Extraction & Synthesis       (SKILL + Enhanced Error Handling)
+PHASE 2 — Literature Extraction & Synthesis       (SKILL)
         ↓
 PHASE 3 — Argument Structure & Review Outline     (SKILL)
         ↓
@@ -57,12 +57,14 @@ PHASE 4 — Literature Review Drafting              (SKILL)
         ↓
 PHASE 4.5 — Citation Integrity Validation         (SKILL - Quality Control)
         ↓
-PHASE 6 — Contribution & Implications Framing     (SKILL)
+PHASE 5 — Contribution & Implications Framing     (SKILL)
         ↓
-PHASE 7 — Cross-Phase Validation                  (SKILL - Quality Control)
+PHASE 6 — Cross-Phase Validation                  (SKILL - Quality Control)
 ```
 
-> Note: Phase numbering aligns with conventional research workflows. Phase 5 (methods/results) and Phase 8 (dissemination) are intentionally modular and optional. Quality control phases (4.5, 7) are automated validation checkpoints.
+> **Note:** Phase numbering follows the complete research pipeline: 1 (Discovery) → 2 (Synthesis) → 3 (Outline) → 4 (Draft) → 4.5 (Citation Validation) → 5 (Contributions) → 6 (Cross-Phase Validation). Quality control phases (4.5, 6) are automated validation checkpoints.
+
+> **Skills Compliance:** All skills comply with the [Agent Skills specification](https://agentskills.io/specification) using actual tool names (`Read Write Edit Glob Grep Bash`) and include comprehensive Pre-Execution Validation, Execution Models, Error Handling, Output Validation, and Integration documentation.
 
 ---
 
