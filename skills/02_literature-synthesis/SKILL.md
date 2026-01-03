@@ -3,7 +3,7 @@ name: literature-review-synthesis-matrix
 description: Generates a two-part literature review matrix: (1) paper-centric extraction and (2) theme-centric synthesis, from a folder of PDF research papers.
 license: Apache-2.0
 compatibility: Requires PDF parsing capability and filesystem read/write access.
-allowed-tools: list_directory read_resource parse_pdf write_file
+allowed-tools: Read Write Edit Glob Grep Bash
 metadata:
   short-description: Builds extraction and synthesis matrices from a corpus of research PDFs.
   version: 2.0.0
@@ -25,23 +25,93 @@ Activate this skill when the user:
 
 ---
 
-## 2. Part 1 — Literature Extraction Matrix (Paper-Centric)
+## 2. Pre-Execution Validation
 
-### 2.1 Objective
+**Before beginning extraction, validate prerequisites:**
+
+### 2.1 Verify Corpus Directory
+1. Check that `corpus/` directory exists
+2. Verify it contains PDF files (at least 1 PDF required)
+3. Confirm these are the **screened and approved** PDFs from Phase 1 (Literature Discovery & Screening)
+
+**If corpus is invalid:**
+- **Missing directory:** Halt and prompt: "The `corpus/` directory was not found. Please ensure Phase 1 (Literature Discovery & Screening) has been completed and approved PDFs are in `corpus/`."
+- **Empty directory:** Halt and prompt: "The `corpus/` directory contains no PDF files. Please complete Phase 1 screening first."
+- **Unscreened corpus:** Warn: "The corpus appears to contain unscreened PDFs. For best results, complete Phase 1 screening before running Phase 2 extraction."
+
+### 2.2 Prepare Output Directory
+1. Create `outputs/` directory if it doesn't exist
+2. Check for existing extraction/synthesis files and note if resuming or starting fresh
+
+### 2.3 Verify PDF Parsing Capability
+1. Confirm Read tool has PDF parsing support
+2. If unavailable, halt with error: "PDF parsing capability required but not available"
+
+---
+
+## 3. Execution Model
+
+This skill operates as a **sequential two-part workflow**:
+
+### 3.1 Part Execution Sequence
+
+**Automatic Sequential Execution:**
+1. **Part 1 (Extraction)** runs first and produces `outputs/literature-extraction-matrix.md`
+2. **Part 2 (Synthesis)** runs automatically after Part 1 completes, using Part 1's output
+3. Both parts complete in a single skill invocation
+
+**Dependency:**
+- Part 2 **requires** Part 1 output
+- Part 2 cannot run independently without Part 1 data
+- Part 1 can be run alone if synthesis is not needed (rare)
+
+### 3.2 Processing Strategy
+
+**Incremental One-at-a-Time Processing:**
+- Process each PDF individually (not all at once)
+- Extract one paper → Write to extraction matrix → Move to next paper
+- This approach:
+  - ✅ Avoids context window limitations
+  - ✅ Enables progress tracking
+  - ✅ Allows recovery from interruptions
+  - ✅ Scales to large corpora (100+ papers)
+
+**State Management:**
+- Progress tracked in `outputs/extraction-progress.md`
+- If interrupted, can resume from last completed PDF
+- Final matrices assembled after all PDFs processed
+
+### 3.3 User Control Points
+
+**Users can:**
+- Run the full workflow (Part 1 + Part 2) in one invocation
+- Review Part 1 output before synthesis (manually pause between parts)
+- Re-run Part 2 with different synthesis parameters (using existing Part 1 output)
+
+**Users cannot:**
+- Run Part 2 without Part 1
+- Skip validation steps
+- Process non-PDF files
+
+---
+
+## 4. Part 1 — Literature Extraction Matrix (Paper-Centric)
+
+### 4.1 Objective
 Create a **standardized extraction table** where each row represents one paper and each column captures a consistent analytical attribute.
 
 This part emphasizes **accuracy, normalization, and completeness**, not interpretation.
 
 ---
 
-### 2.2 Part 1 Execution Steps
+### 4.2 Part 1 Execution Steps
 
-1. **Discovery**  
-   Identify all PDF files in the specified directory `corpus`.
+1. **Discovery**
+   Identify all PDF files in the `corpus/` directory.
 
-2. **Iteration**  
+2. **Iteration**
    For each PDF:
-   - Extract text using `parse_pdf`.
+   - Extract text using the Read tool's PDF parsing capability.
    - Identify bibliographic and analytical elements.
    - Normalize terminology across papers.
    - Populate exactly one row per paper.
@@ -55,7 +125,7 @@ This part emphasizes **accuracy, normalization, and completeness**, not interpre
 
 ---
 
-### 2.3 Part 1 Extraction Schema
+### 4.3 Part 1 Extraction Schema
 
 | Column | Description |
 |------|-------------|
@@ -69,7 +139,7 @@ This part emphasizes **accuracy, normalization, and completeness**, not interpre
 
 ---
 
-### 2.4 Part 1 Constraints
+### 4.4 Part 1 Constraints
 - Do not invent missing information.
 - Do not merge multiple papers into one row.
 - Use `Not specified` when information is unavailable.
@@ -77,9 +147,74 @@ This part emphasizes **accuracy, normalization, and completeness**, not interpre
 
 ---
 
-## 3. Part 2 — Literature Synthesis Matrix (Theme-Centric)
+### 4.5 State Management & Recovery
 
-### 3.1 Objective
+**Progress Tracking File:** `outputs/extraction-progress.md`
+
+**Purpose:** Enable resumption if extraction is interrupted during large corpus processing.
+
+**Progress file structure:**
+```markdown
+# Phase 2 Extraction Progress
+
+**Session Started:** [timestamp]
+**Total PDFs:** [N]
+**PDFs Processed:** [X]/[N]
+**Status:** [IN_PROGRESS / COMPLETE]
+
+## Processing Log
+
+| PDF Filename | Status | Timestamp | Extraction Quality |
+|--------------|--------|-----------|-------------------|
+| paper1.pdf   | ✅ COMPLETE | 2026-01-03 10:15 | Complete |
+| paper2.pdf   | ✅ COMPLETE | 2026-01-03 10:22 | Partial |
+| paper3.pdf   | ⏳ IN_PROGRESS | 2026-01-03 10:28 | - |
+| paper4.pdf   | ⏸️ PENDING | - | - |
+```
+
+**Recovery Workflow:**
+
+If interrupted, the agent can resume:
+
+```
+RECOVERY PROCEDURE:
+
+1. Check if outputs/extraction-progress.md exists
+   - If NO: Start fresh extraction
+   - If YES: Resume from last position
+
+2. Read extraction-progress.md
+   - Parse processing log table
+   - Identify last completed PDF
+   - Get list of PENDING PDFs
+
+3. Resume processing:
+   - Start with first PENDING PDF
+   - Process one-at-a-time as normal
+   - Append to extraction matrix incrementally
+   - Update progress file after each PDF
+
+4. Continue until all PDFs processed
+   - Then proceed to Part 2 (synthesis)
+
+EXAMPLE:
+If interrupted at paper 7 of 20:
+  - Papers 1-6: Already in extraction matrix
+  - Paper 7: May be partial (re-process)
+  - Papers 8-20: Resume from paper 8
+```
+
+**Implementation Notes:**
+- Each PDF extraction is independent (no carry-over context needed)
+- Progress file enables audit trail of processing
+- Extraction matrix built incrementally (one row per PDF)
+- Final assembly happens after all PDFs processed
+
+---
+
+## 5. Part 2 — Literature Synthesis Matrix (Theme-Centric)
+
+### 5.1 Objective
 Transform the Part 1 extraction matrix into a **true synthesis matrix** that enables:
 
 - Cross-paper comparison
@@ -91,14 +226,14 @@ This part is **comparative and integrative**, but must remain grounded in Part 1
 
 ---
 
-### 3.2 Part 2 Input
+### 5.2 Part 2 Input
 Use **only** the Part 1 extraction matrix generated in this run.
 
 No new sources may be introduced.
 
 ---
 
-### 3.3 Part 2 Execution Steps
+### 5.3 Part 2 Execution Steps
 
 1. **Theme Identification**
 - Scan the **Key Themes / Concepts**, methodologies, findings, and gaps.
@@ -124,7 +259,7 @@ Save as: `outputs/literature-synthesis-matrix.md`
 
 ---
 
-### 3.4 Part 2 Synthesis Schema
+### 5.4 Part 2 Synthesis Schema
 
 | Column | Description |
 |------|-------------|
@@ -137,7 +272,7 @@ Save as: `outputs/literature-synthesis-matrix.md`
 
 ---
 
-### 3.5 Part 2 Constraints
+### 5.5 Part 2 Constraints
 - Do not infer beyond what Part 1 supports.
 - Do not attribute claims to papers that do not support them.
 - Explicitly note weak or sparse evidence.
@@ -145,9 +280,9 @@ Save as: `outputs/literature-synthesis-matrix.md`
 
 ---
 
-## 4. Error Handling and Quality Reporting
+## 6. Error Handling and Quality Reporting
 
-### 4.1 PDF Processing Errors
+### 6.1 PDF Processing Errors
 
 **When a PDF fails to parse:**
 
@@ -200,7 +335,7 @@ Save as: `outputs/literature-synthesis-matrix.md`
 - **Action:** Optional to resolve
 ```
 
-### 4.2 Metadata Extraction Warnings
+### 6.2 Metadata Extraction Warnings
 
 **When metadata is incomplete or ambiguous:**
 
@@ -215,7 +350,7 @@ Add column: **Extraction Quality**
 - **Partial:** Some fields missing or unclear (specify which)
 - **Minimal:** Only basic identification possible (title/filename only)
 
-### 4.3 Quality Thresholds and Alerts
+### 6.3 Quality Thresholds and Alerts
 
 **Automated quality checks:**
 
@@ -241,7 +376,7 @@ Add column: **Extraction Quality**
 - Review failed PDFs if time permits but not blocking
 ```
 
-### 4.4 Synthesis Phase Error Handling
+### 6.4 Synthesis Phase Error Handling
 
 **When synthesis encounters issues:**
 
@@ -258,7 +393,7 @@ Add column: **Extraction Quality**
    - If extraction failed for key papers, note gaps in synthesis
    - Explicitly state "Analysis limited by incomplete corpus extraction"
 
-### 4.5 Error Recovery Procedures
+### 6.5 Error Recovery Procedures
 
 **If >50% of PDFs fail:**
 1. STOP processing
@@ -274,7 +409,7 @@ Add column: **Extraction Quality**
 2. Include diagnostic report explaining why synthesis was skipped
 3. Provide specific requirements for proceeding (e.g., "Need ≥3 successfully extracted papers")
 
-### 4.6 Transparency and Auditability
+### 6.6 Transparency and Auditability
 
 **Every output must include:**
 
@@ -303,22 +438,50 @@ Add column: **Extraction Quality**
 
 ---
 
-## 5. Expected Outputs
-Two Markdown files in the target directory:
+## 7. Expected Outputs
+Two Markdown files in the `outputs/` directory:
 
-1. **Part 1:** `outputs/literature-extraction-matrix.md`  
+1. **Part 1:** `outputs/literature-extraction-matrix.md`
 2. **Part 2:** `outputs/literature-synthesis-matrix.md`
 
 Together, these enable both **transparent evidence tracing** and **rigorous synthesis**.
 
 ---
 
-## 6. Example Invocation
+## 8. Example Invocation
 > “Generate a full literature extraction and synthesis matrix from all PDFs in the `corpus/` folder.”
 
 ---
 
-## 7. Intended Use
+## 9. Integration with Other Phases
+
+### 9.1 Relationship to Phase 1 (Literature Discovery & Screening)
+
+**Prerequisites from Phase 1:**
+- `corpus/` directory must contain **screened and approved** PDFs only
+- Excluded papers should have been removed during Phase 1 human review
+- Ideally, Phase 1's PRISMA flow diagram is available for methods documentation
+
+**Quality Dependency:**
+- Phase 2 quality directly depends on Phase 1 screening quality
+- If unscreened papers are in `corpus/`, synthesis may include irrelevant literature
+- **Recommendation:** Always complete Phase 1 before Phase 2
+
+### 9.2 Handoff to Phase 3 (Outline Generation)
+
+**Phase 2 outputs serve as inputs to Phase 3:**
+- Extraction matrix provides comprehensive paper details
+- Synthesis matrix identifies key themes and gaps for outline structure
+- Together, they enable evidence-based section planning
+
+**Workflow continuity:**
+1. Phase 1: Screen corpus → approved PDFs in `corpus/`
+2. Phase 2: Extract & synthesize → matrices in `outputs/`
+3. Phase 3: Generate outline → structured document skeleton
+
+---
+
+## 10. Intended Use
 This skill supports:
 - Academic literature reviews
 - Policy evidence synthesis

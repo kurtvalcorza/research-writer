@@ -3,7 +3,7 @@ name: citation-integrity-validator
 description: Validates citation accuracy in the literature review draft by cross-referencing against the extraction matrix, detecting fabricated citations, misattributions, and citation quality issues.
 license: Apache-2.0
 compatibility: Requires read access to Markdown files (extraction matrix and review draft).
-allowed-tools: read_resource write_file
+allowed-tools: Read Write Edit Glob Grep Bash
 metadata:
   short-description: Quality control for citation integrity and claim-evidence alignment.
   version: 1.0.0
@@ -32,7 +32,75 @@ Activate this skill when the user:
 
 ---
 
-## 2. Objective
+## 2. Pre-Execution Validation
+
+**Before beginning validation, verify prerequisites:**
+
+### 2.1 Verify Required Input Files
+
+**Required files:**
+- `outputs/literature-review-draft.md` (from Phase 4)
+- `outputs/literature-extraction-matrix.md` (from Phase 2)
+
+**Optional files:**
+- `outputs/literature-synthesis-matrix.md` (from Phase 2, for theme alignment checks)
+- `outputs/literature-review-outline.md` (from Phase 3, for evidence strength verification)
+
+**Validation steps:**
+1. Check that `outputs/literature-review-draft.md` exists and is non-empty
+2. Check that `outputs/literature-extraction-matrix.md` exists and is non-empty
+3. Verify draft contains parseable citation patterns
+4. Verify extraction matrix contains paper metadata
+
+**If required files are missing:**
+- **Draft missing:** Halt and prompt: "Required draft file `outputs/literature-review-draft.md` not found. Please complete Phase 4 (Literature Drafting) first."
+- **Extraction matrix missing:** Halt and prompt: "Required extraction matrix `outputs/literature-extraction-matrix.md` not found. Please complete Phase 2 first."
+- **Files empty:** Halt and prompt: "Required input files appear empty. Ensure previous phases completed successfully."
+
+### 2.2 Prepare Output Directory
+1. Verify `outputs/` directory exists (should exist from previous phases)
+2. If missing, create `outputs/` directory
+3. Check for existing `citation-integrity-report.md` and note if updating or creating fresh
+
+---
+
+## 3. Execution Model
+
+This skill operates as a **single-pass analytical workflow**:
+
+### 3.1 Processing Strategy
+
+**Single-Pass Validation:**
+- Read draft once to extract all citations
+- Read extraction and synthesis matrices into context
+- Perform all validation checks in sequence
+- Generate comprehensive report
+
+**No Incremental Processing:**
+- Entire draft analyzed as a unit
+- Suitable for drafts with 20-200 citations (typical Phase 4 output)
+- Typical execution time: 2-5 minutes for 50-citation draft
+
+**State Management:**
+- No progress tracking required (single-pass operation)
+- If interrupted, restart from beginning (low cost, quick execution)
+- No recovery mechanism needed
+
+### 3.2 Dependency Chain
+
+**Sequential dependency:**
+1. Phase 2 (extraction matrix) must be complete
+2. Phase 4 (draft) must be complete
+3. This phase produces validation report for human review
+
+**Quality propagation:**
+- Validation quality depends on extraction matrix completeness
+- Incomplete metadata → limited misattribution detection
+- Missing synthesis matrix → no theme alignment checks
+
+---
+
+## 4. Objective
 
 Produce a **comprehensive citation integrity report** that:
 - Identifies every citation in the draft
@@ -43,9 +111,9 @@ Produce a **comprehensive citation integrity report** that:
 
 ---
 
-## 3. Inputs
+## 5. Inputs
 
-### 3.1 Required Inputs
+### 5.1 Required Inputs
 
 **Literature Review Draft:**
 - File: `outputs/literature-review-draft.md` (from Phase 4)
@@ -59,7 +127,7 @@ Produce a **comprehensive citation integrity report** that:
 - File: `outputs/literature-synthesis-matrix.md` (from Phase 2)
 - Evidence mappings: Claims should align with themes
 
-### 3.2 Optional Inputs
+### 5.2 Optional Inputs
 
 **Literature Review Outline:**
 - File: `outputs/literature-review-outline.md` (from Phase 3)
@@ -67,9 +135,9 @@ Produce a **comprehensive citation integrity report** that:
 
 ---
 
-## 4. Execution Steps
+## 6. Execution Steps
 
-### 4.1 Citation Extraction Phase
+### 6.1 Citation Extraction Phase
 
 **Step 1: Parse Draft for Citations**
 - Scan `outputs/literature-review-draft.md` for all in-text citations
@@ -89,7 +157,7 @@ Create complete inventory:
 
 ---
 
-### 4.2 Validation Phase
+### 6.2 Validation Phase
 
 **Step 3: Cross-Reference Against Extraction Matrix**
 
@@ -120,7 +188,7 @@ For each citation in the draft:
 
 ---
 
-### 4.3 Quality Assessment Phase
+### 6.3 Quality Assessment Phase
 
 **Step 4: Citation Distribution Analysis**
 
@@ -144,7 +212,7 @@ For each citation in the draft:
 
 ---
 
-### 4.4 Format Consistency Phase
+### 6.4 Format Consistency Phase
 
 **Step 5: Citation Format Validation**
 
@@ -163,308 +231,98 @@ For each citation in the draft:
 
 ---
 
-## 5. Output Structure
+## 7. Output Structure
 
 Generate: `outputs/citation-integrity-report.md`
+
+**Report contains the following sections:**
+
+1. **Executive Summary** - High-level metrics and overall validation status
+2. **Fabricated Citations** - Citations not found in extraction matrix (CRITICAL)
+3. **Misattribution Warnings** - Claims inconsistent with paper findings
+4. **Metadata Inconsistencies** - Formatting or metadata errors
+5. **Citation Distribution Analysis** - Source diversity, section balance, evidence alignment
+6. **Format Consistency Issues** - Citation style variations
+7. **Detailed Citation Inventory** - Complete alphabetical list with validation status
+8. **Synthesis Matrix Cross-Check** - Theme-citation alignment verification
+9. **Quality Control Checklist** - Pass/fail criteria
+10. **Recommended Actions** - Prioritized fixes (Critical → High → Medium → Low priority)
+11. **Validation Metadata** - Processing details and timestamp
+
+### 7.1 Minimal Example (PASS Status)
 
 ```markdown
 # Citation Integrity Report (Phase 4.5)
 
-**Generated:** [date]
-**Draft Analyzed:** literature-review-draft.md
-**Reference Corpus:** literature-extraction-matrix.md
-**Validation Status:** [PASS / WARNINGS / CRITICAL ISSUES]
-
----
+**Generated:** 2026-01-03
+**Validation Status:** ✅ PASS
 
 ## Executive Summary
 
 | Metric | Count | Status |
 |--------|-------|--------|
-| Total citations in draft | X | ℹ️ |
-| Unique papers cited | X | ℹ️ |
-| Papers in corpus not cited | X | ⚠️ if >20% |
-| Fabricated citations detected | X | 🚨 if >0 |
-| Misattribution warnings | X | ⚠️ if >0 |
-| Format inconsistencies | X | ⚠️ if >5 |
-| Over-cited papers (>30% share) | X | ⚠️ if >0 |
+| Total citations in draft | 45 | ℹ️ |
+| Unique papers cited | 18 | ℹ️ |
+| Fabricated citations detected | 0 | ✅ PASS |
+| Misattribution warnings | 0 | ✅ PASS |
+| Format inconsistencies | 2 | ✅ PASS (<5) |
 
-**Overall Assessment:** [PASS / NEEDS ATTENTION / CRITICAL ISSUES]
+**Overall Assessment:** ✅ PASS - Ready for human review
+
+## Recommended Actions
+
+### MEDIUM PRIORITY:
+1. Standardize 2 format variations (mixed comma usage in multi-author citations)
 
 ---
+
+**Validation complete. No critical issues detected.**
+```
+
+### 7.2 Example with Issues
+
+```markdown
+# Citation Integrity Report (Phase 4.5)
+
+**Validation Status:** 🚨 NEEDS REVISION
+
+## Executive Summary
+
+| Metric | Count | Status |
+|--------|-------|--------|
+| Fabricated citations detected | 2 | 🚨 CRITICAL |
+| Misattribution warnings | 3 | ⚠️ WARNING |
+| Over-cited papers (>30% share) | 1 | ⚠️ WARNING |
+
+**Overall Assessment:** 🚨 NEEDS REVISION
 
 ## 1. Fabricated Citations (CRITICAL)
 
-**Definition:** Citations appearing in draft but NOT in extraction matrix.
+**Count:** 2
 
-**Count:** [X]
-
-**Status:** [🚨 CRITICAL if >0 / ✅ PASS if 0]
-
-### Detected Fabrications:
-
-| Citation | Location | Context | Action Required |
-|----------|----------|---------|-----------------|
-| (Smith, 2025) | Section 2, Para 3 | "Smith (2025) argues that AI adoption..." | REMOVE or ADD paper to corpus |
-| ... | ... | ... | ... |
-
-**Explanation:**
-These citations reference papers that are NOT in your approved corpus (extraction matrix). This indicates:
-- Possible hallucination by the drafting agent
-- Unintentional reference to papers outside the screening scope
-- Manual additions that weren't processed through Phase 1-2
-
-**Action Required:**
-1. For each fabricated citation: Decide whether to:
-   - **REMOVE** the citation and rephrase the claim (if paper is out of scope)
-   - **ADD** the paper to corpus by processing through Phase 1-2 (if relevant)
-2. Re-run Phase 4 after corpus changes
-
----
+| Citation | Location | Action Required |
+|----------|----------|-----------------|
+| (Smith, 2025) | Section 2, Para 3 | REMOVE or ADD to corpus |
+| (Lee, 2024) | Section 5, Para 1 | REMOVE or ADD to corpus |
 
 ## 2. Misattribution Warnings
 
-**Definition:** Citations where the claim appears inconsistent with the paper's documented findings.
-
-**Count:** [X]
-
-**Status:** [⚠️ WARNING if >0 / ✅ PASS if 0]
-
-### Potential Misattributions:
-
-| Citation | Claim in Draft | Finding in Extraction Matrix | Severity | Recommendation |
-|----------|----------------|------------------------------|----------|----------------|
-| (Jones, 2024) | "Jones (2024) found strong evidence of AI adoption barriers" | Key Findings: "Preliminary survey of 20 SMEs" | Medium | Claim overstates certainty; use hedging language |
-| (Brown, 2023) | "Brown (2023) demonstrates cost savings" | Key Findings: "Conceptual framework proposed" | High | Misattribution - paper is theoretical, not empirical |
-| ... | ... | ... | ... | ... |
-
-**Severity Levels:**
-- **High:** Claim fundamentally misrepresents paper's content or findings
-- **Medium:** Claim overstates certainty or scope of paper's findings
-- **Low:** Minor interpretation differences
-
-**Action Required:**
-1. Review each flagged citation in context
-2. Verify claim against original paper (if accessible)
-3. Adjust claim language to match evidence strength
-4. Consider replacing citation if misattribution is severe
-
----
-
-## 3. Metadata Inconsistencies
-
-**Definition:** Citations with formatting or metadata errors.
-
-**Count:** [X]
-
-**Status:** [⚠️ if >0 / ✅ PASS if 0]
-
-### Detected Inconsistencies:
-
-| Citation in Draft | Correct Format (from Matrix) | Location | Issue Type |
-|-------------------|------------------------------|----------|------------|
-| (Smith, 2023) | (Smith, 2024) | Section 1 | Wrong year |
-| (Johnson et al., 2024) | (Johnson & Lee, 2024) | Section 3 | Should be &, not et al. (only 2 authors) |
-| ... | ... | ... | ... |
-
-**Action Required:**
-1. Update citations to match extraction matrix metadata
-2. Ensure consistency with chosen citation style
-
----
-
-## 4. Citation Distribution Analysis
-
-### 4.1 Source Diversity
-
-**Papers by Citation Frequency:**
-
-| Paper | Citation Count | % of Total | Assessment |
-|-------|----------------|------------|------------|
-| Pareja (2025) | 25 | 35% | 🚨 OVER-CITED (>30%) |
-| Campued et al. (2023) | 20 | 28% | ⚠️ High usage |
-| Jala et al. (2024) | 15 | 21% | ✅ Balanced |
-| ... | ... | ... | ... |
-
-**Papers in Corpus NOT Cited:**
-
-| Paper | Status | Recommendation |
-|-------|--------|----------------|
-| Chen (2023) | Not cited | Review if relevant themes in synthesis matrix |
-| ... | ... | ... |
-
-**Over-Citation Analysis:**
-- **Issue:** Pareja (2025) accounts for 35% of all citations
-- **Risk:** May indicate over-reliance on single source or limited synthesis
-- **Recommendation:** Review draft to ensure claims are supported by multiple sources where possible
-
-**Under-Citation Analysis:**
-- **Papers never cited:** [X]
-- **Potential issue:** Papers in corpus but unused may indicate:
-  - Screening errors (should have been excluded)
-  - Synthesis gaps (relevant papers overlooked)
-  - Draft gaps (missing themes)
-
----
-
-### 4.2 Section-Wise Distribution
-
-| Section | Citation Count | Citations per 100 words | Assessment |
-|---------|----------------|-------------------------|------------|
-| Section 1: Current State | 15 | 8.5 | ✅ Well-supported |
-| Section 2: Infrastructure | 8 | 4.2 | ⚠️ Moderately supported |
-| Section 3: Human Capital | 3 | 1.8 | 🚨 Under-cited (<2 per 100 words) |
-| ... | ... | ... | ... |
-
-**Under-Cited Sections:**
-- Section 3: Human Capital has only 3 citations across 450 words
-- **Risk:** Claims may appear unsupported
-- **Recommendation:** Add citations from synthesis matrix or acknowledge limited evidence
-
----
-
-### 4.3 Evidence Strength Alignment
-
-**Cross-Check with Outline's Evidence Profiles:**
-
-| Section | Outline Evidence Profile | Citation Count | Alignment Status |
-|---------|--------------------------|----------------|------------------|
-| Section 1 | "Strong consensus (all 3 papers)" | 15 citations | ✅ ALIGNED |
-| Section 3 | "Strong consensus (all 3 papers)" | 3 citations | 🚨 MISALIGNED - should have more citations |
-| Section 4 | "Mixed/contested" | 12 citations | ✅ ALIGNED |
-| Section 6 | "Emerging/limited" | 8 citations | ⚠️ May overstate - limited evidence should have fewer citations |
-
-**Action Required:**
-- Section 3: Add more citations to match "strong consensus" claim
-- Section 6: Consider reducing citation density or adding hedging language
-
----
-
-## 5. Format Consistency Issues
-
-**Count:** [X]
-
-**Status:** [⚠️ if >5 / ✅ PASS if <5]
-
-### Format Variations Detected:
-
-| Issue Type | Examples | Count | Recommendation |
-|------------|----------|-------|----------------|
-| Inconsistent year format | `(Smith, 2024)` vs `(Smith 2024)` | 5 | Standardize to (Author, Year) |
-| Et al. inconsistency | `Smith et al.` vs `Smith, Jones, & Lee` for 3+ authors | 3 | Use et al. for 3+ authors |
-| Punctuation variance | `(Smith, 2024; Jones, 2023)` vs `(Smith 2024, Jones 2023)` | 2 | Standardize separator |
-
-**Action Required:**
-1. Choose a consistent citation style (APA, Chicago, etc.)
-2. Apply format rules uniformly across entire draft
-3. Consider using citation management tool for consistency
-
----
-
-## 6. Detailed Citation Inventory
-
-### All Citations in Draft (Alphabetical)
-
-| Citation | Frequency | Locations | Validation Status |
-|----------|-----------|-----------|-------------------|
-| Campued et al. (2023) | 20 | Sections 1, 3, 4, 5 | ✅ Valid |
-| Jala et al. (2024) | 15 | Sections 2, 3, 5, 6 | ✅ Valid |
-| Pareja (2025) | 25 | All sections | ✅ Valid (but over-cited) |
-| Smith (2025) | 1 | Section 2 | 🚨 FABRICATED - not in corpus |
-| ... | ... | ... | ... |
-
----
-
-## 7. Synthesis Matrix Cross-Check
-
-**Theme-Citation Alignment:**
-
-| Theme (from Synthesis Matrix) | Expected Citations | Actual Citations in Draft | Status |
-|--------------------------------|-------------------|---------------------------|--------|
-| AI Readiness and Awareness | All 3 papers | Pareja (2025), Campued (2023), Jala (2024) | ✅ Complete |
-| Skills and Workforce Development | All 3 papers | Campued (2023), Jala (2024) | ⚠️ Missing Pareja (2025) |
-| Infrastructure Constraints | Pareja, Jala | Pareja (2025), Jala (2024) | ✅ Complete |
-| ... | ... | ... | ... |
-
-**Missing Theme-Citation Links:**
-- Theme "Skills and Workforce Development" should cite Pareja (2025) based on synthesis matrix
-- **Recommendation:** Review if Pareja's implicit discussion of skills should be cited
-
----
-
-## 8. Quality Control Checklist
-
-Before proceeding to human review, verify:
-
-- [ ] **Zero fabricated citations** (all citations exist in extraction matrix)
-- [ ] **No high-severity misattributions** (claims match paper findings)
-- [ ] **Balanced source distribution** (no single paper >30% of citations)
-- [ ] **All corpus papers considered** (papers not cited have been reviewed for relevance)
-- [ ] **Section citations adequate** (no section <2 citations per 100 words without justification)
-- [ ] **Evidence strength aligned** (citation density matches outline's evidence profile)
-- [ ] **Format consistency** (<5 format variations)
-- [ ] **Theme-citation alignment** (synthesis matrix themes properly cited)
-
-**Overall Validation Status:** [PASS / NEEDS REVISION]
-
----
-
-## 9. Recommended Actions (Prioritized)
-
-### CRITICAL (Must Fix Before Proceeding):
-1. Remove or resolve all fabricated citations
-2. Fix high-severity misattributions
-
-### HIGH PRIORITY (Strongly Recommended):
-3. Address over-citation issues (>30% from single source)
-4. Add citations to under-cited sections
-5. Align evidence strength claims with citation density
-
-### MEDIUM PRIORITY (Improve Quality):
-6. Resolve metadata inconsistencies
-7. Fix format variations
-8. Consider citing unused corpus papers if relevant
-
-### LOW PRIORITY (Polish):
-9. Balance citation distribution for better synthesis
-10. Review et al. usage for consistency
-
----
-
-## 10. Validation Metadata
-
-**Validation performed by:** Citation Integrity Validator v1.0.0
-**Extraction matrix source:** literature-extraction-matrix.md
-**Synthesis matrix source:** literature-synthesis-matrix.md
-**Draft analyzed:** literature-review-draft.md (Phase 4 output)
-**Total citations validated:** [N]
-**Validation timestamp:** [datetime]
-
----
-
-## Appendix A: Citation-by-Citation Detail
-
-[Detailed line-by-line validation results for full transparency]
-
-**Format:**
-```
-Citation: (Author, Year)
-Location: Section X, Paragraph Y, Line Z
-Context: "Full sentence containing citation..."
-Validation checks:
-  ✅ Exists in extraction matrix
-  ✅ Metadata consistent
-  ✅ Claim-evidence aligned
-  ✅ Theme-appropriate usage
-Overall: PASS
+**Count:** 3 (2 High, 1 Medium severity)
+
+| Citation | Severity | Recommendation |
+|----------|----------|----------------|
+| (Jones, 2024) | High | Claim misrepresents theoretical paper as empirical |
+| (Brown, 2023) | High | Overstates scope of findings |
+| (Wilson, 2023) | Medium | Use hedging language for preliminary findings |
+
+## Recommended Actions (CRITICAL)
+
+1. ❗ Remove 2 fabricated citations or add papers to corpus
+2. ❗ Fix 2 high-severity misattributions
+3. Address over-citation of Pareja (2025) - 35% of all citations
 ```
 
-[Repeat for all citations]
-
----
-
-**End of Citation Integrity Report**
-```
+**Note:** Full detailed report includes all sections listed above. Examples show condensed versions for PASS and FAIL scenarios.
 
 ---
 
@@ -491,48 +349,154 @@ Overall: PASS
 
 ## 7. Error Handling
 
-### 7.1 Missing Input Files
-- If extraction matrix is not found: Stop and report error
-- If draft is not found: Stop and report error
-- If synthesis matrix is missing: Proceed with limited validation (skip theme alignment)
+### 7.1 Missing or Invalid Input Files
 
-### 7.2 Unparseable Citations
-- If citation format is non-standard: Flag for human review
-- Log all unparseable patterns for improvement
-- Provide examples of expected format
+**If draft file is missing or empty:**
+- Halt execution
+- Prompt: "Required draft file `outputs/literature-review-draft.md` not found or empty. Please complete Phase 4 (Literature Drafting) first."
 
-### 7.3 Ambiguous Validation Results
-- If claim-evidence alignment is unclear: Mark as "Requires human verification"
-- If metadata has minor variations: Note but don't flag as critical
-- Document ambiguity clearly
+**If extraction matrix is missing or empty:**
+- Halt execution
+- Prompt: "Required extraction matrix `outputs/literature-extraction-matrix.md` not found or empty. Please complete Phase 2 first."
+
+**If synthesis matrix is missing:**
+- Continue with limited validation (skip theme alignment checks)
+- Note in report: "Synthesis matrix unavailable - theme alignment checks skipped"
+- Warn: "Validation quality reduced without synthesis matrix. Consider completing full Phase 2 before validation."
+
+**If outline file is missing:**
+- Continue without evidence strength alignment checks
+- Note in report: "Outline unavailable - evidence strength verification skipped"
+
+### 7.2 Citation Parsing Failures
+
+**If citation format is non-standard:**
+- Flag unparseable citations in report section: "Unparseable Citations"
+- Log pattern examples: "Found unusual pattern: [example]"
+- Provide expected format guidance: "Standard formats: (Author Year), Author et al. Year"
+- Continue processing remaining citations
+
+**If no citations detected:**
+- Generate minimal report noting zero citations found
+- Flag for human review: "⚠️ No citations detected in draft. Verify draft completeness or citation format."
+- Check if draft contains text (empty draft vs. format issue)
+
+### 7.3 Validation Ambiguity
+
+**If claim-evidence alignment is unclear:**
+- Flag as "Requires human verification" in misattribution section
+- Provide claim text and available paper metadata
+- Note: "Alignment uncertain - insufficient metadata or complex claim"
+- Assign severity: Low (for human judgment)
+
+**If metadata has minor variations:**
+- Note variation without flagging as critical: "Author name variant: Smith vs. J. Smith"
+- Include in format consistency section (not misattribution)
+- Document: "Likely formatting variation, not error"
+
+**If contradictory signals exist:**
+- Present both signals to human reviewer
+- Example: "Citation exists in extraction matrix BUT year mismatch (2023 vs. 2024)"
+- Assign appropriate severity based on confidence level
+
+### 7.4 Output Write Failures
+
+**If unable to write to `outputs/` directory:**
+- Halt and report: "Cannot write to `outputs/` directory. Verify write permissions."
+- Offer fallback: Return report in response text for manual saving
+
+**If partial report exists and process interrupted:**
+- Overwrite with fresh report (single-pass operation, no incremental state)
+- Note in metadata: "Previous partial report overwritten"
+
+### 7.5 Quality and Completeness Issues
+
+**Self-check after validation:**
+- Verify all sections of report are populated
+- Confirm citation inventory matches extraction count
+- Check that severity levels are assigned consistently
+- Ensure recommendations are actionable
+
+**If quality issues detected:**
+- Flag incomplete sections: `[INCOMPLETE: Section X could not be generated - reason]`
+- Provide diagnostic notes in validation metadata
+- Recommend manual review: "Validation quality may be reduced - human review recommended for sections: [list]"
 
 ---
 
-## 8. Integration with Workflow
+## 8. Integration with Other Phases
 
-### 8.1 When to Run
-**Recommended:** Automatically after Phase 4 completion, before human review
+### 8.1 Relationship to Phase 2 (Literature Extraction & Synthesis)
 
-**Workflow position:**
-```
-Phase 4 (Draft) → Phase 4.5 (Citation Validation) → Human Review → Phase 6
-```
+**Prerequisites from Phase 2:**
+- `outputs/literature-extraction-matrix.md` must exist with complete paper metadata
+- Extraction matrix should include citation details (authors, year, titles)
+- Optional: `outputs/literature-synthesis-matrix.md` for theme alignment checks
 
-### 8.2 Outputs Feed Into
-- **Human review checkpoint:** Report guides reviewer attention to problem areas
-- **Phase 4 revision:** If critical issues found, revise draft before proceeding
-- **Phase 6:** Clean draft with validated citations improves contribution framing
+**Quality Dependency:**
+- Validation quality directly depends on extraction matrix completeness
+- Sparse metadata → limited misattribution detection
+- Missing synthesis matrix → no theme alignment verification
+- Agent can only validate against documented corpus
 
-### 8.3 Pass/Fail Criteria
-**PASS → Proceed to Human Review:**
+**Usage pattern:**
+- Extraction matrix serves as source of truth for citation existence checks
+- Synthesis matrix enables theme-citation consistency verification
+- No new sources can be validated beyond Phase 2 corpus
+
+### 8.2 Relationship to Phase 3 (Argument Structuring)
+
+**Optional inputs from Phase 3:**
+- `outputs/literature-review-outline.md` for evidence strength cross-checks
+- Outline's "Evidence Profile" labels inform validation expectations
+
+**Quality Enhancement:**
+- With outline: Can verify citation density matches claimed evidence strength
+- Without outline: Can still validate citation accuracy and format
+
+### 8.3 Relationship to Phase 4 (Literature Review Drafting)
+
+**Prerequisites from Phase 4:**
+- `outputs/literature-review-draft.md` must exist and contain citations
+- Draft should use consistent citation format (ACM recommended)
+
+**Quality Dependency:**
+- Validation detects issues introduced during drafting
+- Catches fabricated citations not in corpus
+- Identifies misattributions where claims don't match evidence
+
+**Feedback loop:**
+- If validation fails: Return to Phase 4 for revisions
+- If validation passes: Proceed to human review
+
+### 8.4 Workflow Continuity
+
+**Complete pipeline:**
+1. Phase 1: Screen corpus → approved PDFs in `corpus/`
+2. Phase 2: Extract & synthesize → matrices in `outputs/`
+3. Phase 3: Structure argument → outline in `outputs/`
+4. Phase 4: Draft review → literature review draft in `outputs/`
+5. **Phase 4.5: Validate citations → integrity report in `outputs/`**
+6. Human review → final revisions → submission-ready document
+
+**Recommended workflow:**
+- Run Phase 4.5 automatically after every Phase 4 completion
+- Treat as quality assurance checkpoint before human review
+- Resolve all CRITICAL issues before proceeding
+
+### 8.5 Pass/Fail Criteria
+
+**✅ PASS → Proceed to Human Review:**
 - Zero fabricated citations
 - Zero high-severity misattributions
 - Format inconsistencies <5
+- Citation distribution reasonable (no single paper >30%)
 
-**NEEDS REVISION → Return to Phase 4:**
+**🚨 NEEDS REVISION → Return to Phase 4:**
 - Any fabricated citations detected
 - High-severity misattributions present
 - Critical misalignment with evidence strength
+- Systematic format inconsistencies (>10 errors)
 
 ---
 

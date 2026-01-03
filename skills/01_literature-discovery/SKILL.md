@@ -2,8 +2,8 @@
 name: literature-discovery-screening
 description: Extracts metadata from research PDFs, applies user-defined screening criteria, and generates a PRISMA-style screening report with inclusion/exclusion recommendations. Uses universal three-pass incremental workflow for all corpus sizes.
 license: Apache-2.0
-compatibility: Requires PDF parsing capability and filesystem read/write access. CLI-agnostic design (works with Claude Code, Gemini, ChatGPT, etc.)
-allowed-tools: list_directory read_resource parse_pdf write_file
+compatibility: Requires PDF parsing capability and filesystem read/write access
+allowed-tools: Read Write Edit Glob Grep Bash
 ---
 
 # Literature Discovery & Screening Agent (Phase 1)
@@ -38,7 +38,7 @@ Produce a **systematic screening report** that:
 ### 3.1 Required Inputs
 
 **PDF Directory:**
-- `corpus/` - folder containing research PDFs to be screened
+- `corpus/` - folder containing research PDFs to be screened (same directory will contain approved PDFs after human review)
 
 **Screening Criteria:**
 - Read from `template/screening-criteria-template.md`
@@ -53,7 +53,7 @@ The screening criteria template (`template/screening-criteria-template.md`) incl
 - **Inclusion Criteria:** Topic/focus, study type, publication type, geographic context, temporal parameters, language, domain-specific criteria
 - **Exclusion Criteria:** Out of scope, methodological exclusions, geographic/temporal/language exclusions, quality thresholds, domain-specific exclusions
 - **Edge Cases and Decision Rules:** Borderline cases, missing information, conflicting criteria
-- **Screening Protocol:** Liberal vs. conservative approach, consistency checks
+- **Screening Protocol:** Consistency checks and quality assurance measures
 - **Example Applications:** Sample decisions (INCLUDE, EXCLUDE, UNCERTAIN, METADATA_INSUFFICIENT)
 
 **Template Customization:**
@@ -73,12 +73,11 @@ This approach:
 - ✅ Avoids context window limitations (processes one PDF at a time in PASS 2)
 - ✅ Provides state management and recovery (resumable from interruptions)
 - ✅ Scales infinitely (same workflow for 3 PDFs or 300 PDFs)
-- ✅ Works with any AI coding assistant (CLI-agnostic design)
 - ✅ Maintains consistency (one workflow to learn and maintain)
 
-**Token Budget:** Maximum ~30K tokens at any point (well within 200K limit)
+**Token Budget:** Estimated maximum ~30K tokens at any point (well within 200K limit; actual usage varies by PDF complexity)
 
-**Estimated Time:**
+**Estimated Time:** *(Estimates vary based on PDF complexity and system performance)*
 - Small corpus (1-5 PDFs): 5-15 minutes
 - Medium corpus (6-20 PDFs): 15-40 minutes
 - Large corpus (20-50 PDFs): 40-90 minutes
@@ -86,12 +85,32 @@ This approach:
 
 ---
 
+### Pre-Execution Validation
+
+**Before beginning PASS 1, validate prerequisites:**
+
+**Step 0: Verify screening criteria template**
+1. Check that `template/screening-criteria-template.md` exists
+2. Verify the template has been customized (not the default boilerplate)
+3. Confirm all required sections are present:
+   - Research Context
+   - Inclusion Criteria
+   - Exclusion Criteria
+   - Edge Cases and Decision Rules
+
+**If template is missing or uncustomized:**
+- Halt execution
+- Prompt user: "The screening criteria template at `template/screening-criteria-template.md` needs to be customized for your research topic before screening can begin. Please review and update the template, then re-run this skill."
+
+---
+
 ### PASS 1: Lightweight Metadata Scan (All PDFs at once)
 
 **Purpose:** Quick triage to identify obvious INCLUDE/EXCLUDE cases
 
-**Step 1: Enumerate all PDFs**
-- List all PDF files in directory
+**Step 1: Prepare environment and enumerate PDFs**
+- Create `outputs/` directory if it doesn't exist
+- List all PDF files in `corpus/` directory
 - Record filenames and basic file info
 
 **Step 2: Extract lightweight metadata**
@@ -179,9 +198,21 @@ Output temporary file: `outputs/screening-triage.md`
 2. Read `outputs/screening-progress.md` (Pass 2 results)
 3. Merge into comprehensive screening matrix
 
-**Step 8: Generate final outputs**
-- `outputs/literature-screening-matrix.md` (complete)
-- `outputs/prisma-flow-diagram.md`
+**Step 8: Generate final outputs with PRISMA documentation**
+
+1. Generate `outputs/literature-screening-matrix.md` (complete screening results)
+2. Generate `outputs/prisma-flow-diagram.md` with:
+   - **Identification:** Records identified through database searching [external count, if provided]; Records identified through other sources [N/A or user-specified]; Total records identified [count]
+   - **Screening:** Records screened [total PDFs processed]; Records excluded [count with reasons]
+   - **Included:** Records included for synthesis [INCLUDE count]; Records requiring human review [UNCERTAIN count]
+3. Categorize exclusions by reason:
+   - Wrong topic/focus: [count]
+   - Wrong publication type: [count]
+   - Wrong geographic scope: [count]
+   - Outside date range: [count]
+   - Non-English: [count]
+   - Insufficient metadata: [count]
+   - Other reasons: [count with specification]
 
 ---
 
@@ -212,42 +243,46 @@ Output temporary file: `outputs/screening-triage.md`
 ```
 
 **Recovery Capability:**
-If interrupted, agent can:
-1. Read `outputs/screening-progress.md`
-2. Identify last completed PDF
-3. Resume from next paper
-4. No need to re-process completed papers
 
----
+If the screening process is interrupted, the agent can resume using this workflow:
 
-### PASS 4: PRISMA Documentation
+```
+RECOVERY WORKFLOW:
 
-**Note:** This step is integrated into PASS 3 finalization. Listed separately for clarity.
+1. Check if outputs/screening-progress.md exists
+   - If NO: Start from PASS 1 (fresh execution)
+   - If YES: Proceed to step 2
 
-**PRISMA Flow Diagram Data:**
-Calculate and record:
-- **Identification:**
-  - Records identified through database searching: [external count, if provided]
-  - Records identified through other sources: N/A (or user-specified)
-  - Total records identified: [count]
+2. Read outputs/screening-progress.md
+   - Parse "Pass 1 Complete" field
+   - Parse "Pass 2 Progress" field (X/Y papers processed)
+   - Parse "Pass 2 Processing Log" table
 
-- **Screening:**
-  - Records screened: [total PDFs processed]
-  - Records excluded: [count with reasons]
+3. Determine current state:
+   - If Pass 1 not complete: Resume PASS 1
+   - If Pass 1 complete AND Pass 2 has pending papers: Resume PASS 2
 
-- **Included:**
-  - Records included for synthesis: [INCLUDE count]
-  - Records requiring human review: [UNCERTAIN count]
+4. For PASS 2 resumption:
+   - Identify all PDFs with status "⏸️ PENDING" in the processing log
+   - Get list of all PDFs flagged for PASS 2 from outputs/screening-triage.md
+   - Compare to find next unprocessed PDF
+   - Resume processing from that PDF onwards
 
-**Step 8: Exclusion Reason Summary**
-Categorize exclusions by reason:
-- Wrong topic/focus: [count]
-- Wrong publication type: [count]
-- Wrong geographic scope: [count]
-- Outside date range: [count]
-- Non-English: [count]
-- Insufficient metadata: [count]
-- Other reasons: [count with specification]
+5. Continue normal PASS 2 workflow:
+   - Process next pending PDF
+   - Append results to outputs/screening-progress.md
+   - Repeat until all PASS 2 papers are complete
+   - Proceed to PASS 3
+
+EXAMPLE:
+If screening-progress.md shows:
+  - Pass 1 Complete: Yes
+  - Pass 2 Progress: 5/10 papers processed
+  - Last completed: paper5.pdf
+  - Next pending: paper6.pdf
+
+→ Resume by processing paper6.pdf and continuing sequentially
+```
 
 ---
 
@@ -432,7 +467,16 @@ This PRISMA flow diagram follows the PRISMA 2020 guidelines adapted for AI-assis
 
 ## 7. Error Handling
 
-### 7.1 PDF Parsing Failures
+### 7.1 Empty or Missing Corpus Directory
+- **If `corpus/` directory doesn't exist:**
+  - Halt execution
+  - Prompt user: "The `corpus/` directory was not found. Please create it and add PDFs to be screened."
+
+- **If `corpus/` directory is empty (contains 0 PDFs):**
+  - Halt execution
+  - Prompt user: "The `corpus/` directory contains no PDF files. Please add research papers to be screened before running this skill."
+
+### 7.2 PDF Parsing Failures
 - Log the filename and error type
 - Categorize as METADATA_INSUFFICIENT
 - Provide diagnostic suggestions:
@@ -441,12 +485,12 @@ This PRISMA flow diagram follows the PRISMA 2020 guidelines adapted for AI-assis
   - "Encrypted PDF: remove password protection"
   - "Unreadable format: verify file integrity"
 
-### 7.2 Ambiguous Metadata
+### 7.3 Ambiguous Metadata
 - Flag papers with conflicting metadata (e.g., title suggests 2020 but metadata shows 2019)
 - Request human verification
 - Do not guess or infer missing information
 
-### 7.3 Criteria Interpretation Challenges
+### 7.4 Criteria Interpretation Challenges
 - If user-provided criteria are ambiguous, request clarification before screening
 - If a paper presents edge-case scenario, categorize as UNCERTAIN with explanation
 - Document interpretation decisions for consistency
@@ -462,7 +506,7 @@ Before proceeding to Phase 2 (Literature Extraction & Synthesis), the user must:
 2. Approve or override INCLUDE/EXCLUDE recommendations
 3. Resolve UNCERTAIN cases
 4. Address metadata extraction failures
-5. Move approved PDFs to the `corpus/` directory
+5. Remove excluded PDFs from the `corpus/` directory (keeping only approved papers)
 6. Optionally: document final inclusion/exclusion decisions
 
 **Phase 2 inputs will be:**
@@ -473,8 +517,10 @@ Before proceeding to Phase 2 (Literature Extraction & Synthesis), the user must:
 
 ## 9. Example Invocation
 
-### Example 1: With Explicit Criteria
+### Example 1: Standard Template-Based Workflow
 > "Screen all PDFs in the `corpus/` folder for a literature review on AI adoption in Southeast Asia. Include: empirical studies, policy analyses, published 2020-2025. Exclude: purely technical algorithm papers, non-English, non-peer-reviewed sources."
+
+**Agent response:** "First, I'll help you populate the screening criteria template at `template/screening-criteria-template.md` with your requirements. Once that's customized, I'll proceed with the three-pass screening workflow."
 
 ### Example 2: With Criteria Template
 > "Generate a screening report for PDFs in `corpus/`. I'm researching digital transformation in government. Help me define appropriate screening criteria first."
