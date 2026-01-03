@@ -3,7 +3,7 @@ name: literature-discovery-screening
 description: Extracts metadata from research PDFs, applies user-defined screening criteria, and generates a PRISMA-style screening report with inclusion/exclusion recommendations. Uses universal three-pass incremental workflow for all corpus sizes.
 license: Apache-2.0
 compatibility: Requires PDF parsing capability and filesystem read/write access
-capabilities: directory-listing, file-reading, pdf-parsing, file-writing
+allowed-tools: Read Write Edit Glob Grep Bash
 ---
 
 # Literature Discovery & Screening Agent (Phase 1)
