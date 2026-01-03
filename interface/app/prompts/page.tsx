@@ -378,6 +378,17 @@ function PromptsContent() {
                         </div>
                     </div>
 
+                    {/* Warning Banner */}
+                    <div className="px-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg text-yellow-200 text-sm">
+                        <div className="flex items-start gap-2">
+                            <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <strong className="font-semibold">CLI Execution Not Recommended:</strong> The "Run Agent" feature has limitations with large PDF processing (context exhaustion).
+                                <strong className="ml-1">Recommended approach:</strong> Copy the prompt and paste into Claude.ai or your preferred AI assistant for better context management.
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Main Content Split: Prompt vs Terminal */}
                     <div className="flex-1 grid grid-rows-2 lg:grid-rows-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-white/10 overflow-hidden">
                         {/* Source View */}
