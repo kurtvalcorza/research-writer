@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { spawn, ChildProcess } from "child_process";
+import { spawn, ChildProcess, execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
@@ -43,6 +43,18 @@ function validateAndResolvePath(relativePath: string, allowedDir: string, projec
     return resolvedPath;
 }
 
+// Helper to check if provider CLI is available
+function isProviderAvailable(provider: string): boolean {
+    try {
+        const command = process.platform === "win32" ? `where ${provider}` : `which ${provider}`;
+        // stdio: 'ignore' prevents output to console
+        import("child_process").then(cp => cp.execSync(command, { stdio: "ignore" }));
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 export async function POST(req: NextRequest) {
     let child: ChildProcess | null = null;
     let timeoutId: NodeJS.Timeout | null = null;
@@ -63,7 +75,32 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid provider. Must be 'gemini' or 'claude'" }, { status: 400 });
         }
 
+        // 1. Pre-flight Check: Provider Availability
+        if (!isProviderAvailable(provider)) {
+            return NextResponse.json({
+                error: `${provider} CLI not found`,
+                message: `The ${provider} CLI tool is not installed or not in your PATH. Please install it to use this agent.`
+            }, { status: 503 });
+        }
+
         const projectRoot = path.join(process.cwd(), ".."); // Go up from 'interface'
+
+        // 2. Pre-flight Check: Corpus Validation
+        const corpusPath = path.join(projectRoot, "corpus");
+        if (!fs.existsSync(corpusPath)) {
+            return NextResponse.json({
+                error: "Corpus directory missing",
+                message: "The 'corpus' directory was not found. Please create it and add your research PDFs."
+            }, { status: 404 });
+        }
+
+        const pdfFiles = fs.readdirSync(corpusPath).filter(f => f.toLowerCase().endsWith(".pdf"));
+        if (pdfFiles.length === 0) {
+            return NextResponse.json({
+                error: "Corpus is empty",
+                message: "No PDF files found in the 'corpus' directory. Please add at least one PDF to screen."
+            }, { status: 400 });
+        }
 
         // Secure path validation with proper traversal protection
         const fullPromptPath = validateAndResolvePath(promptPath, "prompts", projectRoot);
@@ -76,7 +113,32 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Prompt file not found" }, { status: 404 });
         }
 
-        const promptContent = fs.readFileSync(fullPromptPath, "utf-8");
+        let promptContent = fs.readFileSync(fullPromptPath, "utf-8");
+
+        // 3. Skill Injection (Tactical Fix)
+        // Match both 'skills/name/SKILL.md' and flexible 'skills/path/to/file.md'
+        const skillMatches = promptContent.match(/skills\/[\w\-\/]+\.md/g);
+
+        if (skillMatches) {
+            const injectedSkills: string[] = [];
+
+            for (const skillRelPath of skillMatches) {
+                // Validate skill path securely
+                const fullSkillPath = validateAndResolvePath(skillRelPath, "skills", projectRoot);
+
+                if (fullSkillPath && fs.existsSync(fullSkillPath)) {
+                    const skillContent = fs.readFileSync(fullSkillPath, "utf-8");
+                    injectedSkills.push(`\n\n---\n# INJECTED SKILL: ${skillRelPath}\n\n${skillContent}`);
+                } else {
+                    console.warn(`[Warning] Could not resolve or read referenced skill: ${skillRelPath}`);
+                    injectedSkills.push(`\n\n[System Warning] Referenced skill file '${skillRelPath}' could not be loaded.`);
+                }
+            }
+
+            if (injectedSkills.length > 0) {
+                promptContent += injectedSkills.join("");
+            }
+        }
 
         // Provider-specific configuration
         let command: string = provider;
@@ -93,16 +155,16 @@ export async function POST(req: NextRequest) {
         }
 
         // Spawn the selected CLI tool
-        // On Windows, npm globals are .cmd files which require a shell to execute
         child = spawn(command, args, {
             cwd: projectRoot,
-            shell: isWindows, // Enable shell on Windows to resolve .cmd files
+            shell: isWindows,
             env: { ...process.env, "NO_COLOR": "1", "FORCE_COLOR": "0" }
         });
 
         // Set up timeout
         timeoutId = setTimeout(() => {
             if (child && !child.killed) {
+                console.log("Execution timed out, terminating...");
                 child.kill("SIGTERM");
                 setTimeout(() => {
                     if (child && !child.killed) {
@@ -112,11 +174,19 @@ export async function POST(req: NextRequest) {
             }
         }, MAX_EXECUTION_TIME);
 
-        // Clean up on client disconnect
+        // 4. Clean up on client disconnect (Improved)
         req.signal.addEventListener('abort', () => {
             if (timeoutId) clearTimeout(timeoutId);
             if (child && !child.killed) {
+                console.log("Client aborted, terminating agent...");
                 child.kill("SIGTERM");
+                // Give it a chance to clean up gracefully
+                setTimeout(() => {
+                    if (child && !child.killed) {
+                        console.log("Force killing agent...");
+                        child.kill("SIGKILL");
+                    }
+                }, 5000);
             }
         });
 
@@ -126,6 +196,11 @@ export async function POST(req: NextRequest) {
                 const sanitizedPath = path.normalize(promptPath).replace(/^(\.\.[\/\\])+/, "");
                 yield `[System] Starting ${provider.charAt(0).toUpperCase() + provider.slice(1)} Agent...\n`;
                 yield `[System] Reading prompt: ${sanitizedPath}\n`;
+
+                if (skillMatches && skillMatches.length > 0) {
+                    yield `[System] Injected ${skillMatches.length} referenced skill(s) into context.\n`;
+                }
+
                 yield `[System] Executing: ${command} ${args.join(" ")}\n\n`;
 
                 // Pipe input
