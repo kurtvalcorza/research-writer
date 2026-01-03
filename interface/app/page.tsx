@@ -197,7 +197,8 @@ export default function Home() {
               isCompleted = stats.corpusCount > 0;
             }
 
-            const isLocked = index > currentPhaseIndex && currentPhaseIndex !== -1;
+            const isLocked = (index > currentPhaseIndex && currentPhaseIndex !== -1) && phase.id !== "1";
+
 
             return (
               <Card key={phase.id} className={cn(

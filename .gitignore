@@ -2,8 +2,7 @@
 
 # PDF Corpus (large files, potentially copyrighted)
 # Keep .gitkeep to track directory, but ignore PDFs
-corpus/*.pdf
-corpus/**/*.pdf
+
 
 # Output Files (generated artifacts, may contain sensitive research data)
 # Keep .gitkeep to track directory, but ignore generated files
