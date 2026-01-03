@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Copy, Check, ArrowLeft, Terminal, Play, Zap, XCircle } from "lucide-react";
+import { Copy, Check, ArrowLeft, Terminal, Play, Zap, XCircle, Activity, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,15 @@ function PromptsContent() {
     // Abort controller ref
     const abortControllerRef = useRef<AbortController | null>(null);
 
+    // System check state
+    const [isCheckingSystem, setIsCheckingSystem] = useState(false);
+    const [systemCheckResult, setSystemCheckResult] = useState<{
+        available: boolean;
+        hasShellCapability?: boolean;
+        message?: string;
+        recommendation?: string;
+    } | null>(null);
+
     // Computed logs for current phase
     const logs = logsMap[activePhase] || [];
 
@@ -50,6 +59,21 @@ function PromptsContent() {
             const total = parseInt(progressMatch[2], 10);
             if (!isNaN(current) && !isNaN(total)) {
                 setProgress({ current, total });
+            }
+        }
+
+        // Smart error detection for tool-related errors
+        const lowerText = text.toLowerCase();
+        if (
+            lowerText.includes("tool not found") ||
+            lowerText.includes("run_shell_command") ||
+            lowerText.includes("no tool named") ||
+            lowerText.includes("conductor") ||
+            lowerText.includes("critical error")
+        ) {
+            // Don't override existing errors, but flag this as critical
+            if (!error) {
+                setError("Tool availability error detected - check terminal output for details");
             }
         }
     };
@@ -125,6 +149,36 @@ function PromptsContent() {
             appendLog("\n[System] Execution stopped by user.");
             setIsExecuting(false);
             setError("Execution stopped by user.");
+        }
+    };
+
+    const checkSystem = async () => {
+        setIsCheckingSystem(true);
+        setError(null);
+        setSystemCheckResult(null);
+
+        try {
+            const response = await fetch("/api/agent/check", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ provider })
+            });
+
+            const result = await response.json();
+            setSystemCheckResult(result);
+
+            if (!result.available || !result.hasShellCapability) {
+                setError(result.message || "System check failed");
+            }
+        } catch (error: any) {
+            const msg = error.message || String(error);
+            setError(`System check failed: ${msg}`);
+            setSystemCheckResult({
+                available: false,
+                message: msg
+            });
+        } finally {
+            setIsCheckingSystem(false);
         }
     };
 
@@ -225,16 +279,25 @@ function PromptsContent() {
 
                         <div className="flex items-center space-x-3">
                             <div className="flex items-center space-x-2 mr-2">
-                                <select
-                                    value={provider}
-                                    onChange={(e) => setProvider(e.target.value as "gemini" | "claude")}
-                                    disabled={isExecuting}
-                                    className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-foreground border border-white/10 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    title="Select AI Provider"
-                                >
-                                    <option value="gemini">Gemini CLI</option>
-                                    <option value="claude">Claude CLI</option>
-                                </select>
+                                <div className="relative">
+                                    <select
+                                        value={provider}
+                                        onChange={(e) => {
+                                            setProvider(e.target.value as "gemini" | "claude");
+                                            setSystemCheckResult(null); // Clear previous check when switching
+                                        }}
+                                        disabled={isExecuting || isCheckingSystem}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-foreground border border-white/10 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        title="Select AI Provider"
+                                    >
+                                        <option value="gemini">Gemini CLI</option>
+                                        <option value="claude">Claude CLI</option>
+                                    </select>
+                                    {/* Warning badge if system check failed */}
+                                    {systemCheckResult && !systemCheckResult.hasShellCapability && (
+                                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="System check detected issues" />
+                                    )}
+                                </div>
 
                                 {provider === "gemini" && (
                                     <div className="group relative">
@@ -256,6 +319,26 @@ function PromptsContent() {
                                     </div>
                                 )}
                             </div>
+
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={checkSystem}
+                                disabled={isExecuting || isCheckingSystem}
+                                title="Check if provider has required tools"
+                            >
+                                {isCheckingSystem ? (
+                                    <>
+                                        <Activity className="w-4 h-4 mr-2 animate-spin" />
+                                        Checking...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Activity className="w-4 h-4 mr-2" />
+                                        Check System
+                                    </>
+                                )}
+                            </Button>
 
                             <Button variant="secondary" size="sm" onClick={copyToClipboard} disabled={isExecuting}>
                                 {copied ? (
@@ -317,6 +400,37 @@ function PromptsContent() {
 
                         {/* Terminal View */}
                         <div className="flex flex-col bg-[#1e1e1e] border-l border-white/5">
+                            {/* System Check Result Banner */}
+                            {systemCheckResult && (
+                                <div className={cn(
+                                    "px-4 py-3 border-b text-xs",
+                                    systemCheckResult.hasShellCapability
+                                        ? "bg-green-500/10 border-green-500/20 text-green-400"
+                                        : "bg-yellow-500/10 border-yellow-500/20 text-yellow-400"
+                                )}>
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex-1">
+                                            <div className="flex items-center mb-1">
+                                                {systemCheckResult.hasShellCapability ? (
+                                                    <Check className="w-3 h-3 mr-2" />
+                                                ) : (
+                                                    <AlertTriangle className="w-3 h-3 mr-2" />
+                                                )}
+                                                <span className="font-semibold">{systemCheckResult.message}</span>
+                                            </div>
+                                            {systemCheckResult.recommendation && (
+                                                <div className="ml-5 text-[10px] opacity-90">
+                                                    {systemCheckResult.recommendation}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button onClick={() => setSystemCheckResult(null)} className="hover:opacity-70">
+                                            <XCircle className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Error Banner */}
                             {error && (
                                 <div className="px-4 py-3 bg-red-500/10 border-b border-red-500/20 text-red-400 text-xs flex items-center justify-between">

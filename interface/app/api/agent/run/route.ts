@@ -216,10 +216,29 @@ export async function POST(req: NextRequest) {
                     }
                 }
 
-                // Stream stderr
+                // Stream stderr with enhanced error detection
                 if (child?.stderr) {
                     for await (const chunk of child.stderr) {
-                        yield `[Error] ${chunk.toString()}`;
+                        const errorText = chunk.toString();
+                        const lowerError = errorText.toLowerCase();
+
+                        // Detect tool-related errors
+                        if (lowerError.includes("tool not found") ||
+                            lowerError.includes("run_shell_command") ||
+                            lowerError.includes("no tool named") ||
+                            lowerError.includes("conductor")) {
+                            yield `\n[CRITICAL ERROR] Missing Required Tool Detected\n`;
+                            yield `[Error] ${errorText}`;
+                            yield `\n[SUGGESTION] This error suggests the ${provider} CLI lacks required tools.\n`;
+                            if (provider === "gemini") {
+                                yield `[SUGGESTION] For Gemini: Install the 'conductor' extension or switch to Claude CLI.\n`;
+                            } else {
+                                yield `[SUGGESTION] For Claude: Ensure you have the latest version installed.\n`;
+                            }
+                            yield `[SUGGESTION] Use the "Check System" button to verify tool availability.\n\n`;
+                        } else {
+                            yield `[Error] ${errorText}`;
+                        }
                     }
                 }
 
