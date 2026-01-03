@@ -381,7 +381,7 @@ This phase validates the integrity of the entire analytical pipeline:
 
 3. **Set up your AI coding assistant:**
    - [**Claude Code**](https://claude.com/product/claude-code) (recommended)
-   - [**Gemini CLI**](https://geminicli.com/)
+   - [**Gemini CLI**](https://geminicli.com/) (Requires `--yolo` flag for full tool support)
    - [**Codex CLI**](https://developers.openai.com/codex/cli/)
    - Any AI coding assistant with file reading capabilities
 
