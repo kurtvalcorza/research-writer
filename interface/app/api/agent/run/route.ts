@@ -58,6 +58,7 @@ function isProviderAvailable(provider: string): boolean {
 export async function POST(req: NextRequest) {
     let child: ChildProcess | null = null;
     let timeoutId: NodeJS.Timeout | null = null;
+    let useStdin = true; // Flag to determine if we use stdin or command args
 
     try {
         const { promptPath, yoloMode, provider = "gemini" } = await req.json();
@@ -113,32 +114,11 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Prompt file not found" }, { status: 404 });
         }
 
-        let promptContent = fs.readFileSync(fullPromptPath, "utf-8");
+        const promptContent = fs.readFileSync(fullPromptPath, "utf-8");
 
-        // 3. Skill Injection (Tactical Fix)
-        // Match both 'skills/name/SKILL.md' and flexible 'skills/path/to/file.md'
-        const skillMatches = promptContent.match(/skills\/[\w\-\/]+\.md/g);
-
-        if (skillMatches) {
-            const injectedSkills: string[] = [];
-
-            for (const skillRelPath of skillMatches) {
-                // Validate skill path securely
-                const fullSkillPath = validateAndResolvePath(skillRelPath, "skills", projectRoot);
-
-                if (fullSkillPath && fs.existsSync(fullSkillPath)) {
-                    const skillContent = fs.readFileSync(fullSkillPath, "utf-8");
-                    injectedSkills.push(`\n\n---\n# INJECTED SKILL: ${skillRelPath}\n\n${skillContent}`);
-                } else {
-                    console.warn(`[Warning] Could not resolve or read referenced skill: ${skillRelPath}`);
-                    injectedSkills.push(`\n\n[System Warning] Referenced skill file '${skillRelPath}' could not be loaded.`);
-                }
-            }
-
-            if (injectedSkills.length > 0) {
-                promptContent += injectedSkills.join("");
-            }
-        }
+        // Note: Skills are referenced in prompts but NOT auto-injected
+        // Agents will use their Read tool to access skill files as needed
+        // This prevents "Prompt is too long" errors and reduces context usage
 
         // Provider-specific configuration
         let command: string = provider;
@@ -152,6 +132,11 @@ export async function POST(req: NextRequest) {
             }
         } else if (provider === "claude") {
             command = "claude";
+            // Claude CLI has prompt length limits with stdin piping
+            // Pass prompt as command argument instead
+            args.push("--print");
+            args.push(promptContent);
+            useStdin = false;
         }
 
         // Spawn the selected CLI tool
@@ -196,15 +181,10 @@ export async function POST(req: NextRequest) {
                 const sanitizedPath = path.normalize(promptPath).replace(/^(\.\.[\/\\])+/, "");
                 yield `[System] Starting ${provider.charAt(0).toUpperCase() + provider.slice(1)} Agent...\n`;
                 yield `[System] Reading prompt: ${sanitizedPath}\n`;
-
-                if (skillMatches && skillMatches.length > 0) {
-                    yield `[System] Injected ${skillMatches.length} referenced skill(s) into context.\n`;
-                }
-
                 yield `[System] Executing: ${command} ${args.join(" ")}\n\n`;
 
-                // Pipe input
-                if (child?.stdin) {
+                // Pipe input (only for providers that use stdin)
+                if (useStdin && child?.stdin) {
                     child.stdin.write(promptContent);
                     child.stdin.end();
                 }

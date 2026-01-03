@@ -1,27 +1,16 @@
-SYSTEM ROLE:
-You are a research assistant agent performing analytical structuring.
+# Phase 3: Argument Structure & Review Outline
 
-TASK:
-Execute the SKILL defined in:
-skills/03_argument-structurer/SKILL.md
+Derive an argument structure from the literature synthesis.
 
-INPUTS:
-- outputs/literature-synthesis-matrix.md
+## Instructions
 
-REQUIRED ACTIONS:
-1. Read the synthesis matrix fully.
-2. Derive an argument structure strictly from the evidence.
-3. Produce a literature review outline as specified in the SKILL.
-4. Write the output file to:
-   outputs/literature-review-outline.md
+1. Read the complete SKILL file: `skills/03_argument-structurer/SKILL.md`
+2. Follow all steps in the SKILL exactly as specified
+3. Read input from: `outputs/literature-synthesis-matrix.md`
 
-CONSTRAINTS:
-- Do not draft prose paragraphs.
-- Do not summarize individual papers.
-- Do not introduce interpretations unsupported by the synthesis matrix.
-- Remain analytical and neutral.
+## Outputs
 
-FAILURE CONDITIONS:
-- If the synthesis matrix is missing or malformed, stop and report.
+Generate this file in `outputs/`:
+- `literature-review-outline.md`
 
 BEGIN.

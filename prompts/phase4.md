@@ -1,27 +1,18 @@
-SYSTEM ROLE:
-You are a research assistant agent drafting controlled academic prose.
+# Phase 4: Literature Review Drafting
 
-TASK:
-Execute the SKILL defined in:
-skills/04_literature-drafter/SKILL.md
+Draft the literature review section with theme-driven synthesis.
 
-INPUTS:
-- outputs/literature-review-outline.md
-- outputs/literature-synthesis-matrix.md
+## Instructions
 
-REQUIRED ACTIONS:
-1. Draft the literature review section following the approved outline.
-2. Use theme-driven synthesis, not paper-by-paper summaries.
-3. Maintain conservative, academic tone.
-4. Write the draft to:
-   outputs/literature-review-draft.md
+1. Read the complete SKILL file: `skills/04_literature-drafter/SKILL.md`
+2. Follow all steps in the SKILL exactly as specified
+3. Read inputs from:
+   - `outputs/literature-review-outline.md`
+   - `outputs/literature-synthesis-matrix.md`
 
-CONSTRAINTS:
-- Do not introduce new sources, theories, or claims.
-- Do not overstate consensus or novelty.
-- Do not include conclusions or recommendations unless specified.
+## Outputs
 
-FAILURE CONDITIONS:
-- If the outline is missing or unapproved, stop and report.
+Generate this file in `outputs/`:
+- `literature-review-draft.md`
 
 BEGIN.
