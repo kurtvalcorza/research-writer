@@ -71,3 +71,13 @@ When conducting new audits:
 ---
 
 **Audit Methodology:** Issues are prioritized based on user impact (critical = blocks progression, high = significant friction, medium = minor friction, low = nice-to-have enhancements).
+
+---
+
+## Validation Tools
+
+We have formalized the validation process into an **Agent Skill** to allow for automated self-testing.
+
+- **[System Integrity Validation Skill](skills/system-validation/SKILL.md)** (`audits/skills/system-validation/SKILL.md`)
+  - **Purpose:** Automates IQ (Installation Qualification) and OQ (Operational Qualification).
+  - **Usage:** Run this skill to verify environment health (files, tools, permissions) before starting major research phases.
