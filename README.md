@@ -427,8 +427,8 @@ npm run start
 
 ### Security & Quality
 
-The web interface is **enterprise-grade** and **production-ready** with:
-- ✅ No critical security vulnerabilities
+The web interface is built with **robust security and engineering best practices**:
+- ✅ Designed to prevent common vulnerabilities
 - ✅ PDF validation and file size limits
 - ✅ Path traversal protection
 - ✅ Security headers (HSTS, CSP, X-Frame-Options)
