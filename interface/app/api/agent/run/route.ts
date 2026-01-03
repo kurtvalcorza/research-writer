@@ -81,6 +81,7 @@ export async function POST(req: NextRequest) {
         // Provider-specific configuration
         let command: string = provider;
         const args: string[] = [];
+        const isWindows = process.platform === "win32";
 
         if (provider === "gemini") {
             command = "gemini";
@@ -91,10 +92,11 @@ export async function POST(req: NextRequest) {
             command = "claude";
         }
 
-        // Spawn the selected CLI tool WITHOUT shell: true to prevent command injection
+        // Spawn the selected CLI tool
+        // On Windows, npm globals are .cmd files which require a shell to execute
         child = spawn(command, args, {
             cwd: projectRoot,
-            // Removed shell: true for security - spawn searches PATH by default
+            shell: isWindows, // Enable shell on Windows to resolve .cmd files
             env: { ...process.env, "NO_COLOR": "1", "FORCE_COLOR": "0" }
         });
 

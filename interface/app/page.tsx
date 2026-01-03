@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Play, CheckCircle, ArrowRight, RefreshCw, Lock } from "lucide-react";
+import { FileText, Play, CheckCircle, ArrowRight, RefreshCw, Lock, FolderOpen, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -18,18 +18,19 @@ export default function Home() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch Corpus Count
-      const corpusRes = await fetch("/api/files?dir=corpus");
-      const corpusData: FilesResponse = await corpusRes.json();
-      const corpusCount = corpusData.files ? corpusData.files.length : 0;
+      // Fetch all data in parallel
+      const [corpusRes, outputsRes, templateRes] = await Promise.all([
+        fetch("/api/files?dir=corpus"),
+        fetch("/api/files?dir=outputs"),
+        fetch("/api/files?dir=template"),
+      ]);
 
-      // Fetch Outputs to determine completion
-      const outputsRes = await fetch("/api/files?dir=outputs");
+      const corpusData: FilesResponse = await corpusRes.json();
+      const corpusCount = corpusData.files ? corpusData.files.filter((f: FileStat) => f.name.toLowerCase().endsWith(".pdf")).length : 0;
+
       const outputsData: FilesResponse = await outputsRes.json();
       const outputFiles = outputsData.files ? outputsData.files.map((f: FileStat) => f.name) : [];
 
-      // Fetch Template properties
-      const templateRes = await fetch("/api/files?dir=template");
       const templateData: FilesResponse = await templateRes.json();
       const templateFiles = templateData.files ? templateData.files.map((f: FileStat) => f.name) : [];
 
@@ -78,6 +79,12 @@ export default function Home() {
             <RefreshCw className="w-5 h-5" aria-hidden="true" />
           </Button>
 
+          <Link href="/readme" title="Documentation">
+            <Button variant="ghost" size="icon">
+              <BookOpen className="w-5 h-5" />
+            </Button>
+          </Link>
+
           <div
             className="flex items-center space-x-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium"
             role="status"
@@ -91,7 +98,7 @@ export default function Home() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <FileText className="w-5 h-5 text-blue-500" />
@@ -99,63 +106,63 @@ export default function Home() {
             </CardTitle>
             <CardDescription>Research papers in analysis</CardDescription>
           </CardHeader>
-          <div className="px-6 pb-6">
+          <div className="px-6 pb-6 space-y-4 flex-1 flex flex-col">
             {loading ? (
-              <Skeleton className="h-10 w-24" />
-            ) : (
-              <>
-                <div className="text-4xl font-bold">{stats.corpusCount}</div>
-                <div className="text-sm text-muted-foreground mt-2">
-                  PDFs processed
-                </div>
-              </>
-            )}
-          </div>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Play className="w-5 h-5 text-blue-500" />
-              <span>Current Phase</span>
-            </CardTitle>
-            <CardDescription>Recommended next step</CardDescription>
-          </CardHeader>
-          <div className="px-6 pb-6">
-            {loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-4 w-48" />
+              <div className="flex-1 flex items-center justify-center">
+                <Skeleton className="h-10 w-24" />
               </div>
             ) : (
               <>
-                <div className="text-2xl font-bold text-blue-500">
-                  {currentPhaseIndex === -1 ? "All Done" : currentPhase.label.split(":")[0]}
+                <div className="flex-1 flex flex-col items-center justify-center">
+                  <div className="text-4xl font-bold">{stats.corpusCount}</div>
+                  <div className="text-sm text-muted-foreground">
+                    PDFs processed
+                  </div>
                 </div>
-                <div className="text-sm text-muted-foreground mt-2">
-                  {currentPhaseIndex === -1 ? "Project Complete" : currentPhase.label.split(":")[1]}
-                </div>
+                <Link href="/corpus" className="block pt-2 mt-auto w-full">
+                  <Button variant="outline" size="sm" className="w-full">
+                    <FolderOpen className="w-4 h-4 mr-2" />
+                    Manage Files
+                  </Button>
+                </Link>
               </>
             )}
           </div>
         </Card>
 
-        <Card>
+        <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>Prompt Library</CardTitle>
+            <CardTitle className="flex items-center space-x-2">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span>Outputs</span>
+            </CardTitle>
+            <CardDescription>Access all generated research artifacts</CardDescription>
+          </CardHeader>
+          <div className="px-6 pb-6 pt-2 flex-1 flex flex-col justify-end">
+            <Link href="/outputs" className="block">
+              <Button variant="outline" size="sm" className="w-full">
+                <FileText className="w-4 h-4 mr-2" />
+                View Outputs
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        <Card className="flex flex-col">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Play className="w-5 h-5 text-purple-500" />
+              <span>Prompts</span>
+            </CardTitle>
             <CardDescription>Access research prompts</CardDescription>
           </CardHeader>
-          <div className="px-6 pb-6 space-y-3">
-            {loading ? (
-              <Skeleton className="h-10 w-full" />
-            ) : (
-              <Link href={`/prompts?phase=${currentPhase.id}`} className="block">
-                <Button className="w-full justify-start" variant="primary">
-                  <Play className="w-4 h-4 mr-2" />
-                  Start Next Phase
-                </Button>
-              </Link>
-            )}
+          <div className="px-6 pb-6 space-y-3 flex-1 flex flex-col justify-end">
+            <Link href="/prompts" className="block">
+              <Button variant="outline" size="sm" className="w-full">
+                <Play className="w-4 h-4 mr-2" />
+                Go to Prompts
+              </Button>
+            </Link>
           </div>
         </Card>
       </div>
@@ -164,7 +171,7 @@ export default function Home() {
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">Workflow</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {PHASES.map((phase, index) => {
+          {PHASES.filter(p => p.id !== "corpus").map((phase, index) => {
             // Determine completion status
             // Note: During loading, we default to mostly locked or simple view, but skeleton is better.
             // Since we have stats/loading state, we can use that.

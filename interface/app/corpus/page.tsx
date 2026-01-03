@@ -87,7 +87,7 @@ export default function CorpusPage() {
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Corpus Management</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Corpus</h1>
                     <p className="text-muted-foreground">Manage your research PDFs</p>
                 </div>
             </header>

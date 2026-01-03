@@ -67,7 +67,7 @@ export default function OutputsPage() {
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Project Outputs</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Outputs</h1>
                     <p className="text-muted-foreground">Review generated research artifacts</p>
                 </div>
             </header>
@@ -80,8 +80,8 @@ export default function OutputsPage() {
                             key={out.id}
                             onClick={() => setActiveId(out.id)}
                             className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${activeId === out.id
-                                    ? "bg-teal-500/20 text-teal-300 border border-teal-500/30"
-                                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                                ? "bg-teal-500/20 text-teal-300 border border-teal-500/30"
+                                : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
                                 }`}
                         >
                             {out.label}

@@ -118,7 +118,7 @@ function PromptsContent() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
             {/* Sidebar Navigation */}
             <div className="space-y-2 lg:h-full lg:overflow-y-auto pr-2">
-                {PHASES.map((phase) => (
+                {PHASES.filter(p => !["corpus", "0"].includes(p.id)).map((phase) => (
                     <button
                         key={phase.id}
                         onClick={() => {
@@ -276,7 +276,7 @@ export default function PromptsPage() {
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Prompt Library</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Prompts</h1>
                     <p className="text-muted-foreground">Select a phase and execute with AI agents</p>
                 </div>
             </header>
