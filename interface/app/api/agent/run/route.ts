@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { spawn, ChildProcess, execSync } from "child_process";
 import fs from "fs";
 import path from "path";
-
-// Maximum execution time: 10 minutes
-const MAX_EXECUTION_TIME = 10 * 60 * 1000;
+import { validatePath } from "@/lib/utils";
+import { AGENT_CONFIG } from "@/lib/config";
 
 // Function to handle the streaming response
 function makeStream(generator: AsyncGenerator<string, void, unknown>) {
@@ -19,28 +18,6 @@ function makeStream(generator: AsyncGenerator<string, void, unknown>) {
             }
         },
     });
-}
-
-// Secure path validation
-function validateAndResolvePath(relativePath: string, allowedDir: string, projectRoot: string): string | null {
-    // Normalize and remove leading path traversal sequences
-    const sanitizedPath = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, "");
-
-    // Check if path starts with allowed directory
-    if (!sanitizedPath.startsWith(allowedDir)) {
-        return null;
-    }
-
-    // Resolve full paths
-    const resolvedPath = path.resolve(projectRoot, sanitizedPath);
-    const allowedPath = path.resolve(projectRoot, allowedDir);
-
-    // Ensure resolved path is within allowed directory
-    if (!resolvedPath.startsWith(allowedPath + path.sep) && resolvedPath !== allowedPath) {
-        return null;
-    }
-
-    return resolvedPath;
 }
 
 // Helper to check if provider CLI is available and return its path
@@ -106,7 +83,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Secure path validation with proper traversal protection
-        const fullPromptPath = validateAndResolvePath(promptPath, "quick-start", projectRoot);
+        const fullPromptPath = validatePath(promptPath, "quick-start", projectRoot);
 
         if (!fullPromptPath) {
             return NextResponse.json({ error: "Invalid directory or path traversal attempt" }, { status: 403 });
@@ -155,7 +132,7 @@ export async function POST(req: NextRequest) {
                     }
                 }, 5000);
             }
-        }, MAX_EXECUTION_TIME);
+        }, AGENT_CONFIG.MAX_EXECUTION_TIME);
 
         // 4. Clean up on client disconnect (Improved)
         req.signal.addEventListener('abort', () => {
@@ -241,7 +218,6 @@ export async function POST(req: NextRequest) {
             child.kill("SIGTERM");
         }
 
-        console.error("Agent execution failed:", error);
         return NextResponse.json({
             error: "Internal Server Error",
             message: error instanceof Error ? error.message : "Unknown error"

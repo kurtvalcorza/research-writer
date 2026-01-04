@@ -25,7 +25,7 @@ export default function CorpusPage() {
                 setFiles(pdfs);
             }
         } catch (error) {
-            console.error("Failed to fetch files", error);
+            // Silently handle - files list will remain empty
         } finally {
             setLoading(false);
         }
@@ -59,7 +59,6 @@ export default function CorpusPage() {
                 toast.error("Delete failed");
             }
         } catch (error) {
-            console.error("Delete error", error);
             toast.error("Delete failed");
         }
     };
@@ -153,7 +152,6 @@ export default function CorpusPage() {
 
             await fetchFiles();
         } catch (error) {
-            console.error("Batch upload error", error);
             toast.error("Batch upload failed", { id: toastId });
         } finally {
             setUploading(false);

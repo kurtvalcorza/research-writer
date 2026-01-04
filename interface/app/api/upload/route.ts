@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-
-// Maximum file size: 50MB
-const MAX_FILE_SIZE = 50 * 1024 * 1024;
+import { FILE_LIMITS } from "@/lib/config";
 
 // PDF magic bytes signature
 const PDF_SIGNATURE = [0x25, 0x50, 0x44, 0x46]; // %PDF
@@ -31,9 +29,9 @@ export async function POST(request: Request) {
         }
 
         // Validate file size
-        if (file.size > MAX_FILE_SIZE) {
+        if (file.size > FILE_LIMITS.MAX_UPLOAD_SIZE) {
             return NextResponse.json({
-                error: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`
+                error: `File too large. Maximum size is ${FILE_LIMITS.MAX_UPLOAD_SIZE / 1024 / 1024}MB`
             }, { status: 400 });
         }
 
@@ -86,7 +84,6 @@ export async function POST(request: Request) {
             size: file.size
         });
     } catch (error) {
-        console.error("Upload error:", error);
         return NextResponse.json({
             error: "Upload failed",
             message: error instanceof Error ? error.message : "Unknown error"

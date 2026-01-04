@@ -47,7 +47,6 @@ export default function OutputsPage() {
                 setContent("*File not generated yet.*");
             }
         } catch (error) {
-            console.error("Failed to fetch content", error);
             setContent("Error loading content.");
         } finally {
             setLoading(false);

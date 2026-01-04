@@ -23,7 +23,7 @@ export default function SettingsPage() {
                     setContent(data.content);
                 }
             } catch (error) {
-                console.error("Failed to load criteria", error);
+                // Silently handle - content will remain empty
             } finally {
                 setLoading(false);
             }
@@ -48,7 +48,6 @@ export default function SettingsPage() {
                 setStatus("error");
             }
         } catch (error) {
-            console.error("Failed to save", error);
             setStatus("error");
         } finally {
             setSaving(false);

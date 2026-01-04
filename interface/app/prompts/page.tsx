@@ -119,7 +119,6 @@ function PromptsContent() {
                     setContent("Prompt file not found.");
                 }
             } catch (error) {
-                console.error("Failed to fetch prompt", error);
                 setContent("Error loading prompt.");
             } finally {
                 setLoading(false);
@@ -170,8 +169,8 @@ function PromptsContent() {
             if (!result.available || !result.hasShellCapability) {
                 setError(result.message || "System check failed");
             }
-        } catch (error: any) {
-            const msg = error.message || String(error);
+        } catch (error: unknown) {
+            const msg = error instanceof Error ? error.message : String(error);
             setError(`System check failed: ${msg}`);
             setSystemCheckResult({
                 available: false,
@@ -227,11 +226,11 @@ function PromptsContent() {
                 const chunkValue = decoder.decode(value);
                 appendLog(chunkValue);
             }
-        } catch (error: any) {
-            if (error.name === 'AbortError') {
+        } catch (error: unknown) {
+            if (error instanceof Error && error.name === 'AbortError') {
                 // Handled in stopAgent
             } else {
-                const msg = error.message || String(error);
+                const msg = error instanceof Error ? error.message : String(error);
                 appendLog(`\n[Error] Execution failed: ${msg}`);
                 setError(msg);
             }
