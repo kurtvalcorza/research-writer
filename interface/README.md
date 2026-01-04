@@ -2,7 +2,7 @@
 
 A **production-ready, secure** web interface designed to orchestrate the agentic research workflow. This Next.js application provides a centralized dashboard to manage your corpus, configure settings, and execute research phases using external AI agents (Gemini CLI or Claude CLI).
 
-**Status**: ✅ **Production Ready** - Version 2.0.0 (Security Hardened)
+**Status**: ✅ **Production Ready** - Version 2.1.0 (Code Quality Enhanced)
 
 ## ✨ Features
 
@@ -139,9 +139,10 @@ interface/
 │   ├── theme-provider.tsx       # Dark mode support
 │   └── theme-toggle.tsx         # Theme switcher
 ├── lib/                         # Utilities and configuration
+│   ├── config.ts               # Centralized configuration (NEW in 2.1.0)
 │   ├── constants.ts            # Research phases config
 │   ├── types.ts                # TypeScript interfaces
-│   ├── utils.ts                # Utility functions
+│   ├── utils.ts                # Utility functions (includes validatePath)
 │   └── env.ts                  # Environment validation
 ├── middleware.ts                # Security headers
 ├── SECURITY.md                  # Security documentation
@@ -181,6 +182,6 @@ See the full README for troubleshooting tips, or check [SECURITY.md](SECURITY.md
 
 ---
 
-**Version**: 2.0.0 (Security Hardened)  
-**Last Updated**: 2026-01-02  
+**Version**: 2.1.0 (Code Quality Enhanced)
+**Last Updated**: 2026-01-04
 **Status**: Production Ready
