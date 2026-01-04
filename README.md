@@ -140,39 +140,40 @@ research-writer/
 
 ---
 
-## How Prompts & Skills Work Together
+## How Skills Work
 
-This system uses a two-layer architecture for clarity and maintainability:
-
-### **Quick Start Templates** (`quick-start/phaseX.md`)
-- **Purpose:** Concise invocation templates that point to the full skill definitions
-- **Content:** What to do, what inputs to use, what outputs to generate
-- **Length:** Typically 30-120 lines
-- **Role:** Convenient entry point for executing each phase (thin wrappers around skills)
+This system uses **Skills** as the primary interface for executing each research phase:
 
 ### **Skills** (`skills/0X_*/SKILL.md`)
-- **Purpose:** Detailed technical specifications that guide the AI's execution
-- **Content:** Complete workflow steps, error handling, constraints, quality thresholds
-- **Length:** Typically 300-700 lines
-- **Role:** Implementation guide that ensures consistency and rigor
+- **Purpose:** Complete technical specifications that guide AI execution
+- **Content:** Workflow steps, error handling, constraints, quality thresholds, validation rules
+- **Length:** 300-700 lines per skill
+- **Invocation:** Direct execution via `Execute skills/XX_skillname/SKILL.md`
 
-### How They Work Together
+### **Quick Start Templates** (`quick-start/phaseX.md` - Optional)
+- **Purpose:** Thin wrapper files that point to skills (for UI integrations)
+- **Content:** Brief summary + instruction to execute the corresponding SKILL.md
+- **Length:** 30-120 lines
+- **Note:** Most users can skip these and invoke skills directly
+
+### Execution Flow
 
 ```
-User → Tells AI: "Execute quick-start/phase2.md"
+User → Tells AI: "Execute skills/02_literature-synthesis/SKILL.md"
        ↓
-AI reads prompt → "Use SKILL skills/02_literature-synthesis/SKILL.md"
+AI reads SKILL → Loads complete workflow specification
        ↓
-AI follows SKILL → Executes detailed workflow with error handling
+AI executes → Systematic extraction and synthesis with validation
        ↓
-Outputs generated → User reviews results
+Outputs generated → User reviews results (extraction + synthesis matrices)
 ```
 
-**Why this design?**
-- **Simplicity:** Prompts stay clean and easy to read
-- **Rigor:** Skills contain all technical details and edge cases
-- **Modularity:** Can update SKILLs without changing prompts
-- **Consistency:** Same SKILL can be invoked multiple ways
+**Design Benefits:**
+- **Direct invocation:** No intermediary files needed
+- **Complete specification:** All logic in one place (SKILL.md)
+- **Consistency:** Same workflow every time
+- **Modularity:** Skills are independent and composable
+- **Auditability:** Full traceability from spec to execution
 
 ---
 
@@ -550,7 +551,7 @@ Please revise settings/screening-criteria-template.md accordingly.
 **Tell your AI coding assistant (e.g., Claude Code):**
 
 ```
-Please execute Phase 1 literature screening using the instructions in quick-start/phase1.md.
+Execute skills/01_literature-discovery/SKILL.md
 
 Process the PDFs in the corpus/ directory and apply the screening criteria from settings/screening-criteria-template.md.
 ```
@@ -582,7 +583,7 @@ Open `outputs/literature-screening-matrix.md` and review:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 2 literature extraction and synthesis using the instructions in quick-start/phase2.md.
+Execute skills/02_literature-synthesis/SKILL.md
 
 Process the approved PDFs from the corpus/ directory.
 ```
@@ -620,7 +621,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 3 argument structuring using the instructions in quick-start/phase3.md.
+Execute skills/03_argument-structurer/SKILL.md
 
 Use the synthesis matrix to create a logical argument structure and literature review outline.
 ```
@@ -652,7 +653,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 4 literature review drafting using the instructions in quick-start/phase4.md.
+Execute skills/04_literature-drafter/SKILL.md
 
 Use the approved outline and synthesis matrix to draft the literature review.
 ```
@@ -701,7 +702,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 4.5 citation integrity validation using the instructions in quick-start/phase4.5.md.
+Execute skills/05_citation-validator/SKILL.md
 
 Validate all citations in the draft against the extraction matrix.
 ```
@@ -736,7 +737,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 6 contribution and implications framing using the instructions in quick-start/phase6.md.
+Execute skills/06_contribution-framer/SKILL.md
 
 Use the literature review draft and synthesis to frame contributions and implications.
 ```
@@ -788,7 +789,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 7 cross-phase validation using the instructions in quick-start/phase7.md.
+Execute skills/07_cross-phase-validator/SKILL.md
 
 Validate consistency and traceability across all completed phase outputs.
 ```
@@ -826,15 +827,15 @@ For experienced users who want to run the complete workflow in sequence, provide
 ```
 Execute the complete research writing workflow:
 
-1. Phase 1: Screen PDFs using quick-start/phase1.md
+1. Phase 1: Screen PDFs using skills/01_literature-discovery/SKILL.md
 2. Pause for human review of screening-matrix.md
-3. Phase 2: Extract and synthesize using quick-start/phase2.md
-4. Phase 3: Generate outline using quick-start/phase3.md
+3. Phase 2: Extract and synthesize using skills/02_literature-synthesis/SKILL.md
+4. Phase 3: Generate outline using skills/03_argument-structurer/SKILL.md
 5. Pause for human approval of outline
-6. Phase 4: Draft literature review using quick-start/phase4.md
-7. Phase 4.5: Validate citations using quick-start/phase4.5.md
-8. Phase 6: Frame contributions using quick-start/phase6.md
-9. Phase 7: Cross-phase validation using quick-start/phase7.md
+6. Phase 4: Draft literature review using skills/04_literature-drafter/SKILL.md
+7. Phase 4.5: Validate citations using skills/05_citation-validator/SKILL.md
+8. Phase 6: Frame contributions using skills/06_contribution-framer/SKILL.md
+9. Phase 7: Cross-phase validation using skills/07_cross-phase-validator/SKILL.md
 
 Stop at each human checkpoint for approval before proceeding.
 ```
