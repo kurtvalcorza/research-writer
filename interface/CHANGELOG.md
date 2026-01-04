@@ -2,6 +2,94 @@
 
 All notable changes to the Research Writer Interface have been documented here.
 
+## [2.1.0] - 2026-01-04
+
+### 🔒 Security Fixes
+
+#### Command Injection Vulnerability Fixed (Check Route)
+- **Location**: `app/api/agent/check/route.ts`
+- **Issue**: Using `shell: isWindows` allowed shell interpretation on Windows
+- **Fix**: Changed to `shell: false` with explicit provider path resolution
+- **Impact**: Eliminated remaining command injection vulnerability
+
+### 🧹 Code Quality Improvements
+
+#### Extracted Duplicated Path Validation Logic
+- **Location**: Created `lib/utils.ts:validatePath()`
+- **Issue**: Path validation logic duplicated across multiple files
+- **Fix**: Centralized into shared `validatePath()` utility function
+- **Benefits**:
+  - Single source of truth for path validation
+  - Comprehensive JSDoc documentation
+  - Supports both single and multiple allowed directories
+  - Reduces maintenance burden
+- **Files Updated**:
+  - `app/api/content/route.ts`
+  - `app/api/agent/run/route.ts`
+
+#### Removed Console Statements from Production Code
+- **Locations**: Removed 17+ `console.log` and `console.error` statements
+- **Issue**: Console statements in production code
+- **Fix**: Removed all console statements, added comments for production logging
+- **Files Updated**:
+  - All page components (9 instances)
+  - All API routes (7 instances)
+  - Error boundary components
+
+#### Fixed Explicit Any Types
+- **Location**: `app/prompts/page.tsx`
+- **Issue**: Using `catch (error: any)` reduces type safety
+- **Fix**: Replaced with `catch (error: unknown)` and proper type guards
+- **Impact**: Improved type safety with `instanceof Error` checks
+
+### ⚙️ Configuration Management
+
+#### Created Centralized Configuration File
+- **Location**: `lib/config.ts` (new file)
+- **Issue**: Magic numbers and constants scattered throughout codebase
+- **Fix**: Centralized all configuration constants
+- **Contents**:
+  - `FILE_LIMITS`: Upload/content size limits, path length limits
+  - `AGENT_CONFIG`: Execution timeouts, system check timeouts
+  - `ALLOWED_DIRECTORIES`: Whitelisted directories for file operations
+- **Benefits**:
+  - Single source of truth for all configuration
+  - Easy to modify limits and timeouts
+  - Type-safe with `as const`
+  - Comprehensive JSDoc documentation
+- **Files Updated**:
+  - `app/api/content/route.ts`
+  - `app/api/upload/route.ts`
+  - `app/api/files/route.ts`
+  - `app/api/agent/run/route.ts`
+
+### 📝 Type Safety Improvements
+
+- Eliminated all explicit `any` types
+- Added proper error type guards using `instanceof Error`
+- Improved type narrowing in error handlers
+- Better TypeScript inference with centralized config
+
+### 📚 Documentation
+
+#### Enhanced Code Documentation
+- Added comprehensive JSDoc to `validatePath()` utility
+- Added inline comments explaining configuration constants
+- Improved code readability and maintainability
+
+## Migration Guide (2.1.0)
+
+### For Existing Deployments
+- **No breaking changes** - fully backward compatible
+- Configuration limits remain the same (now centralized)
+- All APIs maintain same contracts
+
+### For Developers
+- Import `validatePath` from `@/lib/utils` for path validation
+- Import configuration constants from `@/lib/config`
+- Use `unknown` instead of `any` in catch blocks
+- Follow type guard patterns for error handling
+
 ## [2.0.0] - 2026-01-02
 
 ### 🔒 Security Fixes (Critical)

@@ -35,20 +35,51 @@ This document outlines the security measures implemented in the Research Writer 
 
 ### 2. Path Traversal Protection
 
-All file operations use secure path validation:
-```typescript
-function validateAndResolvePath(relativePath: string, allowedDir: string, projectRoot: string): string | null {
-    const normalized = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, "");
-    const resolvedPath = path.resolve(projectRoot, normalized);
-    const allowedPath = path.resolve(projectRoot, allowedDir);
+All file operations use centralized secure path validation from `lib/utils.ts`:
 
-    if (!resolvedPath.startsWith(allowedPath + path.sep)) {
+```typescript
+/**
+ * Validates and resolves a relative path, ensuring it stays within allowed directories.
+ * Prevents path traversal attacks by normalizing paths and checking boundaries.
+ */
+export function validatePath(
+    relativePath: string,
+    allowedDirs: string | string[],
+    projectRoot: string
+): string | null {
+    // Normalize and remove leading path traversal sequences
+    const normalized = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, "");
+
+    // Convert allowedDirs to array for uniform handling
+    const allowedDirArray = Array.isArray(allowedDirs) ? allowedDirs : [allowedDirs];
+
+    // Check if the path starts with an allowed directory
+    const allowedDir = allowedDirArray.find(dir =>
+        normalized === dir || normalized.startsWith(dir + path.sep)
+    );
+
+    if (!allowedDir) {
         return null;
     }
 
-    return resolvedPath;
+    // Resolve full paths
+    const fullPath = path.resolve(projectRoot, normalized);
+    const allowedPath = path.resolve(projectRoot, allowedDir);
+
+    // Ensure resolved path is within allowed directory
+    if (!fullPath.startsWith(allowedPath + path.sep) && fullPath !== allowedPath) {
+        return null;
+    }
+
+    return fullPath;
 }
 ```
+
+**Benefits of centralized validation:**
+- Single source of truth for path security
+- Supports both single and multiple allowed directories
+- Thoroughly tested and documented
+- Used consistently across all API routes
 
 ### 3. Command Injection Prevention
 
