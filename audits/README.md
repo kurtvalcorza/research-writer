@@ -17,6 +17,7 @@ Audits and validations ensure the system remains:
 ## Current Validation Reports
 
 ### ✅ VALIDATION_REPORT_2026-01-04.md
+**Location:** `audits/reports/VALIDATION_REPORT_2026-01-04.md`
 **Date:** 2026-01-04
 **Type:** IEEE 829-compliant IQ/OQ/PQ/CQ Validation
 **Scope:** Complete system validation (Installation, Operational, Performance, Cognitive)
@@ -46,12 +47,13 @@ Audits and validations ensure the system remains:
 **Production Readiness:** ✅ YES - System certified for research use
 
 **Supporting Files:**
-- `VALIDATION_TRACEABILITY_MATRIX_2026-01-04.md` - Requirements-to-tests mapping (18 requirements, 94% coverage)
-- `validation-evidence/2026-01-04/` - Evidence archive (IQ, OQ, PQ, CQ detailed results)
+- `audits/matrices/VALIDATION_TRACEABILITY_MATRIX_2026-01-04.md` - Requirements-to-tests mapping (18 requirements, 94% coverage)
+- `audits/validation-evidence/2026-01-04/` - Evidence archive (IQ, OQ, PQ, CQ detailed results)
 
 ---
 
 ### META_VALIDATION_SYSTEM_VALIDATION_SKILL_2026-01-04.md
+**Location:** `audits/reports/META_VALIDATION_SYSTEM_VALIDATION_SKILL_2026-01-04.md`
 **Date:** 2026-01-04
 **Type:** Self-validation (The validator validates itself)
 **Scope:** System validation skill v2.0 structure, content, usability, compliance
@@ -75,6 +77,7 @@ Audits and validations ensure the system remains:
 ## Process Audit Reports
 
 ### PROCESS_AUDIT_REPORT.md
+**Location:** `audits/reports/PROCESS_AUDIT_REPORT.md`
 **Date:** 2026-01-02
 **Scope:** Initial setup and Phase 1 (Literature Discovery & Screening)
 
@@ -88,6 +91,7 @@ Audits and validations ensure the system remains:
 ---
 
 ### PHASES_2-7_AUDIT_REPORT.md
+**Location:** `audits/reports/PHASES_2-7_AUDIT_REPORT.md`
 **Date:** 2026-01-02
 **Scope:** Phases 2-7 (prompts and skills documentation)
 
@@ -101,6 +105,7 @@ Audits and validations ensure the system remains:
 ---
 
 ### PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md
+**Location:** `audits/reports/PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md`
 **Date:** 2026-01-04
 **Scope:** Phase 1 execution validation across multiple CLI platforms
 **Platforms:** Claude Code CLI, Claude Code Desktop, Gemini CLI, Antigravity Internal Agent
@@ -113,7 +118,7 @@ Audits and validations ensure the system remains:
 
 **Status:** ✅ Passed - Production-ready for all platforms
 
-**Note:** This report was retrofitted into the formal IQ/OQ/PQ/CQ framework (see `VALIDATION_REPORT_2026-01-04.md`)
+**Note:** This report was retrofitted into the formal IQ/OQ/PQ/CQ framework (see `audits/reports/VALIDATION_REPORT_2026-01-04.md`)
 
 ---
 

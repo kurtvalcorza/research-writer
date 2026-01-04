@@ -32,9 +32,9 @@ This skill automates professional-grade validation testing following industry st
    - Groundedness (no hallucinations), instruction following, safety/refusal, consistency, bias detection
 
 **Automatically Generates:**
-- 📄 **Main Validation Report** (`VALIDATION_REPORT_[DATE].md`) - Complete IEEE 829-compliant report with executive summary, test results, deviations, and recommendations
-- 🔗 **Traceability Matrix** (`VALIDATION_TRACEABILITY_MATRIX_[DATE].md`) - Requirements-to-tests mapping with coverage analysis
-- 📁 **Evidence Archive** (`validation-evidence/[DATE]/`) - Structured test results and execution logs
+- 📄 **Main Validation Report** (`audits/reports/VALIDATION_REPORT_[DATE].md`) - Complete IEEE 829-compliant report with executive summary, test results, deviations, and recommendations
+- 🔗 **Traceability Matrix** (`audits/matrices/VALIDATION_TRACEABILITY_MATRIX_[DATE].md`) - Requirements-to-tests mapping with coverage analysis
+- 📁 **Evidence Archive** (`audits/validation-evidence/[DATE]/`) - Structured test results and execution logs
 
 ---
 
@@ -87,7 +87,7 @@ Execute audits/skills/system-validation/SKILL.md with:
 Upon completion, the skill **automatically generates** a comprehensive validation package:
 
 ### 📄 Main Validation Report
-**File:** `audits/VALIDATION_REPORT_[YYYY-MM-DD].md`
+**File:** `audits/reports/VALIDATION_REPORT_[YYYY-MM-DD].md`
 
 **Contents:**
 - Executive Summary (overall status, pass rates, critical issues)
@@ -103,7 +103,7 @@ Upon completion, the skill **automatically generates** a comprehensive validatio
 **Format:** IEEE 829-compliant with 10 structured sections
 
 ### 🔗 Traceability Matrix
-**File:** `audits/VALIDATION_TRACEABILITY_MATRIX_[YYYY-MM-DD].md`
+**File:** `audits/matrices/VALIDATION_TRACEABILITY_MATRIX_[YYYY-MM-DD].md`
 
 **Contents:**
 - Requirements-to-tests mapping (23 requirements)
@@ -134,8 +134,8 @@ PQ Pass Rate: 100%
 CQ Pass Rate: 100%
 
 Reports Generated:
-- audits/VALIDATION_REPORT_2026-01-04.md
-- audits/VALIDATION_TRACEABILITY_MATRIX_2026-01-04.md
+- audits/reports/VALIDATION_REPORT_2026-01-04.md
+- audits/matrices/VALIDATION_TRACEABILITY_MATRIX_2026-01-04.md
 - audits/validation-evidence/2026-01-04/ (evidence archive)
 
 System is production-ready. Proceed with research work.
@@ -218,7 +218,7 @@ system-validation/
 
 ---
 
-### Phase 4: Cognitive Qualification (CQ) [Optional - AI Only]
+### Phase 4: Cognitive Qualification (CQ) [Optional - AI Models Only]
 
 **What it tests:** AI model behavior is accurate, safe, and unbiased
 
@@ -242,16 +242,16 @@ system-validation/
 After validation, the following files are generated:
 
 ### Main Report
-- `audits/VALIDATION_REPORT_[DATE].md` - Comprehensive validation report
+- `audits/reports/VALIDATION_REPORT_[DATE].md` - Comprehensive validation report
 
 ### Detailed Reports
-- `audits/VALIDATION_IQ_REPORT_[DATE].md` - Installation Qualification results
-- `audits/VALIDATION_OQ_REPORT_[DATE].md` - Operational Qualification results
-- `audits/VALIDATION_PQ_REPORT_[DATE].md` - Performance Qualification results (if applicable)
-- `audits/VALIDATION_CQ_REPORT_[DATE].md` - Cognitive Qualification results (if applicable)
+- `audits/reports/VALIDATION_IQ_REPORT_[DATE].md` - Installation Qualification results
+- `audits/reports/VALIDATION_OQ_REPORT_[DATE].md` - Operational Qualification results
+- `audits/reports/VALIDATION_PQ_REPORT_[DATE].md` - Performance Qualification results (if applicable)
+- `audits/reports/VALIDATION_CQ_REPORT_[DATE].md` - Cognitive Qualification results (if applicable)
 
 ### Traceability
-- `audits/VALIDATION_TRACEABILITY_MATRIX_[DATE].md` - Requirements-to-tests mapping
+- `audits/matrices/VALIDATION_TRACEABILITY_MATRIX_[DATE].md` - Requirements-to-tests mapping
 
 ### Evidence Archive
 - `audits/validation-evidence/[DATE]/` - All test artifacts (JSON results, logs, output archives)

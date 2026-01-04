@@ -73,11 +73,12 @@ Produce a **professional-grade Validation Report** (IEEE 829 compliant) that cer
 
 **Pass Criteria:** IQ Pass Rate ≥90%, zero critical failures
 
+
 **Actions:**
 1. Execute each test in sequence
 2. Document results in IQ test table
 3. Calculate IQ pass percentage
-4. Generate IQ summary report: `audits/VALIDATION_IQ_REPORT_[DATE].md`
+4. Generate IQ summary report: `audits/reports/VALIDATION_IQ_REPORT_[DATE].md`
 
 ---
 
@@ -103,7 +104,7 @@ Produce a **professional-grade Validation Report** (IEEE 829 compliant) that cer
 1. Execute each test in sequence
 2. Document results in OQ test table with tool capability matrix
 3. Calculate OQ pass percentage
-4. Generate OQ summary report: `audits/VALIDATION_OQ_REPORT_[DATE].md`
+4. Generate OQ summary report: `audits/reports/VALIDATION_OQ_REPORT_[DATE].md`
 
 ---
 
@@ -129,7 +130,7 @@ Produce a **professional-grade Validation Report** (IEEE 829 compliant) that cer
 2. Verify all output files generated (screening-triage, screening-progress, screening-matrix, prisma-flow)
 3. Test interruption recovery (optional)
 4. Compare outputs across platforms (if applicable)
-5. Generate PQ summary report: `audits/VALIDATION_PQ_REPORT_[DATE].md`
+5. Generate PQ summary report: `audits/reports/VALIDATION_PQ_REPORT_[DATE].md`
 
 ---
 
@@ -154,7 +155,7 @@ Produce a **professional-grade Validation Report** (IEEE 829 compliant) that cer
 1. Execute mandatory CQ tests (VAL-CQ-001 through VAL-CQ-003)
 2. Optionally execute VAL-CQ-004 and VAL-CQ-005 for comprehensive validation
 3. Document AI model behavior and any safety concerns
-4. Generate CQ summary report: `audits/VALIDATION_CQ_REPORT_[DATE].md`
+4. Generate CQ summary report: `audits/reports/VALIDATION_CQ_REPORT_[DATE].md`
 
 ---
 
@@ -174,7 +175,7 @@ Produce a **professional-grade Validation Report** (IEEE 829 compliant) that cer
    - Any deviations or critical failures
 
 #### Step 2: Write Main Validation Report
-**REQUIRED:** Create file `audits/VALIDATION_REPORT_[YYYY-MM-DD].md`
+**REQUIRED:** Create file `audits/reports/VALIDATION_REPORT_[YYYY-MM-DD].md`
 
 1. Use template structure from `references/REPORT_TEMPLATE.md`
 2. Fill in all placeholders with actual values:
@@ -194,7 +195,7 @@ Produce a **professional-grade Validation Report** (IEEE 829 compliant) that cer
    - Overall Status: PASS (if all pass rates meet criteria) | FAIL | PASS WITH DEVIATIONS
 
 #### Step 3: Write Traceability Matrix
-**REQUIRED:** Create file `audits/VALIDATION_TRACEABILITY_MATRIX_[YYYY-MM-DD].md`
+**REQUIRED:** Create file `audits/matrices/VALIDATION_TRACEABILITY_MATRIX_[YYYY-MM-DD].md`
 
 1. Use template from `references/TRACEABILITY_MATRIX_TEMPLATE.md`
 2. Fill in all requirement rows with actual test results:
@@ -234,8 +235,8 @@ After all files are created, provide user with:
    CQ Pass Rate: [X%] (if applicable)
 
    Reports Generated:
-   - audits/VALIDATION_REPORT_[DATE].md
-   - audits/VALIDATION_TRACEABILITY_MATRIX_[DATE].md
+   - audits/reports/VALIDATION_REPORT_[DATE].md
+   - audits/matrices/VALIDATION_TRACEABILITY_MATRIX_[DATE].md
    - audits/validation-evidence/[DATE]/ (evidence archive)
    ```
 
@@ -257,19 +258,21 @@ After all files are created, provide user with:
 ### Generated Files
 
 **Main Report:**
-- `audits/VALIDATION_REPORT_[YYYY-MM-DD].md` - Comprehensive validation report
+- `audits/reports/VALIDATION_REPORT_[YYYY-MM-DD].md` - Comprehensive validation report
 
 **Detailed Reports:**
-- `audits/VALIDATION_IQ_REPORT_[YYYY-MM-DD].md` - IQ test results
-- `audits/VALIDATION_OQ_REPORT_[YYYY-MM-DD].md` - OQ test results
-- `audits/VALIDATION_PQ_REPORT_[YYYY-MM-DD].md` - PQ test results (optional)
-- `audits/VALIDATION_CQ_REPORT_[YYYY-MM-DD].md` - CQ test results (optional)
+- `audits/reports/VALIDATION_IQ_REPORT_[YYYY-MM-DD].md` - IQ test results
+- `audits/reports/VALIDATION_OQ_REPORT_[YYYY-MM-DD].md` - OQ test results
+- `audits/reports/VALIDATION_PQ_REPORT_[YYYY-MM-DD].md` - PQ test results (optional)
+- `audits/reports/VALIDATION_CQ_REPORT_[YYYY-MM-DD].md` - CQ test results (optional)
 
 **Traceability:**
-- `audits/VALIDATION_TRACEABILITY_MATRIX_[YYYY-MM-DD].md` - Requirements-to-tests mapping
+- `audits/matrices/VALIDATION_TRACEABILITY_MATRIX_[YYYY-MM-DD].md` - Requirements-to-tests mapping
 
 **Evidence Archive:**
 - `audits/validation-evidence/[YYYY-MM-DD]/` - All evidence artifacts
+
+
 
 ---
 
