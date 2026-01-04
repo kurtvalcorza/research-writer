@@ -160,34 +160,95 @@ Produce a **professional-grade Validation Report** (IEEE 829 compliant) that cer
 
 ### PHASE 5: Validation Report Generation
 
-**Objective:** Generate comprehensive validation report with traceability and evidence
+**Objective:** Automatically generate comprehensive validation report with traceability and evidence
+
+**Prerequisites:** All IQ/OQ/PQ/CQ tests completed and results collected
 
 **Actions:**
-1. **Aggregate all test results** from IQ, OQ, PQ, CQ phases
-2. **Generate main validation report** using template:
-   - Location: `audits/VALIDATION_REPORT_[DATE].md`
-   - Template: See `references/REPORT_TEMPLATE.md`
-   - Include: Executive summary, test results tables, deviations, recommendations
 
-3. **Generate traceability matrix**:
-   - Location: `audits/VALIDATION_TRACEABILITY_MATRIX_[DATE].md`
-   - Template: See `references/TRACEABILITY_MATRIX_TEMPLATE.md`
-   - Map all requirements to test IDs and evidence
+#### Step 1: Prepare Test Summary Data
+1. Review all test results from conversation history (IQ, OQ, PQ, CQ phases)
+2. For each phase, compile:
+   - Test ID, Test Name, Expected Result, Actual Result, Status (✅ PASS / ❌ FAIL / ⚠️ RESTRICTED / N/A)
+   - Pass rate percentage
+   - Any deviations or critical failures
 
-4. **Create evidence archive**:
-   - Location: `audits/validation-evidence/[DATE]/`
-   - Contents:
-     - `IQ_results_[timestamp].json`
-     - `OQ_results_[timestamp].json`
-     - `PQ_results_[timestamp].json` (if applicable)
-     - `CQ_results_[timestamp].json` (if applicable)
-     - `execution_log_[timestamp].txt`
-     - `outputs_archive_[timestamp].zip`
+#### Step 2: Write Main Validation Report
+**REQUIRED:** Create file `audits/VALIDATION_REPORT_[YYYY-MM-DD].md`
 
-5. **Calculate overall validation status**:
-   - Overall Status: PASS | FAIL | PASS WITH DEVIATIONS
-   - Production Ready: YES | NO | YES WITH RESTRICTIONS
-   - Document all deviations and corrective actions
+1. Use template structure from `references/REPORT_TEMPLATE.md`
+2. Fill in all placeholders with actual values:
+   - **Executive Summary:** Overall status, pass rates, critical issues count
+   - **Section 3.1 (IQ Results):** Complete IQ test table with actual results
+   - **Section 3.2 (OQ Results):** Complete OQ test table with actual results
+   - **Section 3.3 (PQ Results):** Complete PQ test table (if PQ was executed)
+   - **Section 3.4 (CQ Results):** Complete CQ test table (if CQ was executed)
+   - **Section 5 (Deviations):** Document all deviations with severity and corrective actions
+   - **Section 8 (Conclusion):** Final validation status and production readiness
+
+3. Calculate and include:
+   - IQ Pass Rate: (# passed IQ tests) / (# total IQ tests) × 100%
+   - OQ Pass Rate: (# passed OQ tests) / (# total OQ tests) × 100%
+   - PQ Pass Rate: (# passed PQ tests) / (# total PQ tests) × 100% (if applicable)
+   - CQ Pass Rate: (# passed CQ tests) / (# total CQ tests) × 100% (if applicable)
+   - Overall Status: PASS (if all pass rates meet criteria) | FAIL | PASS WITH DEVIATIONS
+
+#### Step 3: Write Traceability Matrix
+**REQUIRED:** Create file `audits/VALIDATION_TRACEABILITY_MATRIX_[YYYY-MM-DD].md`
+
+1. Use template from `references/TRACEABILITY_MATRIX_TEMPLATE.md`
+2. Fill in all requirement rows with actual test results:
+   - Map each requirement (REQ-IQ-001, REQ-OQ-001, etc.) to its test ID
+   - Mark status: ✅ PASS / ❌ FAIL / N/A
+   - Link to evidence (test output, deviation ID)
+
+3. Calculate coverage:
+   - Total Requirements: [count]
+   - Requirements Tested: [count]
+   - Requirements Passed: [count]
+   - Test Coverage: [percentage]%
+
+#### Step 4: Create Evidence Archive Directory
+**REQUIRED:** Create directory `audits/validation-evidence/[YYYY-MM-DD]/`
+
+1. Create the directory structure
+2. Save test results as structured data (JSON or markdown):
+   - `IQ_results_[timestamp].json` (or .md)
+   - `OQ_results_[timestamp].json` (or .md)
+   - `PQ_results_[timestamp].json` (if applicable)
+   - `CQ_results_[timestamp].json` (if applicable)
+
+3. Optional: Create execution log capturing all test commands and outputs
+
+#### Step 5: Generate Validation Summary
+After all files are created, provide user with:
+
+1. **Validation completion confirmation:**
+   ```
+   ✅ System Validation Complete
+
+   Overall Status: [PASS | FAIL | PASS WITH DEVIATIONS]
+   IQ Pass Rate: [X%]
+   OQ Pass Rate: [X%]
+   PQ Pass Rate: [X%] (if applicable)
+   CQ Pass Rate: [X%] (if applicable)
+
+   Reports Generated:
+   - audits/VALIDATION_REPORT_[DATE].md
+   - audits/VALIDATION_TRACEABILITY_MATRIX_[DATE].md
+   - audits/validation-evidence/[DATE]/ (evidence archive)
+   ```
+
+2. **Next steps recommendation:**
+   - If PASS: "System is production-ready. Proceed with research work."
+   - If FAIL: "Critical issues detected. Review deviations and apply corrective actions before production use."
+   - If PASS WITH DEVIATIONS: "System operational with noted limitations. Review restrictions in validation report."
+
+**Pass Criteria for Phase 5:**
+- ✅ Main validation report created with all sections complete
+- ✅ Traceability matrix created with all requirements mapped
+- ✅ Evidence archive directory created
+- ✅ Overall validation status calculated and documented
 
 ---
 
@@ -343,6 +404,7 @@ For each platform (Claude Code Desktop, Gemini CLI, etc.):
 | 1.1 | 2026-01-04 | Added CQ (Cognitive Qualification) for AI validation | Gemini + Claude Collaboration |
 | 1.2 | 2026-01-04 | Enhanced CQ with consistency and bias tests (VAL-CQ-004, VAL-CQ-005) | Claude Sonnet 4.5 |
 | 2.0 | 2026-01-04 | Restructured for progressive disclosure, modular references | Claude Sonnet 4.5 |
+| 2.1 | 2026-01-04 | Enhanced Phase 5 with explicit automatic report generation | Claude Sonnet 4.5 |
 
 ---
 

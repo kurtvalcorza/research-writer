@@ -1,6 +1,6 @@
 # System Validation Skill
 
-**Version:** 2.0
+**Version:** 2.1
 **Last Updated:** 2026-01-04
 **License:** Apache-2.0
 **Compatibility:** Universal (Claude Code, Gemini CLI, OpenAI, Anthropic API)
@@ -31,7 +31,10 @@ This skill automates professional-grade validation testing following industry st
 4. **CQ (Cognitive Qualification):** Verifies AI model behavior is accurate and safe
    - Groundedness (no hallucinations), instruction following, safety/refusal, consistency, bias detection
 
-**Outputs:** IEEE 829-compliant validation reports with traceability matrix and evidence artifacts.
+**Automatically Generates:**
+- 📄 **Main Validation Report** (`VALIDATION_REPORT_[DATE].md`) - Complete IEEE 829-compliant report with executive summary, test results, deviations, and recommendations
+- 🔗 **Traceability Matrix** (`VALIDATION_TRACEABILITY_MATRIX_[DATE].md`) - Requirements-to-tests mapping with coverage analysis
+- 📁 **Evidence Archive** (`validation-evidence/[DATE]/`) - Structured test results and execution logs
 
 ---
 
@@ -74,6 +77,69 @@ Execute audits/skills/system-validation/SKILL.md with:
 
 **Duration:** ~45-60 minutes
 **Tests:** Full installation + operational + performance + cognitive testing
+
+**Output:** Generates formal validation report automatically at completion
+
+---
+
+## Automatic Report Generation
+
+Upon completion, the skill **automatically generates** a comprehensive validation package:
+
+### 📄 Main Validation Report
+**File:** `audits/VALIDATION_REPORT_[YYYY-MM-DD].md`
+
+**Contents:**
+- Executive Summary (overall status, pass rates, critical issues)
+- Test Environment details (OS, platform, dependencies)
+- Complete test results tables for IQ/OQ/PQ/CQ phases
+- Traceability section
+- Deviations & corrective actions
+- Risk assessment
+- Recommendations
+- Approval signatures
+- Evidence artifacts list
+
+**Format:** IEEE 829-compliant with 10 structured sections
+
+### 🔗 Traceability Matrix
+**File:** `audits/VALIDATION_TRACEABILITY_MATRIX_[YYYY-MM-DD].md`
+
+**Contents:**
+- Requirements-to-tests mapping (23 requirements)
+- Test coverage analysis
+- Status tracking (PASS/FAIL/N/A)
+- Evidence linking
+
+### 📁 Evidence Archive
+**Directory:** `audits/validation-evidence/[YYYY-MM-DD]/`
+
+**Contents:**
+- `IQ_results_[timestamp].json` - Installation Qualification test data
+- `OQ_results_[timestamp].json` - Operational Qualification test data
+- `PQ_results_[timestamp].json` - Performance Qualification test data (if applicable)
+- `CQ_results_[timestamp].json` - Cognitive Qualification test data (if applicable)
+- Execution logs and supporting evidence
+
+### ✅ Validation Summary
+The skill provides a final summary upon completion:
+
+```
+✅ System Validation Complete
+
+Overall Status: PASS
+IQ Pass Rate: 100%
+OQ Pass Rate: 100%
+PQ Pass Rate: 100%
+CQ Pass Rate: 100%
+
+Reports Generated:
+- audits/VALIDATION_REPORT_2026-01-04.md
+- audits/VALIDATION_TRACEABILITY_MATRIX_2026-01-04.md
+- audits/validation-evidence/2026-01-04/ (evidence archive)
+
+System is production-ready. Proceed with research work.
+```
 
 ---
 
