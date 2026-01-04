@@ -18,7 +18,7 @@ This document outlines the security measures implemented in the Research Writer 
   - Maximum content size: 10MB
   - Path length validation (max 500 characters)
   - Directory traversal protection
-  - Write access restricted to `template/` directory only
+  - Write access restricted to `settings/` directory only
 
 - **Files API (`/api/files`)**:
   - Whitelisted directories: `corpus`, `outputs`, `prompts`, `template`

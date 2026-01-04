@@ -7,7 +7,7 @@ Execute systematic literature screening using the three-pass workflow.
 1. Read the complete SKILL file: `skills/01_literature-discovery/SKILL.md`
 2. Follow all steps in the SKILL exactly as specified
 3. Process PDFs in: `corpus/`
-4. Use screening criteria from: `template/screening-criteria-template.md`
+4. Use screening criteria from: `settings/screening-criteria-template.md`
 
 ## Outputs
 

@@ -19,10 +19,10 @@ export default function Home() {
     setLoading(true);
     try {
       // Fetch all data in parallel
-      const [corpusRes, outputsRes, templateRes] = await Promise.all([
+      const [corpusRes, outputsRes, settingsRes] = await Promise.all([
         fetch("/api/files?dir=corpus"),
         fetch("/api/files?dir=outputs"),
-        fetch("/api/files?dir=template"),
+        fetch("/api/files?dir=settings"),
       ]);
 
       const corpusData: FilesResponse = await corpusRes.json();
@@ -31,10 +31,10 @@ export default function Home() {
       const outputsData: FilesResponse = await outputsRes.json();
       const outputFiles = outputsData.files ? outputsData.files.map((f: FileStat) => f.name) : [];
 
-      const templateData: FilesResponse = await templateRes.json();
-      const templateFiles = templateData.files ? templateData.files.map((f: FileStat) => f.name) : [];
+      const settingsData: FilesResponse = await settingsRes.json();
+      const settingsFiles = settingsData.files ? settingsData.files.map((f: FileStat) => f.name) : [];
 
-      const allFiles = [...outputFiles, ...templateFiles];
+      const allFiles = [...outputFiles, ...settingsFiles];
 
       const completedPhases = PHASES.filter(p => allFiles.includes(p.outputFile)).map(p => p.id);
 
@@ -246,7 +246,7 @@ export default function Home() {
                     )}
 
                     <span className="text-[10px] bg-white/5 px-2 py-1 rounded text-muted-foreground font-mono">
-                      {phase.id === "corpus" ? "corpus" : phase.id === "0" ? "template" : `Phase ${phase.id}`}
+                      {phase.id === "corpus" ? "corpus" : phase.id === "0" ? "settings" : `Phase ${phase.id}`}
                     </span>
                   </div>
                 </div>

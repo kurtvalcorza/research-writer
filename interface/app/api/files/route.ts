@@ -11,7 +11,7 @@ interface FileStat {
 
 // Function to safely get directory path
 function getSafePath(dirName: string): string {
-    const allowedDirs = ["corpus", "outputs", "prompts", "template"];
+    const allowedDirs = ["corpus", "outputs", "prompts", "settings"];
     if (!allowedDirs.includes(dirName)) {
         throw new Error("Invalid directory");
     }

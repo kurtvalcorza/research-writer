@@ -18,7 +18,7 @@
 ```
 ✅ corpus/ - exists
 ✅ outputs/ - exists
-✅ template/ - exists
+✅ settings/ - exists
 ✅ prompts/ - exists
 ✅ skills/ - exists
 ✅ audits/ - exists
@@ -37,7 +37,7 @@ audits  corpus  outputs  prompts  skills  template
 
 **Test Procedure:**
 - Verified `.gitignore` exists and allows corpus access
-- Verified `template/screening-criteria-template.md` exists
+- Verified `settings/screening-criteria-template.md` exists
 
 **Results:**
 - `.gitignore`: Initially blocked `corpus/*.pdf` (fixed during multi-platform testing)

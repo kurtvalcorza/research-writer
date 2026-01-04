@@ -50,18 +50,18 @@ else
 fi
 echo ""
 
-# Check template customization
-echo "📋 Checking screening criteria template..."
-if grep -q "AI adoption in the Philippines" template/screening-criteria-template.md 2>/dev/null; then
-  echo "   ⚠️  WARNING: Template contains example content"
-  echo "   Please customize template/screening-criteria-template.md for your research topic"
+# Check settings file customization
+echo "📋 Checking screening criteria settings..."
+if grep -q "AI adoption in the Philippines" settings/screening-criteria-template.md 2>/dev/null; then
+  echo "   ⚠️  WARNING: Settings file contains example content"
+  echo "   Please customize settings/screening-criteria-template.md for your research topic"
   echo ""
 fi
 
 echo "✅ Setup complete!"
 echo ""
 echo "Next steps:"
-echo "  1. Customize template/screening-criteria-template.md for your research topic"
+echo "  1. Customize settings/screening-criteria-template.md for your research topic"
 echo "  2. Add PDF files to corpus/ directory"
 echo "  3. Run Phase 1 screening (see README.md)"
 echo ""

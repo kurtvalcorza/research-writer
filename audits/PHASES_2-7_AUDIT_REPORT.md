@@ -133,7 +133,7 @@ Add realistic time estimates to each phase based on corpus size:
 ### 🟠 HIGH-3: No Example Outputs
 
 **Problem:**
-Phase 1 has `template/screening-criteria-template.md` (example content), but Phases 2-7 have NO example outputs.
+Phase 1 has `settings/screening-criteria-template.md` (example content), but Phases 2-7 have NO example outputs.
 
 **User Impact:**
 - Users don't know what "good output" looks like

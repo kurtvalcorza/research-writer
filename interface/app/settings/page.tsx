@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Save, ArrowLeft, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
-const CRITERIA_PATH = "template/screening-criteria-template.md";
+const CRITERIA_PATH = "settings/screening-criteria-template.md";
 
 export default function SettingsPage() {
     const [content, setContent] = useState("");

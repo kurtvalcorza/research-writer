@@ -14,7 +14,7 @@
 1. Check for existence of critical directories:
    - `corpus/` (research PDFs)
    - `outputs/` (generated reports)
-   - `template/` (screening criteria)
+   - `settings/` (screening criteria)
    - `prompts/` (execution prompts)
    - `skills/` (skill definitions)
    - `audits/` (validation reports)
@@ -43,7 +43,7 @@
 **Test Procedure:**
 1. Verify `.gitignore` exists
 2. **CRITICAL CHECK:** Ensure `corpus/*.pdf` and `outputs/*.md` are NOT ignored
-3. Verify `template/screening-criteria-template.md` exists
+3. Verify `settings/screening-criteria-template.md` exists
 4. Check if template contains customizable sections
 
 **Pass Criteria:**

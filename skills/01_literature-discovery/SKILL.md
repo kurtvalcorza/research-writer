@@ -41,12 +41,12 @@ Produce a **systematic screening report** that:
 - `corpus/` - folder containing research PDFs to be screened (same directory will contain approved PDFs after human review)
 
 **Screening Criteria:**
-- Read from `template/screening-criteria-template.md`
-- Template must be customized for the research topic before executing Phase 1
+- Read from `settings/screening-criteria-template.md`
+- Settings file must be customized for the research topic before executing Phase 1
 
 ### 3.2 Template Structure
 
-The screening criteria template (`template/screening-criteria-template.md`) includes:
+The screening criteria settings file (`settings/screening-criteria-template.md`) includes:
 
 **Required Sections:**
 - **Research Context:** Topic, review type, geographic/temporal scope
@@ -56,11 +56,11 @@ The screening criteria template (`template/screening-criteria-template.md`) incl
 - **Screening Protocol:** Consistency checks and quality assurance measures
 - **Example Applications:** Sample decisions (INCLUDE, EXCLUDE, UNCERTAIN, METADATA_INSUFFICIENT)
 
-**Template Customization:**
-If the user has not customized the screening template before running Phase 1, recommend action to customize using a prompt like:
+**Settings Customization:**
+If the user has not customized the screening criteria before running Phase 1, recommend action to customize using a prompt like:
 ```
 Topic: [Your Research Topic]
-Please revise template/screening-criteria-template.md accordingly.
+Please revise settings/screening-criteria-template.md accordingly.
 ```
 
 ---
@@ -89,18 +89,18 @@ This approach:
 
 **Before beginning PASS 1, validate prerequisites:**
 
-**Step 0: Verify screening criteria template**
-1. Check that `template/screening-criteria-template.md` exists
-2. Verify the template has been customized (not the default boilerplate)
+**Step 0: Verify screening criteria settings**
+1. Check that `settings/screening-criteria-template.md` exists
+2. Verify the settings file has been customized (not the default boilerplate)
 3. Confirm all required sections are present:
    - Research Context
    - Inclusion Criteria
    - Exclusion Criteria
    - Edge Cases and Decision Rules
 
-**If template is missing or uncustomized:**
+**If settings file is missing or uncustomized:**
 - Halt execution
-- Prompt user: "The screening criteria template at `template/screening-criteria-template.md` needs to be customized for your research topic before screening can begin. Please review and update the template, then re-run this skill."
+- Prompt user: "The screening criteria settings file at `settings/screening-criteria-template.md` needs to be customized for your research topic before screening can begin. Please review and update the settings, then re-run this skill."
 
 ---
 
@@ -502,7 +502,7 @@ Before proceeding to Phase 2 (Literature Extraction & Synthesis), the user must:
 ### Example 1: Standard Template-Based Workflow
 > "Screen all PDFs in the `corpus/` folder for a literature review on AI adoption in Southeast Asia. Include: empirical studies, policy analyses, published 2020-2025. Exclude: purely technical algorithm papers, non-English, non-peer-reviewed sources."
 
-**Agent response:** "First, I'll help you populate the screening criteria template at `template/screening-criteria-template.md` with your requirements. Once that's customized, I'll proceed with the three-pass screening workflow."
+**Agent response:** "First, I'll help you populate the screening criteria settings at `settings/screening-criteria-template.md` with your requirements. Once that's customized, I'll proceed with the three-pass screening workflow."
 
 ### Example 2: With Criteria Template
 > "Generate a screening report for PDFs in `corpus/`. I'm researching digital transformation in government. Help me define appropriate screening criteria first."

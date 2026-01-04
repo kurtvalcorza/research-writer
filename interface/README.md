@@ -78,7 +78,7 @@ Go to the **Corpus** page to upload your research papers (PDFs). These files are
 - Delete functionality with confirmation
 
 ### 2. Configure Criteria
-Visit **Settings** to define your *Screening Criteria*. This updates the \`../template/screening-criteria-template.md\` file, which is used by the agent during Phase 1.
+Visit **Settings** to define your *Screening Criteria*. This updates the \`../settings/screening-criteria-template.md\` file, which is used by the agent during Phase 1.
 
 **Features:**
 - Live editing with syntax highlighting

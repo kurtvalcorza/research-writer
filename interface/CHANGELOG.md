@@ -32,7 +32,7 @@ All notable changes to the Research Writer Interface have been documented here.
 #### Content API Security
 - **Location**: `app/api/content/route.ts`
 - Added 10MB content size limit
-- Restricted write access to `template/` directory only
+- Restricted write access to `settings/` directory only
 - Added path length validation (500 char max)
 - Enhanced error messages without information leakage
 - **Impact**: Prevents unauthorized content modification
@@ -180,7 +180,7 @@ No new dependencies added. All improvements use existing packages more securely 
 1. **No breaking changes** for end users
 2. **API contracts unchanged** (same request/response formats)
 3. **Environment variables**: No new variables required
-4. **File permissions**: Ensure write access to `template/` directory
+4. **File permissions**: Ensure write access to `settings/` directory
 
 ### For Developers
 

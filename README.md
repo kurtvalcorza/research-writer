@@ -78,7 +78,7 @@ research-writer/
 ├── scripts/
 │   └── setup.sh               (Automated setup and validation)
 │
-├── template/
+├── settings/
 │   └── screening-criteria-template.md  (Customize before Phase 1)
 │
 ├── prompts/
@@ -200,7 +200,7 @@ Outputs generated → User reviews results
 **Time Estimates:**
 - 1-5 PDFs: 5-15 min | 6-20 PDFs: 15-40 min | 20-50 PDFs: 40-90 min | 50+ PDFs: 90-180 min
 
-**Inputs:** PDFs in `corpus/` + screening criteria in `template/screening-criteria-template.md`
+**Inputs:** PDFs in `corpus/` + screening criteria in `settings/screening-criteria-template.md`
 **Outputs:** `literature-screening-matrix.md`, `prisma-flow-diagram.md`, `screening-progress.md`
 
 ### PHASE 2 — Literature Extraction & Synthesis
@@ -541,7 +541,7 @@ Customize the template for your research topic:
 
 ```
 Topic: AI Adoption in the Philippines
-Please revise template/screening-criteria-template.md accordingly.
+Please revise settings/screening-criteria-template.md accordingly.
 # Add instructions on screen criteria
 ```
 
@@ -552,7 +552,7 @@ Please revise template/screening-criteria-template.md accordingly.
 ```
 Please execute Phase 1 literature screening using the instructions in prompts/phase1.md.
 
-Process the PDFs in the corpus/ directory and apply the screening criteria from template/screening-criteria-template.md.
+Process the PDFs in the corpus/ directory and apply the screening criteria from settings/screening-criteria-template.md.
 ```
 
 **What happens:**

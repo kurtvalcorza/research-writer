@@ -7,7 +7,7 @@ const MAX_CONTENT_SIZE = 10 * 1024 * 1024;
 
 function getSafePath(relativePath: string, projectRoot: string): string | null {
     // Allow access to specific dirs
-    const allowedRoots = ["prompts", "template", "outputs"];
+    const allowedRoots = ["prompts", "settings", "outputs"];
 
     // Normalize path and remove leading traversal sequences
     const normalized = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, "");
@@ -108,10 +108,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Invalid path or access denied" }, { status: 403 });
         }
 
-        // Only allow writing to template directory
-        if (!relPath.startsWith("template/")) {
+        // Only allow writing to settings directory
+        if (!relPath.startsWith("settings/")) {
             return NextResponse.json({
-                error: "Write access only allowed for template directory"
+                error: "Write access only allowed for settings directory"
             }, { status: 403 });
         }
 

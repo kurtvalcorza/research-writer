@@ -176,7 +176,7 @@ User: "Wait, which one do I actually use???"
   The skill will follow the universal three-pass workflow defined in:
   skills/01_literature-discovery/SKILL.md
 
-  Input: corpus/ directory + template/screening-criteria-template.md
+  Input: corpus/ directory + settings/screening-criteria-template.md
   Output: literature-screening-matrix.md, prisma-flow-diagram.md
   ```
 - Keep all technical details in SKILL.md only
@@ -219,7 +219,7 @@ Tell Claude Code:
 ```
 Please execute Phase 1 literature screening using the instructions in prompts/phase1.md.
 
-Process the PDFs in the corpus/ directory and apply the criteria from template/screening-criteria-template.md.
+Process the PDFs in the corpus/ directory and apply the criteria from settings/screening-criteria-template.md.
 ```
 
 The agent will execute the universal three-pass workflow automatically.
@@ -230,7 +230,7 @@ The agent will execute the universal three-pass workflow automatically.
 ### 🟠 HIGH-3: Template File is Pre-Filled (Not Actually a Template)
 
 **Problem:**
-`template/screening-criteria-template.md` is already filled out with a specific research topic ("AI Adoption in the Philippines").
+`settings/screening-criteria-template.md` is already filled out with a specific research topic ("AI Adoption in the Philippines").
 
 **User Impact:**
 - New users might think the template is "the format to use" and try to use it as-is
@@ -238,7 +238,7 @@ The agent will execute the universal three-pass workflow automatically.
 - File is named "template" but is actually "example"
 
 **Evidence:**
-From `template/screening-criteria-template.md`:
+From `settings/screening-criteria-template.md`:
 ```markdown
 **Research Question/Topic:**
 "AI adoption in the Philippines: barriers, facilitators, and implementation patterns"
@@ -249,7 +249,7 @@ From `template/screening-criteria-template.md`:
 **Recommendation:**
 **OPTION A:** Rename to make it clear
 ```
-template/
+settings/
   ├── screening-criteria-template.md (BLANK template with placeholders)
   └── screening-criteria-example.md (Philippines AI example)
 ```
@@ -309,9 +309,9 @@ if ! python3 -c "import pypdf" 2>/dev/null; then
 fi
 
 # Check template customization
-if grep -q "AI adoption in the Philippines" template/screening-criteria-template.md; then
+if grep -q "AI adoption in the Philippines" settings/screening-criteria-template.md; then
   echo "⚠️  WARNING: Template still contains example content"
-  echo "   Please customize template/screening-criteria-template.md"
+  echo "   Please customize settings/screening-criteria-template.md"
 fi
 
 if [ -z "$ERRORS" ]; then

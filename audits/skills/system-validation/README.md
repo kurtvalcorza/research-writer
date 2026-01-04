@@ -172,7 +172,7 @@ system-validation/
 **Test IDs:** VAL-IQ-001 through VAL-IQ-005
 
 **Key Checks:**
-- ✅ Required directories exist (`corpus/`, `outputs/`, `template/`, `prompts/`, `skills/`, `audits/`)
+- ✅ Required directories exist (`corpus/`, `outputs/`, `settings/`, `prompts/`, `skills/`, `audits/`)
 - ✅ `.gitignore` configured correctly (doesn't block corpus access)
 - ✅ Screening criteria template present with required sections
 - ✅ Dependencies installed (Python, PDF libraries, Git)

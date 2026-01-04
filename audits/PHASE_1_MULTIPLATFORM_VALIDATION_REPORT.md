@@ -151,7 +151,7 @@ Due to Gemini CLI limitations in the test environment (missing `run_shell_comman
     - Extracted data saved to `outputs/pdf_data.json`.
 
 2.  **Screening**:
-    - Applied criteria from `template/screening-criteria-template.md` ("AI Adoption in the Philippines").
+    - Applied criteria from `settings/screening-criteria-template.md` ("AI Adoption in the Philippines").
     - **Results**: All 6 papers were found to be RELEVANT and recommended for **INCLUSION**.
 
 3.  **Output Generation**:
@@ -209,7 +209,7 @@ Execute skills\01_literature-discovery\SKILL.md
 **Status:** ✅ PASSED
 
 1. **Screening Criteria Template Check:**
-   - File `template/screening-criteria-template.md` exists: ✅
+   - File `settings/screening-criteria-template.md` exists: ✅
    - Template customized for research topic: ✅ (AI Adoption in the Philippines)
    - All required sections present: ✅
      - Research Context (Systematic Review, Philippines/SEA, 2018-2025)

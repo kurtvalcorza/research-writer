@@ -12,7 +12,7 @@
 │                                                              │
 │  Researcher identifies topic & gathers PDFs                 │
 │  Downloads PDFs to /corpus/ directory                        │
-│  Customizes template/screening-criteria-template.md         │
+│  Customizes settings/screening-criteria-template.md         │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -22,7 +22,7 @@
 ├─────────────────────────────────────────────────────────────┤
 │  INPUT:                                                      │
 │    • /corpus/ directory (PDFs - any size: 1-100+)           │
-│    • template/screening-criteria-template.md                │
+│    • settings/screening-criteria-template.md                │
 │                                                              │
 │  EXECUTION (Universal Workflow):                            │
 │    PASS 1: Lightweight Metadata Scan (all PDFs)            │

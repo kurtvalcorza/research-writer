@@ -29,7 +29,7 @@ This document provides a concise overview of all improvements made to elevate th
 | **Process Timeout** | 10-minute execution limit | Prevents resource exhaustion |
 | **Protected Files** | Whitelist for `.gitkeep`, `.gitignore` | Prevents accidental deletion |
 | **Security Headers** | HSTS, CSP, X-Frame-Options, etc. | Defense in depth |
-| **Write Restrictions** | Only `template/` directory writable | Prevents unauthorized changes |
+| **Write Restrictions** | Only `settings/` directory writable | Prevents unauthorized changes |
 
 ---
 
