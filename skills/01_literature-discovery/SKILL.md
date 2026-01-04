@@ -104,46 +104,28 @@ This approach:
 
 ---
 
-### PASS 1: Lightweight Metadata Scan (All PDFs at once)
+### PASS 1: Lightweight Metadata Scan (Incremental)
 
-**Purpose:** Quick triage to identify obvious INCLUDE/EXCLUDE cases
+**Purpose:** Quick triage to identify obvious INCLUDE/EXCLUDE cases. **Must process one PDF at a time** to save tokens.
 
-**Step 1: Prepare environment and enumerate PDFs**
+**Step 1: Prepare environment**
 - Create `outputs/` directory if it doesn't exist
-- List all PDF files in `corpus/` directory
-- Record filenames and basic file info
+- Initialize `outputs/screening-triage.md` with table headers:
+  `| Filename | Year | Title | Status | Rationale |`
 
-**Step 2: Extract lightweight metadata**
-For each PDF, extract **only**:
-- **Filename**
-- **Title** (from PDF metadata or first page)
-- **Year** (from PDF metadata or filename pattern)
-- **Page count**
-- **First 200 characters** (quick topic scan)
+**Step 2: Incremental Triage Loop**
+**For each PDF in `corpus/`:**
+1. **Read PDF:** Read first 1-2 pages ONLY (limit context).
+2. **Extract lightweight metadata:** Title, Year, quick topic check.
+3. **Decide:**
+   - ✅ **Auto-INCLUDE:** Title clearly matches topic + year in range
+   - ❌ **Auto-EXCLUDE:** Obvious mismatch (year, topic, language)
+   - ⚠️ **Flag for PASS 2:** Unclear / Abstract needed
+4. **Append:** Add row to `outputs/screening-triage.md`.
+5. **Clear Context:** **CRITICAL:** Forget/release PDF content before Next.
 
-**Do NOT extract:** Full abstracts, author lists, or parse beyond page 1
-
-**Step 3: Quick criteria application**
-For each PDF, apply **simple filters**:
-- ✅ **Auto-INCLUDE if:** Title clearly matches topic + year in range
-- ❌ **Auto-EXCLUDE if:** Year out of range, wrong language (detectable from title), obvious topic mismatch
-- ⚠️ **Flag for PASS 2 if:** Unclear from title alone
-
-**Step 4: Create triage report**
-Output temporary file: `outputs/screening-triage.md`
-
-```markdown
-## Pass 1 Triage Results
-
-**Auto-INCLUDE (obvious matches):** [N] papers
-[List filenames]
-
-**Auto-EXCLUDE (obvious rejections):** [N] papers
-[List filenames with brief reason]
-
-**Requires detailed screening (PASS 2):** [N] papers
-[List filenames]
-```
+**Step 3: Summary**
+- Count results from the generated file.
 
 ---
 

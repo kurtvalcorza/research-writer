@@ -41,6 +41,17 @@ Validate the end-to-end execution of *Phase 1: Literature Discovery & Screening*
   ```
 - **Outcome:** ✅ `conductor` successfully registered the tools. The agent executed the 3-pass screening workflow without errors.
 
+### Test 3: Context Window Limits & Scalability
+**Objective:** Verify agent's ability to handle multiple PDFs without exceeding token limits.
+
+- **Issue:** During "Pass 1" (Triage), the agent attempted to read *all* PDFs into context simultaneously ("Lightweight Metadata Scan (All PDFs at once)"), causing a `ContextWindowExceeded` error with just 6 PDFs.
+- **Root Cause:** The original `SKILL.md` design for Pass 1 was optimized for speed (batch processing) rather than memory safety.
+- **Resolution:** Refactored `skills/01_literature-discovery/SKILL.md` to enforce an **Incremental Triage Loop**:
+    1. Process one PDF at a time.
+    2. Extract metadata and append to triage file.
+    3. **Explicitly clear context** before processing the next PDF.
+- **Outcome:** ✅ The skill is now scalable to any number of PDFs (Infinite Corpus Support).
+
 ## 4. Final Results
 **Phase 1 Execution Metrics:**
 - **Input:** 6 PDF files
