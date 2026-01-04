@@ -63,7 +63,7 @@ Produce a **professional-grade Validation Report** (IEEE 829 compliant) that cer
 **Objective:** Verify environment is correctly installed and configured
 
 **Test Checklist:**
-- [ ] VAL-IQ-001: Directory structure verification (corpus, outputs, template, prompts, skills, audits)
+- [ ] VAL-IQ-001: Directory structure verification (corpus, outputs, template, quick-start, skills, audits)
 - [ ] VAL-IQ-002: Configuration file validation (.gitignore, screening template)
 - [ ] VAL-IQ-003: Dependency verification (Python, PDF libraries, Git)
 - [ ] VAL-IQ-004: Skills integrity check (all 7 phase skills present with valid YAML)

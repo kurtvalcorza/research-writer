@@ -1,4 +1,7 @@
-# Phase 7: Cross-Phase Validation
+# Phase 7: Cross-Phase Validation - Quick Start
+
+**Purpose:** Quick-start template for Phase 7 execution.
+**Full Details:** See `skills/07_cross-phase-validator/SKILL.md` for complete implementation guide.
 
 Validate consistency and traceability across all phase outputs.
 

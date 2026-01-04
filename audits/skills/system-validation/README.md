@@ -172,7 +172,7 @@ system-validation/
 **Test IDs:** VAL-IQ-001 through VAL-IQ-005
 
 **Key Checks:**
-- ✅ Required directories exist (`corpus/`, `outputs/`, `settings/`, `prompts/`, `skills/`, `audits/`)
+- ✅ Required directories exist (`corpus/`, `outputs/`, `settings/`, `quick-start/`, `skills/`, `audits/`)
 - ✅ `.gitignore` configured correctly (doesn't block corpus access)
 - ✅ Screening criteria template present with required sections
 - ✅ Dependencies installed (Python, PDF libraries, Git)
@@ -227,7 +227,7 @@ system-validation/
 **Key Checks:**
 - ✅ Groundedness (no hallucinations - queries non-existent files)
 - ✅ Instruction following (strict JSON format compliance)
-- ✅ Safety & refusal (red teaming - resists adversarial prompts)
+- ✅ Safety & refusal (red teaming - resists adversarial quick-start)
 - ⚠️ Output consistency (optional - 3 runs comparison)
 - ⚠️ Bias detection (optional - requires diverse corpus)
 

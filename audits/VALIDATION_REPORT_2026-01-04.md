@@ -61,7 +61,7 @@ This validation certifies that the Research Writer system is production-ready by
 
 | Test ID | Test Name | Expected Result | Actual Result | Status | Evidence |
 |---------|-----------|----------------|---------------|--------|----------|
-| VAL-IQ-001 | Directory Structure | All 6 dirs exist | 6/6 found (corpus, outputs, template, prompts, skills, audits) | ✅ PASS | Directory listing |
+| VAL-IQ-001 | Directory Structure | All 6 dirs exist | 6/6 found (corpus, outputs, settings, quick-start, skills, audits) | ✅ PASS | Directory listing |
 | VAL-IQ-002 | Configuration Files | Files valid, .gitignore allows corpus | Initially blocked, fixed | ✅ PASS | PHASE_1 report |
 | VAL-IQ-003 | Dependencies | Python ≥3.8, Git installed | Python 3.13.9, Git 2.52.0 | ✅ PASS | Version check |
 | VAL-IQ-004 | Skills Integrity | All 7 skills valid YAML | 7/7 skills present with valid frontmatter | ✅ PASS | Glob + Read check |

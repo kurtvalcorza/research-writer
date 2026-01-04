@@ -1,7 +1,7 @@
 # Process Audit Report: Phases 2-7 (Prompts & Skills)
 **Date:** 2026-01-02
 **Auditor:** Process Audit (First-Time User Perspective)
-**Scope:** prompts/phase2.md through phase7.md + skills/02 through 07
+**Scope:** quick-start/phase2.md through phase7.md + skills/02 through 07
 
 ---
 
@@ -24,7 +24,7 @@ This audit evaluates Phases 2-7 from a first-time user perspective. Unlike Phase
 ### 🔴 CRITICAL-1: Inconsistent Execution Instructions (Steps 5-10)
 
 **Problem:**
-README Steps 5-10 (Phases 2-7) use vague "Execute Phase X using prompts/phaseX.md" format, but Step 3 (Phase 1) was updated with clear "Tell your AI coding assistant:" instructions.
+README Steps 5-10 (Phases 2-7) use vague "Execute Phase X using quick-start/phaseX.md" format, but Step 3 (Phase 1) was updated with clear "Tell your AI coding assistant:" instructions.
 
 **User Impact:**
 - **Confusion**: "Wait, why does Phase 1 have clear instructions but Phase 2 doesn't?"
@@ -37,13 +37,13 @@ README Steps 5-10 (Phases 2-7) use vague "Execute Phase X using prompts/phaseX.m
 **Tell your AI coding assistant (e.g., Claude Code):**
 
 ```
-Please execute Phase 1 literature screening using the instructions in prompts/phase1.md.
+Please execute Phase 1 literature screening using the instructions in quick-start/phase1.md.
 ...
 ```
 
 # Step 5 (Phase 2) - BAD:
 ```bash
-Execute Phase 2 using prompts/phase2.md with the approved corpus.
+Execute Phase 2 using quick-start/phase2.md with the approved corpus.
 ```
 ```
 
@@ -94,7 +94,7 @@ Add a brief explanation in README (maybe in "How This Works" section):
 
 This system uses a two-layer design:
 
-- **Prompts** (`prompts/phaseX.md`): Concise invocation instructions that you pass to your AI assistant
+- **Prompts** (`quick-start/phaseX.md`): Concise invocation instructions that you pass to your AI assistant
 - **Skills** (`skills/0X_*/SKILL.md`): Detailed technical specifications that guide the AI's execution
 
 When you execute a phase, the AI reads the prompt (what to do) and follows the SKILL (how to do it). This separation keeps instructions clean while maintaining technical rigor.
@@ -204,7 +204,7 @@ Update README Step 5:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 2 literature extraction and synthesis using the instructions in prompts/phase2.md.
+Please execute Phase 2 literature extraction and synthesis using the instructions in quick-start/phase2.md.
 
 Process the approved PDFs from the corpus/ directory.
 ```
@@ -277,7 +277,7 @@ For experienced users who want to run the complete workflow in sequence, provide
 
 ```
 Execute the complete research writing workflow:
-1. Phase 1: Screen PDFs using prompts/phase1.md
+1. Phase 1: Screen PDFs using quick-start/phase1.md
 2. Pause for human review of screening-matrix.md
 ...
 ```
@@ -450,7 +450,7 @@ Track your progress through the workflow:
 
 ### ✅ Excellent Technical Design
 
-**prompts/phase2-7.md:**
+**quick-start/phase2-7.md:**
 - ✅ Clean, concise delegation files (28-118 lines each)
 - ✅ Consistent structure (SYSTEM ROLE → TASK → INPUTS → ACTIONS → CONSTRAINTS)
 - ✅ Clear separation of concerns (prompts invoke, SKILLs implement)

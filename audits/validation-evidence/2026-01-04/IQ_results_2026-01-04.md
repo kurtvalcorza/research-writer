@@ -19,15 +19,15 @@
 ✅ corpus/ - exists
 ✅ outputs/ - exists
 ✅ settings/ - exists
-✅ prompts/ - exists
+✅ quick-start/ - exists
 ✅ skills/ - exists
 ✅ audits/ - exists
 ```
 
 **Evidence:**
 ```
-ls -d corpus outputs template prompts skills audits
-audits  corpus  outputs  prompts  skills  template
+ls -d corpus outputs template quick-start skills audits
+audits  corpus  outputs  quick-start  skills  template
 ```
 
 ---

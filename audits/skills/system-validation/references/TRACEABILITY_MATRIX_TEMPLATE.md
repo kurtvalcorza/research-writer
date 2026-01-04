@@ -27,7 +27,7 @@
 | Requirement ID | Requirement Description | Category | Test ID(s) | Status | Evidence |
 |----------------|------------------------|----------|-----------|--------|----------|
 | **Installation & Configuration** |
-| REQ-IQ-001 | System must have required directory structure (corpus, outputs, template, prompts, skills, audits) | Functional | VAL-IQ-001 | [✅/❌] | [link] |
+| REQ-IQ-001 | System must have required directory structure (corpus, outputs, template, quick-start, skills, audits) | Functional | VAL-IQ-001 | [✅/❌] | [link] |
 | REQ-IQ-002 | .gitignore must allow corpus and outputs access | Operational | VAL-IQ-002 | [✅/❌] | [link] |
 | REQ-IQ-003 | Screening criteria template must exist with required sections | Functional | VAL-IQ-002 | [✅/❌] | [link] |
 | REQ-IQ-004 | Required dependencies must be installed (Python, PDF libs, Git) | Operational | VAL-IQ-003 | [✅/❌] | [link] |

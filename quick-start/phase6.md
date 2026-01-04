@@ -1,4 +1,7 @@
-# Phase 6: Contribution & Implications Framing
+# Phase 6: Contribution & Implications Framing - Quick Start
+
+**Purpose:** Quick-start template for Phase 6 execution.
+**Full Details:** See `skills/06_contribution-framer/SKILL.md` for complete implementation guide.
 
 Frame contributions and implications grounded in the literature review.
 
