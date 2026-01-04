@@ -118,10 +118,17 @@ research-writer/
 │   ├── research-contributions-implications.md (Phase 6)
 │   └── cross-phase-validation-report.md     (Phase 7)
 │
-├── audits/                    (Process audit reports)
+├── audits/                    (Validation & audit reports)
 │   ├── README.md              (Audit history and methodology)
-│   ├── PROCESS_AUDIT_REPORT.md (Phase 1 setup audit)
-│   └── PHASES_2-7_AUDIT_REPORT.md (Phases 2-7 docs audit)
+│   ├── matrices/              (Traceability matrices)
+│   ├── reports/               (Validation and audit reports)
+│   │   ├── VALIDATION_REPORT_*.md           (IQ/OQ/PQ/CQ validation)
+│   │   ├── PROCESS_AUDIT_REPORT.md          (Phase 1 setup audit)
+│   │   ├── PHASES_2-7_AUDIT_REPORT.md       (Phases 2-7 docs audit)
+│   │   └── PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md
+│   ├── skills/                (System validation skill)
+│   │   └── system-validation/
+│   └── validation-evidence/   (Test evidence archives)
 │
 ├── interface/                 (Web UI - Optional)
 │   ├── app/                   (Next.js pages and API routes)
