@@ -44,13 +44,14 @@ Validate the end-to-end execution of *Phase 1: Literature Discovery & Screening*
 ### Test 3: Context Window Limits & Scalability
 **Objective:** Verify agent's ability to handle multiple PDFs without exceeding token limits.
 
-- **Issue:** During "Pass 1" (Triage), the agent attempted to read *all* PDFs into context simultaneously ("Lightweight Metadata Scan (All PDFs at once)"), causing a `ContextWindowExceeded` error with just 6 PDFs.
+- **Issue:** During initial testing with **Claude Code CLI** (not Gemini CLI), the agent attempted to read *all* PDFs into context simultaneously during "Pass 1" (Triage), causing a `ContextWindowExceeded` error with just 6 PDFs.
 - **Root Cause:** The original `SKILL.md` design for Pass 1 was optimized for speed (batch processing) rather than memory safety.
 - **Resolution:** Refactored `skills/01_literature-discovery/SKILL.md` to enforce an **Incremental Triage Loop**:
     1. Process one PDF at a time.
     2. Extract metadata and append to triage file.
     3. **Explicitly clear context** before processing the next PDF.
 - **Outcome:** ✅ The skill is now scalable to any number of PDFs (Infinite Corpus Support).
+- **Note:** This fix was implemented before Gemini CLI testing, so Gemini CLI testing occurred with the already-fixed incremental workflow.
 
 ## 4. Final Results
 **Phase 1 Execution Metrics:**
@@ -298,7 +299,7 @@ Final Corpus: 6 papers (awaiting approval)
 | Initial Setup | Required `--yolo` flag | No special flags needed |
 | Tool Availability | Needed `conductor` extension | Native tool support |
 | File Access | Blocked by `.gitignore` initially | No blocking issues |
-| Context Overflow | Occurred during batch processing | Not encountered |
+| Context Overflow | Not encountered (tested after fix) | Occurred during initial testing (before incremental fix) |
 | PDF Reading | Required extension support | Native PDF reading |
 | Execution Speed | ~3 minutes | < 2 minutes (verification) |
 

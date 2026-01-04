@@ -881,9 +881,11 @@ Each can be added as a composable SKILL.
 
 **Problem: Context window limit hit during PASS 1**
 ```
-Solution: Extract minimal metadata only
-- Skip first 200 characters extraction
-- Flag all papers for PASS 2 (full screening)
+Solution: This issue has been fixed in the current version
+- The skill now uses incremental processing (one PDF at a time)
+- If you still encounter this, ensure you're using the latest SKILL.md
+- The universal three-pass workflow handles any corpus size
+- Note: Initial testing with Claude Code CLI revealed this issue, which was fixed before multi-platform validation
 ```
 
 **Problem: PDF parsing failure**
