@@ -1,20 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { spawn } from "child_process";
+import { spawn, execSync } from "child_process";
+
+// Helper to get the full path to a provider CLI
+function getProviderPath(provider: string): string | null {
+    try {
+        const command = process.platform === "win32" ? `where ${provider}` : `which ${provider}`;
+        // stdio: 'pipe' to capture output
+        const output = execSync(command, { encoding: "utf-8", stdio: "pipe" });
+        // Get the first line (first match) and trim whitespace
+        return output.split(/\r?\n/)[0].trim();
+    } catch {
+        return null;
+    }
+}
 
 // Helper to check if provider CLI is available
 function isProviderAvailable(provider: string): boolean {
-    try {
-        const command = process.platform === "win32" ? `where ${provider}` : `which ${provider}`;
-        require("child_process").execSync(command, { stdio: "ignore" });
-        return true;
-    } catch {
-        return false;
-    }
+    return getProviderPath(provider) !== null;
 }
 
 // Helper to check available tools for a provider
 async function checkProviderTools(provider: string): Promise<{ available: boolean; tools: string[]; error?: string }> {
-    if (!isProviderAvailable(provider)) {
+    const providerPath = getProviderPath(provider);
+    if (!providerPath) {
         return {
             available: false,
             tools: [],
@@ -23,11 +31,11 @@ async function checkProviderTools(provider: string): Promise<{ available: boolea
     }
 
     return new Promise((resolve) => {
-        const isWindows = process.platform === "win32";
         const testPrompt = "List all available tools you have access to. Respond with just the tool names, one per line.";
 
-        const child = spawn(provider, [], {
-            shell: isWindows,
+        // Spawn the CLI directly without shell to mitigate command injection risks
+        const child = spawn(providerPath, [], {
+            shell: false,
             env: { ...process.env, "NO_COLOR": "1", "FORCE_COLOR": "0" }
         });
 
@@ -177,7 +185,6 @@ export async function POST(req: NextRequest) {
         });
 
     } catch (error) {
-        console.error("System check failed:", error);
         return NextResponse.json({
             error: "System check failed",
             message: error instanceof Error ? error.message : "Unknown error"

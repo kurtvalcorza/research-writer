@@ -40,7 +40,8 @@ export default function Home() {
 
       setStats({ corpusCount, completedPhases });
     } catch (error) {
-      console.error("Failed to fetch dashboard data", error);
+      // Error is handled by showing default stats (0 corpus, no completed phases)
+      // In production, this should be logged to an error tracking service
     } finally {
       setLoading(false);
     }

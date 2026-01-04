@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { ALLOWED_DIRECTORIES } from "@/lib/config";
 
 interface FileStat {
     name: string;
@@ -11,7 +12,7 @@ interface FileStat {
 
 // Function to safely get directory path
 function getSafePath(dirName: string): string {
-    const allowedDirs = ["corpus", "outputs", "prompts", "settings"];
+    const allowedDirs = [...ALLOWED_DIRECTORIES.FILE_DIRS];
     if (!allowedDirs.includes(dirName)) {
         throw new Error("Invalid directory");
     }
@@ -58,7 +59,6 @@ export async function GET(request: Request) {
         return NextResponse.json({ files: validFiles });
 
     } catch (error) {
-        console.error("Failed to list files:", error);
         return NextResponse.json({
             error: "Failed to list files",
             message: error instanceof Error ? error.message : "Unknown error"
@@ -108,8 +108,6 @@ export async function DELETE(request: Request) {
 
         return NextResponse.json({ success: true, filename: safeFilename });
     } catch (error) {
-        console.error("Failed to delete file:", error);
-
         if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
             return NextResponse.json({ error: "File not found" }, { status: 404 });
         }
