@@ -57,12 +57,12 @@ PHASE 4 — Literature Review Drafting              (SKILL)
         ↓
 PHASE 4.5 — Citation Integrity Validation         (SKILL - Quality Control)
         ↓
-PHASE 5 — Contribution & Implications Framing     (SKILL)
+PHASE 6 — Contribution & Implications Framing     (SKILL)
         ↓
-PHASE 6 — Cross-Phase Validation                  (SKILL - Quality Control)
+PHASE 7 — Cross-Phase Validation                  (SKILL - Quality Control)
 ```
 
-> **Note:** Phase numbering follows the complete research pipeline: 1 (Discovery) → 2 (Synthesis) → 3 (Outline) → 4 (Draft) → 4.5 (Citation Validation) → 5 (Contributions) → 6 (Cross-Phase Validation). Quality control phases (4.5, 6) are automated validation checkpoints.
+> **Note:** Phase numbering follows the complete research pipeline: 1 (Discovery) → 2 (Synthesis) → 3 (Outline) → 4 (Draft) → 4.5 (Citation Validation) → 6 (Contributions) → 7 (Cross-Phase Validation). Quality control phases (4.5, 7) are automated validation checkpoints.
 
 > **Skills Compliance:** All skills comply with the [Agent Skills specification](https://agentskills.io/specification) using actual tool names (`Read Write Edit Glob Grep Bash`) and include comprehensive Pre-Execution Validation, Execution Models, Error Handling, Output Validation, and Integration documentation.
 
