@@ -15,7 +15,7 @@
    - `corpus/` (research PDFs)
    - `outputs/` (generated reports)
    - `settings/` (screening criteria)
-   - `prompts/` (execution prompts)
+   - `quick-start/` (execution quick-start)
    - `skills/` (skill definitions)
    - `audits/` (validation reports)
 

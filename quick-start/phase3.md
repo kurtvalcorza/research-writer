@@ -1,4 +1,7 @@
-# Phase 3: Argument Structure & Review Outline
+# Phase 3: Argument Structure & Review Outline - Quick Start
+
+**Purpose:** Quick-start template for Phase 3 execution.
+**Full Details:** See `skills/03_argument-structurer/SKILL.md` for complete implementation guide.
 
 Derive an argument structure from the literature synthesis.
 

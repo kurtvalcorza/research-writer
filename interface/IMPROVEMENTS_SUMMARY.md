@@ -14,7 +14,7 @@ This document provides a concise overview of all improvements made to elevate th
 **File**: `app/api/agent/run/route.ts`
 
 ### 2. Path Traversal Vulnerability ❌ → ✅
-**Before**: Regex-only validation allowed bypass (e.g., `prompts/../../etc/passwd`)
+**Before**: Regex-only validation allowed bypass (e.g., `quick-start/../../etc/passwd`)
 **After**: Secure path resolution with `path.resolve()` validation
 **Files**: All API routes
 

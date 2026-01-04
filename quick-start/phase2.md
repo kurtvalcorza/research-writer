@@ -1,4 +1,7 @@
-# Phase 2: Literature Extraction & Synthesis
+# Phase 2: Literature Extraction & Synthesis - Quick Start
+
+**Purpose:** Quick-start template for Phase 2 execution.
+**Full Details:** See `skills/02_literature-synthesis/SKILL.md` for complete implementation guide.
 
 Extract metadata and synthesize themes across research PDFs.
 

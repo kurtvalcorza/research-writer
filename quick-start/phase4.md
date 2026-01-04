@@ -1,4 +1,7 @@
-# Phase 4: Literature Review Drafting
+# Phase 4: Literature Review Drafting - Quick Start
+
+**Purpose:** Quick-start template for Phase 4 execution.
+**Full Details:** See `skills/04_literature-drafter/SKILL.md` for complete implementation guide.
 
 Draft the literature review section with theme-driven synthesis.
 

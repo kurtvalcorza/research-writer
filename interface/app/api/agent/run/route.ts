@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Secure path validation with proper traversal protection
-        const fullPromptPath = validateAndResolvePath(promptPath, "prompts", projectRoot);
+        const fullPromptPath = validateAndResolvePath(promptPath, "quick-start", projectRoot);
 
         if (!fullPromptPath) {
             return NextResponse.json({ error: "Invalid directory or path traversal attempt" }, { status: 403 });

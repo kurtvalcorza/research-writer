@@ -145,29 +145,29 @@ Thumbs.db
 ### 🟠 HIGH-1: Confusing Prompt vs SKILL Relationship
 
 **Problem:**
-README and workflow use both "prompts/phase1.md" AND "skills/01_literature-discovery/SKILL.md" but their relationship is unclear.
+README and workflow use both "quick-start/phase1.md" AND "skills/01_literature-discovery/SKILL.md" but their relationship is unclear.
 
 **User Confusion Points:**
-1. prompts/phase1.md says: "Skill Definition: Read and follow skills/01_literature-discovery/SKILL.md"
+1. quick-start/phase1.md says: "Skill Definition: Read and follow skills/01_literature-discovery/SKILL.md"
 2. Do I execute the prompt? Or the SKILL? Or both?
 3. The prompt is 309 lines, the SKILL is 527 lines - which one matters?
 
 **Evidence from Files:**
-- `prompts/phase1.md` line 7: "**Skill Definition:** Read and follow `skills/01_literature-discovery/SKILL.md`"
+- `quick-start/phase1.md` line 7: "**Skill Definition:** Read and follow `skills/01_literature-discovery/SKILL.md`"
 - But the prompt file ITSELF contains complete execution instructions
 - 95% duplicate content between the two files
 
 **User Mental Model Problem:**
 ```
-User reads README → "Execute Phase 1 using prompts/phase1.md"
-User opens prompts/phase1.md → "Read skills/01_literature-discovery/SKILL.md"
+User reads README → "Execute Phase 1 using quick-start/phase1.md"
+User opens quick-start/phase1.md → "Read skills/01_literature-discovery/SKILL.md"
 User opens SKILL.md → "Here's the full workflow"
 User: "Wait, which one do I actually use???"
 ```
 
 **Recommendation:**
 **OPTION A (Recommended):** Simplify to single-source-of-truth
-- Make prompts/phase1.md a SHORT invocation file:
+- Make quick-start/phase1.md a SHORT invocation file:
   ```markdown
   # Phase 1: Literature Discovery & Screening
 
@@ -182,7 +182,7 @@ User: "Wait, which one do I actually use???"
 - Keep all technical details in SKILL.md only
 
 **OPTION B:** Clarify roles explicitly
-- prompts/ = "What to do" (high-level user instructions)
+- quick-start/ = "What to do" (high-level user instructions)
 - skills/ = "How to do it" (technical agent instructions)
 - Update README to explain this distinction clearly
 
@@ -191,17 +191,17 @@ User: "Wait, which one do I actually use???"
 ### 🟠 HIGH-2: Unclear "How to Execute" Instructions
 
 **Problem:**
-README says "Execute Phase 1 using prompts/phase1.md" but doesn't explain HOW.
+README says "Execute Phase 1 using quick-start/phase1.md" but doesn't explain HOW.
 
 **What New Users See:**
 ```
 Step 3: Run Phase 1 Screening
-Execute Phase 1 using prompts/phase1.md.
+Execute Phase 1 using quick-start/phase1.md.
 ```
 
 **What Users Think:**
 - Do I copy-paste the file contents?
-- Do I tell Claude Code "read prompts/phase1.md"?
+- Do I tell Claude Code "read quick-start/phase1.md"?
 - Do I use a slash command?
 - Do I just say "run phase 1"?
 
@@ -217,7 +217,7 @@ Update README Step 3 to:
 
 Tell Claude Code:
 ```
-Please execute Phase 1 literature screening using the instructions in prompts/phase1.md.
+Please execute Phase 1 literature screening using the instructions in quick-start/phase1.md.
 
 Process the PDFs in the corpus/ directory and apply the criteria from settings/screening-criteria-template.md.
 ```
@@ -406,7 +406,7 @@ Users don't know if:
 - Whether it's stuck
 
 **Recommendation:**
-Update prompts/phase1.md PASS 2 instructions to include progress notifications:
+Update quick-start/phase1.md PASS 2 instructions to include progress notifications:
 ```markdown
 6. **Update progress file AND notify user:**
 

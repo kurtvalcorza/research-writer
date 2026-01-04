@@ -9,10 +9,10 @@ A **production-ready, secure** web interface designed to orchestrate the agentic
 ### Core Features
 - **Dashboard**: Real-time overview of your research progress with "Phase Locking" to enforce a rigorous evidence-first workflow
 - **Corpus Management**: Drag-and-drop upload, listing, and deletion of research PDFs with validation
-- **Prompt Library**: View and copy prompts for each research phase (Screening, Synthesis, Drafting, etc.)
+- **Quick Start Library**: View and copy quick-start templates for each research phase (Screening, Synthesis, Drafting, etc.)
 - **Criteria Editor**: Visual editor for your Inclusion/Exclusion screening criteria
 - **Output Viewer**: Beautiful Markdown rendering for generated research artifacts (matrices, drafts, reports)
-- **Multi-Provider CLI Integration**: Direct execution of prompts using either `gemini` or `claude` command-line tools with real-time terminal view
+- **Multi-Provider CLI Integration**: Direct execution of quick-start using either `gemini` or `claude` command-line tools with real-time terminal view
 
 ### Security Features
 - ✅ **Enterprise-Grade Security**: No critical vulnerabilities, comprehensive input validation
@@ -128,7 +128,7 @@ interface/
 │   │   └── upload/              # File upload
 │   ├── corpus/                   # Corpus management page
 │   ├── outputs/                  # Output viewer page
-│   ├── prompts/                  # Prompt library page
+│   ├── quick-start/                  # Prompt library page
 │   ├── settings/                 # Settings editor page
 │   ├── layout.tsx               # Root layout with metadata
 │   ├── page.tsx                 # Dashboard
@@ -153,7 +153,7 @@ interface/
 ### Directory References
 - \`../corpus\` - Directory for input PDFs (parent repository)
 - \`../outputs\` - Directory for generated research artifacts (parent repository)
-- \`../prompts\` - Directory containing the system prompts for each phase (parent repository)
+- \`../quick-start\` - Directory containing the system quick-start for each phase (parent repository)
 - \`../template\` - Directory for screening criteria template (parent repository)
 
 ## 🔒 Security

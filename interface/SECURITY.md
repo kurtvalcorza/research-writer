@@ -21,7 +21,7 @@ This document outlines the security measures implemented in the Research Writer 
   - Write access restricted to `settings/` directory only
 
 - **Files API (`/api/files`)**:
-  - Whitelisted directories: `corpus`, `outputs`, `prompts`, `template`
+  - Whitelisted directories: `corpus`, `outputs`, `quick-start`, `settings`
   - Protected files: `.gitkeep`, `.gitignore`
   - Path traversal prevention
   - Directory deletion prevention

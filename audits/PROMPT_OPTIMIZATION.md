@@ -4,7 +4,7 @@
 
 When executing phases from the UI, the system was encountering "Prompt is too long" errors. This occurred because:
 
-1. The UI read the prompt file (e.g., `prompts/phase1.md`)
+1. The UI read the prompt file (e.g., `quick-start/phase1.md`)
 2. Detected references to skill files (e.g., `skills/01_literature-discovery/SKILL.md`)
 3. **Auto-injected the entire skill file content** into the prompt before sending to the CLI
 4. The combined prompt + skill content exceeded the CLI's prompt size limit
@@ -97,7 +97,7 @@ BEGIN.
 
 This change aligns with the intended two-layer architecture:
 
-- **Prompts** (`prompts/phaseX.md`) - Concise invocation instructions (entry point)
+- **Prompts** (`quick-start/phaseX.md`) - Concise invocation instructions (entry point)
 - **Skills** (`skills/0X_*/SKILL.md`) - Detailed technical specs (read when needed)
 
 The agent reads the prompt, sees the instruction to read the skill file, and uses its Read tool to access it.

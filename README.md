@@ -81,7 +81,7 @@ research-writer/
 ├── settings/
 │   └── screening-criteria-template.md  (Customize before Phase 1)
 │
-├── prompts/
+├── quick-start/
 │   ├── phase1.md              (Phase 1 execution prompt)
 │   ├── phase2.md              (Phase 2 prompt)
 │   ├── phase3.md              (Phase 3 prompt)
@@ -144,11 +144,11 @@ research-writer/
 
 This system uses a two-layer architecture for clarity and maintainability:
 
-### **Prompts** (`prompts/phaseX.md`)
-- **Purpose:** Concise invocation instructions that you pass to your AI assistant
+### **Quick Start Templates** (`quick-start/phaseX.md`)
+- **Purpose:** Concise invocation templates that point to the full skill definitions
 - **Content:** What to do, what inputs to use, what outputs to generate
 - **Length:** Typically 30-120 lines
-- **Role:** Entry point for executing each phase
+- **Role:** Convenient entry point for executing each phase (thin wrappers around skills)
 
 ### **Skills** (`skills/0X_*/SKILL.md`)
 - **Purpose:** Detailed technical specifications that guide the AI's execution
@@ -159,7 +159,7 @@ This system uses a two-layer architecture for clarity and maintainability:
 ### How They Work Together
 
 ```
-User → Tells AI: "Execute prompts/phase2.md"
+User → Tells AI: "Execute quick-start/phase2.md"
        ↓
 AI reads prompt → "Use SKILL skills/02_literature-synthesis/SKILL.md"
        ↓
@@ -550,7 +550,7 @@ Please revise settings/screening-criteria-template.md accordingly.
 **Tell your AI coding assistant (e.g., Claude Code):**
 
 ```
-Please execute Phase 1 literature screening using the instructions in prompts/phase1.md.
+Please execute Phase 1 literature screening using the instructions in quick-start/phase1.md.
 
 Process the PDFs in the corpus/ directory and apply the screening criteria from settings/screening-criteria-template.md.
 ```
@@ -582,7 +582,7 @@ Open `outputs/literature-screening-matrix.md` and review:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 2 literature extraction and synthesis using the instructions in prompts/phase2.md.
+Please execute Phase 2 literature extraction and synthesis using the instructions in quick-start/phase2.md.
 
 Process the approved PDFs from the corpus/ directory.
 ```
@@ -620,7 +620,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 3 argument structuring using the instructions in prompts/phase3.md.
+Please execute Phase 3 argument structuring using the instructions in quick-start/phase3.md.
 
 Use the synthesis matrix to create a logical argument structure and literature review outline.
 ```
@@ -652,7 +652,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 4 literature review drafting using the instructions in prompts/phase4.md.
+Please execute Phase 4 literature review drafting using the instructions in quick-start/phase4.md.
 
 Use the approved outline and synthesis matrix to draft the literature review.
 ```
@@ -701,7 +701,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 4.5 citation integrity validation using the instructions in prompts/phase4.5.md.
+Please execute Phase 4.5 citation integrity validation using the instructions in quick-start/phase4.5.md.
 
 Validate all citations in the draft against the extraction matrix.
 ```
@@ -736,7 +736,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 6 contribution and implications framing using the instructions in prompts/phase6.md.
+Please execute Phase 6 contribution and implications framing using the instructions in quick-start/phase6.md.
 
 Use the literature review draft and synthesis to frame contributions and implications.
 ```
@@ -788,7 +788,7 @@ The agent will:
 **Tell your AI coding assistant:**
 
 ```
-Please execute Phase 7 cross-phase validation using the instructions in prompts/phase7.md.
+Please execute Phase 7 cross-phase validation using the instructions in quick-start/phase7.md.
 
 Validate consistency and traceability across all completed phase outputs.
 ```
@@ -826,15 +826,15 @@ For experienced users who want to run the complete workflow in sequence, provide
 ```
 Execute the complete research writing workflow:
 
-1. Phase 1: Screen PDFs using prompts/phase1.md
+1. Phase 1: Screen PDFs using quick-start/phase1.md
 2. Pause for human review of screening-matrix.md
-3. Phase 2: Extract and synthesize using prompts/phase2.md
-4. Phase 3: Generate outline using prompts/phase3.md
+3. Phase 2: Extract and synthesize using quick-start/phase2.md
+4. Phase 3: Generate outline using quick-start/phase3.md
 5. Pause for human approval of outline
-6. Phase 4: Draft literature review using prompts/phase4.md
-7. Phase 4.5: Validate citations using prompts/phase4.5.md
-8. Phase 6: Frame contributions using prompts/phase6.md
-9. Phase 7: Cross-phase validation using prompts/phase7.md
+6. Phase 4: Draft literature review using quick-start/phase4.md
+7. Phase 4.5: Validate citations using quick-start/phase4.5.md
+8. Phase 6: Frame contributions using quick-start/phase6.md
+9. Phase 7: Cross-phase validation using quick-start/phase7.md
 
 Stop at each human checkpoint for approval before proceeding.
 ```

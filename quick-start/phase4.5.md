@@ -1,4 +1,7 @@
-# Phase 4.5: Citation Integrity Validation
+# Phase 4.5: Citation Integrity Validation - Quick Start
+
+**Purpose:** Quick-start template for Phase 4.5 execution.
+**Full Details:** See `skills/05_citation-validator/SKILL.md` for complete implementation guide.
 
 Validate all citations in the draft against the extraction matrix.
 

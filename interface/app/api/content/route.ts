@@ -7,7 +7,7 @@ const MAX_CONTENT_SIZE = 10 * 1024 * 1024;
 
 function getSafePath(relativePath: string, projectRoot: string): string | null {
     // Allow access to specific dirs
-    const allowedRoots = ["prompts", "settings", "outputs"];
+    const allowedRoots = ["quick-start", "settings", "outputs"];
 
     // Normalize path and remove leading traversal sequences
     const normalized = path.normalize(relativePath).replace(/^(\.\.[\/\\])+/, "");

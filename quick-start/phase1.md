@@ -1,4 +1,7 @@
-# Phase 1: Literature Screening
+# Phase 1: Literature Screening - Quick Start
+
+**Purpose:** Quick-start template for Phase 1 execution.
+**Full Details:** See `skills/01_literature-discovery/SKILL.md` for complete implementation guide.
 
 Execute systematic literature screening using the three-pass workflow.
 
