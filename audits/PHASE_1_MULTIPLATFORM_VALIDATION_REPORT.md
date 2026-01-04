@@ -31,9 +31,9 @@ Validate the end-to-end execution of *Phase 1: Literature Discovery & Screening*
 
 | Platform | OS | Tool Support | Special Requirements |
 |----------|-----|--------------|---------------------|
-| Claude Code CLI | Windows | Native | Context fix applied after initial testing |
-| Gemini CLI | Windows | `conductor` extension | Requires `--yolo` flag |
-| Antigravity Internal | Windows | Custom Python scripts | Manual execution |
+| Claude Code CLI | Windows 11 | Native | Context fix applied after initial testing |
+| Gemini CLI | Windows 11 | `conductor` extension | Requires `--yolo` flag |
+| Antigravity Internal | Windows 11 | Custom Python scripts | Manual execution |
 | Claude Code Desktop | Windows 11 | Native | No special requirements |
 
 ---
@@ -43,7 +43,7 @@ Validate the end-to-end execution of *Phase 1: Literature Discovery & Screening*
 ### 3.1 Gemini CLI Testing
 
 **Environment:**
-- **OS:** Windows
+- **OS:** Windows 11
 - **CLI Tool:** Google Gemini CLI
 - **Extensions:** `conductor` (for standardized tool support)
 - **Target Skill:** `skills/01_literature-discovery/SKILL.md`
@@ -101,7 +101,7 @@ gemini --yolo -p "Execute skills/01_literature-discovery/SKILL.md"
 ### 3.2 Claude Code CLI Testing (Initial Development)
 
 **Environment:**
-- **OS:** Windows
+- **OS:** Windows 11
 - **CLI Tool:** Claude Code CLI
 - **Target Skill:** `skills/01_literature-discovery/SKILL.md`
 
@@ -135,6 +135,7 @@ Refactored `skills/01_literature-discovery/SKILL.md` to enforce an **Incremental
 
 **Environment:**
 - **Date:** 2026-01-04
+- **OS:** Windows 11
 - **Executor:** Antigravity Agent (Manual Mode)
 - **Platform:** Custom Python script execution (bypassing CLI)
 - **Target Skill:** `skills/01_literature-discovery/SKILL.md` (logic validation)

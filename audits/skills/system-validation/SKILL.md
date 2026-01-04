@@ -1,113 +1,822 @@
 ---
 name: system-integrity-validation
-description: Performs Installation Qualification (IQ) and Operational Qualification (OQ) of the Research Writer environment. Validates file access, tool capabilities, and proper configuration (e.g., .gitignore, CLI permissions). Generates audit reports.
+description: Performs comprehensive IQ/OQ/PQ validation of the Research Writer environment following FDA/ISO software validation standards. Validates file access, tool capabilities, configuration integrity, and generates compliance-ready audit reports with traceability.
 license: Apache-2.0
-compatibility: Universal (Gemini, Claude, OpenAI)
+compatibility: Universal (Claude Code, Gemini CLI, OpenAI, Anthropic API)
 allowed-tools: Read Write Edit Glob Grep Bash
+validation-standard: FDA 21 CFR Part 11, ISO 13485, IEEE 829
 ---
 
-# System Integrity Validation Agent
+# System Integrity Validation Skill
 
-This skill automates the **Validation Protocol** for the Research Writer system, ensuring it is correctly installed (IQ) and operationally capable (OQ) before research begins.
+This skill automates the **IQ/OQ/PQ Validation Protocol** for the Research Writer system, ensuring pharmaceutical-grade validation compliance before research begins.
+
+**Validation Approach:**
+- **IQ (Installation Qualification):** Verify correct installation and configuration
+- **OQ (Operational Qualification):** Verify system operates as intended
+- **PQ (Performance Qualification):** Verify system performs as intended in production use
 
 ---
 
 ## 1. Trigger
 
 Activate this skill when:
-- Setting up the system for the first time
-- Troubleshooting "tool not found" or "file access" errors
-- Switching between AI providers (e.g., Claude to Gemini)
-- Verifying environment integrity after git updates
+- **First-time setup:** Initial installation validation
+- **Platform migration:** Switching between AI providers (Claude Code, Gemini CLI, etc.)
+- **Post-update validation:** After git updates or dependency changes
+- **Troubleshooting:** "Tool not found", "File access denied", or execution errors
+- **Compliance audit:** Pre-research validation for regulated environments
+- **Multi-platform testing:** Cross-platform compatibility verification
 
 ---
 
 ## 2. Objective
 
-Produce a **Validation Report** that certifies:
-- **Installation Qualification (IQ):** Required files, directories, and configurations are present.
-- **Operational Qualification (OQ):** The agent can successfully read, write, and execute necessary commands.
+Produce a **GxP-compliant Validation Report** that certifies:
+
+### 2.1 Installation Qualification (IQ)
+- Required directories exist with correct structure
+- Configuration files present and properly formatted
+- Dependencies installed and accessible
+- `.gitignore` correctly configured for data access
+
+### 2.2 Operational Qualification (OQ)
+- All required tools (Read, Write, Bash, Glob, Grep) functional
+- File I/O operations succeed
+- Shell execution capabilities verified
+- PDF parsing libraries accessible
+
+### 2.3 Performance Qualification (PQ)
+- End-to-end workflow execution (minimal corpus test)
+- PRISMA-compliant output generation
+- State management and recovery capabilities
+- Cross-platform compatibility confirmed
+
+### 2.4 Traceability & Audit Trail
+- Test case IDs linked to requirements
+- Evidence artifacts generated and preserved
+- Pass/fail criteria documented
+- Deviation management for failed tests
 
 ---
 
 ## 3. Inputs
 
-No specific inputs required. The agent inspects the current workspace environment.
+**Required:**
+- Current workspace directory (auto-detected)
+
+**Optional:**
+- `--platform`: Specify platform being tested (claude-code-cli, gemini-cli, claude-code-desktop, etc.)
+- `--test-corpus`: Path to minimal test corpus (3-5 PDFs for PQ validation)
+- `--compliance-mode`: Enable full IQ/OQ/PQ with evidence generation (default: IQ/OQ only)
 
 ---
 
 ## 4. Execution Steps
 
-### Phase 1: Installation Qualification (IQ)
+### PHASE 1: Installation Qualification (IQ)
 
-**Step 1: Directory Structure Verification**
-- Check for existence of critical directories:
-  - `corpus/`
-  - `outputs/`
-  - `templates/`
-  - `prompts/`
-  - `skills/`
+**Test ID:** VAL-IQ-001 through VAL-IQ-005
 
-**Step 2: Configuration Check**
-- **.gitignore Analysis:**
-  - Read `.gitignore`.
-  - **CRITICAL CHECK:** Ensure `corpus/*.pdf` and `outputs/*.md` are **NOT** ignored (commented out or missing).
-  - If ignored: Flag as Critical Failure (Agent cannot read/write data).
-- **Template Check:**
-  - Verify `template/screening-criteria-template.md` exists.
-  - Check if it contains default "Example" text (requires customization) or is ready.
+#### Step 1: Directory Structure Verification (VAL-IQ-001)
 
-### Phase 2: Operational Qualification (OQ)
+**Objective:** Verify required directories exist with correct permissions
 
-**Step 3: Tool Capability Test**
-- **Read Test:** specific read of `README.md` (first 5 lines).
-- **Write Test:** Write a small test file to `outputs/validation_test.tmp` and delete it.
-- **Shell Test:** Execute `echo "System Check"` using `run_shell_command` (or `Bash`).
-  - *Note:* If `run_shell_command` fails, flag as "Restricted Mode Error" (Suggest `--yolo` for Gemini).
+**Expected Result:** All critical directories present and accessible
 
-### Phase 3: Reporting
+**Test Procedure:**
+1. Check for existence of critical directories:
+   - `corpus/` (research PDFs)
+   - `outputs/` (generated reports)
+   - `template/` (screening criteria)
+   - `prompts/` (execution prompts)
+   - `skills/` (skill definitions)
+   - `audits/` (validation reports)
 
-**Step 4: Generate Validation Report**
-- Create file: `audits/VALIDATION_REPORT_[YYYY-MM-DD].md`
-- format:
-  ```markdown
-  # System Validation Report
-  **Date:** [Date]
-  **Agent:** [Agent Name]
-  
-  ## IQ Results
-  - Directories: [PASS/FAIL]
-  - Gitignore: [PASS/FAIL] (Must allow PDF/MD access)
-  - Templates: [PASS/WARNING]
-  
-  ## OQ Results
-  - Read Capability: [PASS/FAIL]
-  - Write Capability: [PASS/FAIL]
-  - Shell Capability: [PASS/FAIL] (Critical for some skills)
-  
-  ## Summary
-  [PASS/FAIL]
-  ```
+2. Verify directory permissions (read/write access)
 
-**Step 5: Audit Log Update**
-- Append entry to `audits/README.md` in the "Audit History" table.
+3. Document missing directories in deviation log
+
+**Pass Criteria:**
+- All 6 directories exist
+- All directories are readable and writable
+- No permission errors encountered
+
+**Evidence:**
+- Directory listing with timestamps
+- Permission verification output
 
 ---
 
-## 5. Constraints & Troubleshooting
+#### Step 2: Configuration File Validation (VAL-IQ-002)
 
-### Critical Failures (Stop Work)
-- **Blocked File Access:** If `.gitignore` blocks `corpus/`, the agent is blind. **Fix:** User must modify `.gitignore`.
-- **Missing Write Permission:** If Write Test fails, the agent cannot generate outputs. **Fix:** Check OS permissions or CLI "Safe Mode".
-- **Missing Shell:** If Shell Test fails, some advanced skills (Git operations) may fail. **Fix:** Use `--yolo` (Gemini) or check extension installation.
+**Objective:** Verify configuration files exist and are properly formatted
 
-### Conservative Defaults
-- If a tool fails (e.g., Shell), do NOT crash. Log it as a generic failure in the report and propose the standard fix (e.g., "Enable --yolo flag").
+**Expected Result:** All configuration files present and valid
+
+**Test Procedure:**
+1. Verify `.gitignore` exists
+2. **CRITICAL CHECK:** Ensure `corpus/*.pdf` and `outputs/*.md` are NOT ignored
+3. Verify `template/screening-criteria-template.md` exists
+4. Check if template contains customizable sections
+
+**Pass Criteria:**
+- `.gitignore` exists and allows corpus/output access
+- Template file exists with required sections:
+  - Research Context
+  - Inclusion Criteria
+  - Exclusion Criteria
+  - Edge Cases and Decision Rules
+
+**Critical Failure:** If `.gitignore` blocks corpus access → Flag as IQ FAILURE
+
+**Evidence:**
+- `.gitignore` content snapshot
+- Template file structure verification
 
 ---
 
-## 6. Intended Use
+#### Step 3: Dependency Verification (VAL-IQ-003)
 
-Use this skill as a "Self-Test" mechanism. It mimics the behavior of complex skills (Phase 1-7) to catch configuration issues early.
+**Objective:** Verify required dependencies are installed
+
+**Expected Result:** All dependencies available and correct versions
+
+**Test Procedure:**
+1. Check Python installation (if applicable)
+2. Verify PDF processing libraries (PyPDF2, pdfplumber)
+3. Check Node.js installation (for web interface, if used)
+4. Verify Git installation and configuration
+
+**Pass Criteria:**
+- Python ≥3.8 installed (if required)
+- PDF libraries accessible
+- Git configured with valid credentials
+
+**Evidence:**
+- Dependency version report
+- Import test results
+
+---
+
+#### Step 4: Skills Integrity Check (VAL-IQ-004)
+
+**Objective:** Verify all skill files are present and parseable
+
+**Expected Result:** All 7 phase skills accessible and valid YAML frontmatter
+
+**Test Procedure:**
+1. Enumerate all skill files in `skills/` directory
+2. Verify YAML frontmatter validity
+3. Check `allowed-tools` declarations
+4. Verify skill descriptions match execution models
+
+**Pass Criteria:**
+- All phase skills (01-07) present
+- YAML frontmatter valid in all files
+- No broken references or missing dependencies
+
+**Evidence:**
+- Skill inventory with checksums
+- YAML validation report
+
+---
+
+#### Step 5: IQ Summary Report Generation (VAL-IQ-005)
+
+**Objective:** Generate IQ summary with pass/fail determination
+
+**Expected Result:** IQ report generated with clear status
+
+**Test Procedure:**
+1. Aggregate all IQ test results (VAL-IQ-001 through VAL-IQ-004)
+2. Calculate IQ pass percentage
+3. Document all deviations and critical failures
+4. Generate IQ certificate (if passed)
+
+**Pass Criteria:**
+- IQ Pass Percentage ≥90%
+- Zero critical failures
+- All deviations documented with remediation plans
+
+**Evidence:**
+- IQ Summary Report (`audits/VALIDATION_IQ_REPORT_[DATE].md`)
+
+---
+
+### PHASE 2: Operational Qualification (OQ)
+
+**Test ID:** VAL-OQ-001 through VAL-OQ-006
+
+#### Step 6: Read Capability Test (VAL-OQ-001)
+
+**Objective:** Verify agent can read files correctly
+
+**Expected Result:** Files read successfully with correct content
+
+**Test Procedure:**
+1. Read `README.md` (first 10 lines)
+2. Verify content matches expected format
+3. Test reading `.gitignore` (configuration file)
+4. Test reading skill file (YAML + Markdown)
+
+**Pass Criteria:**
+- All files read without errors
+- Content retrieved matches file structure
+- Line numbers accurate (if using line-numbered read)
+
+**Evidence:**
+- Read operation logs
+- Content hash verification
+
+---
+
+#### Step 7: Write Capability Test (VAL-OQ-002)
+
+**Objective:** Verify agent can write files correctly
+
+**Expected Result:** Files created with correct content and permissions
+
+**Test Procedure:**
+1. Write test file: `outputs/validation_test_[timestamp].tmp`
+2. Verify file created successfully
+3. Read file back to verify content integrity
+4. Delete test file
+5. Verify deletion successful
+
+**Pass Criteria:**
+- File created successfully
+- Content integrity verified (hash match)
+- File deleted without errors
+- No orphaned test files remain
+
+**Evidence:**
+- Write operation logs
+- File creation/deletion timestamps
+
+---
+
+#### Step 8: Shell Execution Test (VAL-OQ-003)
+
+**Objective:** Verify shell command execution capabilities
+
+**Expected Result:** Shell commands execute successfully
+
+**Test Procedure:**
+1. Execute simple echo command: `echo "System Check"`
+2. Execute directory listing: `ls` or `dir`
+3. Execute git status: `git status`
+4. Test command chaining: `echo "test" && echo "success"`
+
+**Pass Criteria:**
+- All commands execute without errors
+- Output captured correctly
+- Exit codes properly detected
+
+**Special Cases:**
+- **Gemini CLI:** If shell test fails, check for `--yolo` flag requirement
+- **Restricted Mode:** Document if shell access is limited
+
+**Evidence:**
+- Shell command execution logs
+- Output verification
+
+---
+
+#### Step 9: PDF Access Test (VAL-OQ-004)
+
+**Objective:** Verify PDF reading capabilities
+
+**Expected Result:** PDF files readable and parseable
+
+**Test Procedure:**
+1. Check if test PDFs exist in `corpus/`
+2. Attempt to read PDF metadata (title, author, year)
+3. Attempt to extract text from first page
+4. Verify encoding handling (UTF-8, special characters)
+
+**Pass Criteria:**
+- PDF files accessible
+- Metadata extractable
+- Text extraction succeeds
+- No encoding errors
+
+**If No Test PDFs Available:**
+- Mark test as N/A
+- Document in validation report
+- Recommend user add test PDF for full OQ
+
+**Evidence:**
+- PDF metadata extraction results
+- Text extraction samples
+
+---
+
+#### Step 10: Glob/Grep Pattern Matching Test (VAL-OQ-005)
+
+**Objective:** Verify file search and pattern matching capabilities
+
+**Expected Result:** Pattern matching tools work correctly
+
+**Test Procedure:**
+1. Test Glob: Find all `.md` files in `outputs/`
+2. Test Glob: Find all skill files matching `skills/*/SKILL.md`
+3. Test Grep: Search for specific pattern in README
+4. Test Grep: Case-insensitive search
+
+**Pass Criteria:**
+- Glob returns correct file matches
+- Grep finds expected patterns
+- No false positives or missed matches
+
+**Evidence:**
+- Search results with file counts
+- Pattern match verification
+
+---
+
+#### Step 11: OQ Summary Report Generation (VAL-OQ-006)
+
+**Objective:** Generate OQ summary with pass/fail determination
+
+**Expected Result:** OQ report generated with tool capability matrix
+
+**Test Procedure:**
+1. Aggregate all OQ test results (VAL-OQ-001 through VAL-OQ-005)
+2. Generate tool capability matrix:
+   | Tool | Status | Evidence |
+   |------|--------|----------|
+   | Read | PASS | VAL-OQ-001 |
+   | Write | PASS | VAL-OQ-002 |
+   | Bash | PASS/RESTRICTED | VAL-OQ-003 |
+   | PDF Access | PASS/N/A | VAL-OQ-004 |
+   | Glob/Grep | PASS | VAL-OQ-005 |
+
+3. Calculate OQ pass percentage
+4. Document platform-specific limitations
+5. Generate OQ certificate (if passed)
+
+**Pass Criteria:**
+- OQ Pass Percentage ≥80%
+- Read, Write, Glob, Grep all PASS
+- Bash PASS or RESTRICTED (documented)
+- PDF Access PASS or N/A (documented)
+
+**Evidence:**
+- OQ Summary Report (`audits/VALIDATION_OQ_REPORT_[DATE].md`)
+- Tool capability matrix
+
+---
+
+### PHASE 3: Performance Qualification (PQ) [Optional - Full Validation Mode]
+
+**Test ID:** VAL-PQ-001 through VAL-PQ-003
+
+**Note:** PQ is optional for basic validation. Required for compliance-mode or multi-platform validation.
+
+#### Step 12: End-to-End Workflow Test (VAL-PQ-001)
+
+**Objective:** Verify Phase 1 skill executes successfully with minimal corpus
+
+**Expected Result:** Complete Phase 1 workflow executes without errors
+
+**Prerequisites:**
+- Test corpus with 3-5 PDFs in `corpus/`
+- Screening criteria template customized
+
+**Test Procedure:**
+1. Execute Phase 1 skill with test corpus
+2. Verify all 3 passes complete (PASS 1, PASS 2, PASS 3)
+3. Check output files generated:
+   - `outputs/screening-triage.md`
+   - `outputs/screening-progress.md`
+   - `outputs/literature-screening-matrix.md`
+   - `outputs/prisma-flow-diagram.md`
+
+4. Validate output content:
+   - All test PDFs processed
+   - Metadata extraction successful
+   - PRISMA compliance verified
+   - No context overflow errors
+
+**Pass Criteria:**
+- All 3 passes complete successfully
+- All 4 output files generated
+- 100% PDF processing success rate
+- PRISMA flow diagram valid
+- No critical errors in execution log
+
+**Evidence:**
+- Phase 1 execution logs
+- Generated output files (archived)
+- Performance metrics (execution time, memory usage)
+
+---
+
+#### Step 13: State Management & Recovery Test (VAL-PQ-002)
+
+**Objective:** Verify interruption recovery capabilities
+
+**Expected Result:** Workflow resumes correctly after interruption
+
+**Test Procedure:**
+1. Start Phase 1 execution with test corpus
+2. Simulate interruption during PASS 2 (after processing 1-2 PDFs)
+3. Check `screening-progress.md` for state information
+4. Resume execution
+5. Verify:
+   - Already-processed PDFs not reprocessed
+   - Remaining PDFs processed successfully
+   - Final outputs complete and accurate
+
+**Pass Criteria:**
+- State file correctly tracks progress
+- Resumption skips completed PDFs
+- No duplicate processing
+- Final outputs match non-interrupted run
+
+**Evidence:**
+- State file snapshots (before/after interruption)
+- Resume execution logs
+- Output file comparison
+
+---
+
+#### Step 14: Cross-Platform Compatibility Test (VAL-PQ-003)
+
+**Objective:** Verify skill executes consistently across platforms
+
+**Expected Result:** Same corpus produces identical outputs on different platforms
+
+**Test Procedure:**
+1. Execute Phase 1 on Platform A (e.g., Claude Code Desktop)
+2. Execute Phase 1 on Platform B (e.g., Gemini CLI with --yolo)
+3. Compare outputs:
+   - File structure identical
+   - Screening decisions consistent
+   - PRISMA flow numbers match
+   - Metadata extraction results equivalent
+
+4. Document platform-specific differences (e.g., execution time, tool availability)
+
+**Pass Criteria:**
+- Output files structurally identical
+- Screening recommendations consistent (±5% variance acceptable)
+- No platform-specific failures
+- All platforms achieve ≥80% success rate
+
+**Evidence:**
+- Output file diffs
+- Platform comparison matrix
+- Execution performance comparison
+
+---
+
+### PHASE 4: Validation Report Generation
+
+#### Step 15: Comprehensive Validation Report (VAL-REPORT-001)
+
+**Objective:** Generate compliance-ready validation report
+
+**Expected Result:** Complete validation report with traceability matrix
+
+**Report Structure:**
+```markdown
+# System Validation Report
+
+**Date:** [YYYY-MM-DD]
+**Platform:** [Platform Name]
+**OS:** [Operating System + Version]
+**Validator:** [Agent Name/Human Name]
+**Validation Type:** [IQ/OQ | IQ/OQ/PQ]
+**Compliance Standard:** FDA 21 CFR Part 11, ISO 13485, IEEE 829
+
+---
+
+## Executive Summary
+
+**Overall Status:** [PASS | FAIL | PASS WITH DEVIATIONS]
+**IQ Status:** [PASS | FAIL] (Pass Rate: X%)
+**OQ Status:** [PASS | FAIL] (Pass Rate: X%)
+**PQ Status:** [PASS | FAIL | N/A] (Pass Rate: X%)
+
+**Critical Issues:** [Count]
+**Deviations:** [Count]
+**Recommendations:** [Count]
+
+---
+
+## 1. Validation Objectives
+
+[Document what was validated and why]
+
+---
+
+## 2. Test Environment
+
+**Platform Details:**
+- OS: [Windows 11 | macOS | Linux]
+- CLI Tool: [Claude Code Desktop | Gemini CLI | etc.]
+- Python Version: [if applicable]
+- Dependencies: [list with versions]
+
+**System Configuration:**
+- Working Directory: [path]
+- Git Repository: [URL]
+- Git Branch: [branch name]
+- Git Commit: [commit hash]
+
+---
+
+## 3. Validation Results
+
+### 3.1 Installation Qualification (IQ)
+
+| Test ID | Test Name | Expected Result | Actual Result | Status | Evidence |
+|---------|-----------|----------------|---------------|--------|----------|
+| VAL-IQ-001 | Directory Structure | All 6 dirs exist | 6/6 found | ✅ PASS | [link] |
+| VAL-IQ-002 | Configuration Files | Files valid | All valid | ✅ PASS | [link] |
+| VAL-IQ-003 | Dependencies | All installed | Python missing | ❌ FAIL | [link] |
+| VAL-IQ-004 | Skills Integrity | All skills valid | 7/7 valid | ✅ PASS | [link] |
+| VAL-IQ-005 | IQ Summary | IQ Pass ≥90% | 75% | ❌ FAIL | [link] |
+
+**IQ Pass Rate:** [X%]
+**IQ Status:** [PASS | FAIL]
+
+---
+
+### 3.2 Operational Qualification (OQ)
+
+| Test ID | Test Name | Expected Result | Actual Result | Status | Evidence |
+|---------|-----------|----------------|---------------|--------|----------|
+| VAL-OQ-001 | Read Capability | Files readable | All readable | ✅ PASS | [link] |
+| VAL-OQ-002 | Write Capability | Files writable | All writable | ✅ PASS | [link] |
+| VAL-OQ-003 | Shell Execution | Commands work | Restricted mode | ⚠️ RESTRICTED | [link] |
+| VAL-OQ-004 | PDF Access | PDFs readable | All readable | ✅ PASS | [link] |
+| VAL-OQ-005 | Pattern Matching | Searches work | All work | ✅ PASS | [link] |
+| VAL-OQ-006 | OQ Summary | OQ Pass ≥80% | 100% | ✅ PASS | [link] |
+
+**OQ Pass Rate:** [X%]
+**OQ Status:** [PASS | FAIL]
+
+---
+
+### 3.3 Performance Qualification (PQ) [If Applicable]
+
+| Test ID | Test Name | Expected Result | Actual Result | Status | Evidence |
+|---------|-----------|----------------|---------------|--------|----------|
+| VAL-PQ-001 | End-to-End Workflow | Phase 1 completes | Completed | ✅ PASS | [link] |
+| VAL-PQ-002 | State Management | Recovery works | Recovery OK | ✅ PASS | [link] |
+| VAL-PQ-003 | Cross-Platform | Consistent outputs | Consistent | ✅ PASS | [link] |
+
+**PQ Pass Rate:** [X%]
+**PQ Status:** [PASS | FAIL | N/A]
+
+---
+
+## 4. Traceability Matrix
+
+| Requirement ID | Requirement Description | Test ID(s) | Status | Evidence |
+|----------------|------------------------|-----------|--------|----------|
+| REQ-001 | System must read PDFs | VAL-OQ-004 | ✅ PASS | [link] |
+| REQ-002 | System must generate PRISMA flow | VAL-PQ-001 | ✅ PASS | [link] |
+| REQ-003 | System must support interruption recovery | VAL-PQ-002 | ✅ PASS | [link] |
+
+---
+
+## 5. Deviations & Corrective Actions
+
+| Deviation ID | Test ID | Description | Severity | Root Cause | Corrective Action | Status |
+|--------------|---------|-------------|----------|------------|-------------------|--------|
+| DEV-001 | VAL-OQ-003 | Shell restricted | Medium | Gemini safe mode | Use --yolo flag | Resolved |
+| DEV-002 | VAL-IQ-003 | Python not found | High | Missing install | Install Python ≥3.8 | Open |
+
+---
+
+## 6. Risk Assessment
+
+| Risk | Severity | Likelihood | Impact | Mitigation | Residual Risk |
+|------|----------|------------|--------|------------|---------------|
+| Large corpus (>100 PDFs) untested | Medium | Low | Potential context overflow | Document limitation, plan scalability test | Low |
+| Non-English PDFs untested | Low | Medium | Unknown parsing behavior | Document language limitation | Low |
+
+---
+
+## 7. Recommendations
+
+1. **Critical:** Resolve all FAIL status tests before production use
+2. **High:** Address all deviations with severity ≥ High
+3. **Medium:** Test with larger corpus (20+ PDFs) to validate scalability
+4. **Low:** Consider multi-platform validation for production deployment
+
+---
+
+## 8. Conclusion
+
+**Overall Validation Status:** [PASS | FAIL | PASS WITH DEVIATIONS]
+
+**System Ready for Production Use:** [YES | NO | YES WITH RESTRICTIONS]
+
+**Restrictions/Limitations:**
+- [List any limitations discovered during validation]
+
+**Next Steps:**
+- [List required actions before production use]
+
+---
+
+## 9. Approval
+
+**Validated By:** [Name]
+**Date:** [YYYY-MM-DD]
+**Signature:** _________________________
+
+**Reviewed By:** [Name]
+**Date:** [YYYY-MM-DD]
+**Signature:** _________________________
+
+---
+
+## 10. Evidence Artifacts
+
+**Evidence Location:** `audits/validation-evidence/[DATE]/`
+
+**Files Generated:**
+- IQ Test Results: `IQ_results_[timestamp].json`
+- OQ Test Results: `OQ_results_[timestamp].json`
+- PQ Test Results: `PQ_results_[timestamp].json` (if applicable)
+- Tool Execution Logs: `execution_log_[timestamp].txt`
+- Output File Archive: `outputs_archive_[timestamp].zip`
+
+**Evidence Retention:** 7 years (as per FDA guidelines)
+
+---
+
+**Report Generated:** [YYYY-MM-DD HH:MM:SS]
+**Report Version:** 1.0
+**Validation Protocol Version:** 1.0
+```
+
+---
+
+## 5. Output Structure
+
+### 5.1 Validation Report Files
+
+Generate the following files in `audits/`:
+
+1. **`VALIDATION_REPORT_[YYYY-MM-DD].md`** - Main validation report (structure above)
+2. **`VALIDATION_IQ_REPORT_[YYYY-MM-DD].md`** - Detailed IQ results
+3. **`VALIDATION_OQ_REPORT_[YYYY-MM-DD].md`** - Detailed OQ results
+4. **`VALIDATION_PQ_REPORT_[YYYY-MM-DD].md`** - Detailed PQ results (if applicable)
+5. **`VALIDATION_TRACEABILITY_MATRIX_[YYYY-MM-DD].md`** - Requirements-to-tests mapping
+
+### 5.2 Evidence Archive
+
+Create evidence archive in `audits/validation-evidence/[DATE]/`:
+- Test execution logs
+- Output file snapshots
+- Configuration file snapshots
+- Dependency version manifests
+- Error logs (if any)
+
+---
+
+## 6. Constraints & Safety Measures
+
+### 6.1 Critical Failure Handling
+
+**If ANY critical test fails, STOP validation and document:**
+1. Test ID that failed
+2. Expected vs. actual result
+3. Root cause (if determinable)
+4. Recommended corrective action
+5. Impact on production readiness
+
+**Critical Failures:**
+- `.gitignore` blocks corpus access
+- Write operations fail
+- Required directories missing
+- Skills integrity check fails
+
+### 6.2 Conservative Defaults
+
+- **When uncertain:** Flag as UNCERTAIN, not FAIL
+- **Platform limitations:** Document as RESTRICTED, not FAIL
+- **Missing test data:** Mark as N/A with recommendation for future testing
+
+### 6.3 Deviation Management
+
+- Document ALL deviations from expected results
+- Assign severity: CRITICAL | HIGH | MEDIUM | LOW
+- Propose corrective actions with timelines
+- Track deviation closure
+
+---
+
+## 7. Platform-Specific Considerations
+
+### 7.1 Gemini CLI
+- May require `--yolo` flag for shell execution
+- `conductor` extension must be installed
+- Check `.gitignore` configuration
+
+### 7.2 Claude Code Desktop
+- Native tool support (no special flags)
+- Full shell access expected
+- PDF reading capabilities built-in
+
+### 7.3 Claude Code CLI
+- Context window management validated
+- Incremental processing verified
+- State management tested
+
+---
+
+## 8. Compliance & Audit Trail
+
+### 8.1 Regulatory Compliance
+
+This validation protocol aligns with:
+- **FDA 21 CFR Part 11:** Electronic records and signatures
+- **ISO 13485:** Medical devices quality management
+- **ISO 9001:** Quality management systems
+- **IEEE 829:** Software test documentation
+- **GxP Guidelines:** Good automated manufacturing practices
+
+### 8.2 Audit Trail Requirements
+
+- All tests uniquely identified (Test IDs)
+- All results timestamped
+- All evidence preserved
+- All deviations documented
+- Traceability maintained end-to-end
+
+### 8.3 Evidence Retention
+
+- **Minimum Retention:** 7 years (FDA requirement)
+- **Storage Location:** `audits/validation-evidence/`
+- **Backup:** Required (not automated by this skill)
+- **Integrity:** SHA-256 hashes for all evidence files
+
+---
+
+## 9. Example Invocation
+
+### Basic Validation (IQ/OQ Only)
+```
+Execute audits/skills/system-validation/SKILL.md
+```
+
+### Full Validation (IQ/OQ/PQ)
+```
+Execute audits/skills/system-validation/SKILL.md with:
+- compliance-mode: true
+- test-corpus: corpus/ (ensure 3-5 test PDFs present)
+- platform: claude-code-desktop
+```
+
+### Multi-Platform Validation
+```
+For each platform (Claude Code Desktop, Gemini CLI, etc.):
+1. Execute full validation (IQ/OQ/PQ)
+2. Generate platform-specific validation report
+3. Compare results across platforms
+4. Generate multi-platform summary report
+```
+
+---
+
+## 10. Limitations & Scope
+
+**This skill validates:**
+- Environment setup and configuration
+- Tool availability and functionality
+- Basic workflow execution (with test corpus)
+- Cross-platform compatibility
+
+**This skill does NOT validate:**
+- Scientific accuracy of screening decisions
+- Quality of research outputs
+- Correctness of PRISMA methodology
+- Performance under stress (large corpora >50 PDFs)
+- Security vulnerabilities
+- Network-dependent operations
+
+**For comprehensive validation, supplement with:**
+- User acceptance testing (UAT)
+- Security audit
+- Performance testing with large corpora
+- Scientific peer review
+
+---
+
+## 11. Version History
+
+| Version | Date | Changes | Author |
+|---------|------|---------|--------|
+| 1.0 | 2026-01-04 | Initial IQ/OQ/PQ validation protocol | Research Writer Team |
+
+---
 
 **End of SKILL Definition**
