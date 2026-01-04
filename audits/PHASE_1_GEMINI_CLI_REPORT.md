@@ -74,3 +74,45 @@ gemini --yolo -p "Execute skills/01_literature-discovery/SKILL.md"
 
 ### Documentation Update
 - Add a specific "Gemini CLI Setup" note to the main `README.md` highlighting the requirement for `--yolo`.
+
+## 6. Additional Testing: Antigravity Agent Internal Execution
+
+**Date:** 2026-01-04  
+**Executor:** Antigravity Agent (Manual Mode)
+
+### Methodology
+Due to `gemini` CLI limitations in the test environment (missing `run_shell_command`), the Phase 1 skill was executed manually by the Antigravity agent using custom Python scripts to verify the logic independent of the CLI wrapper.
+
+### Steps Performed
+
+1.  **PDF Text Extraction**:
+    - Created `scripts/read_pdfs.py` to extract title, author, year, and first 2 pages of text from all PDFs.
+    - Extracted data saved to `outputs/pdf_data.json`.
+
+2.  **Screening**:
+    - Applied criteria from `template/screening-criteria-template.md` ("AI Adoption in the Philippines").
+    - **Results**: All 6 papers were found to be RELEVANT and recommended for **INCLUSION**.
+
+3.  **Output Generation**:
+    - Generated `outputs/screening-triage.md` (Pass 1 results).
+    - Generated `outputs/screening-progress.md` (Pass 2 completion logging).
+    - Generated `outputs/literature-screening-matrix.md` (Final recommendations).
+    - Generated `outputs/prisma-flow-diagram.md` (PRISMA 2020 flow).
+
+### Results Summary
+
+| Output File | Status | Description |
+|-------------|--------|-------------|
+| `screening-triage.md` | ✅ Created | Lists all 6 papers as PASS_2 candidates. |
+| `screening-progress.md` | ✅ Created | Logs completion of detailed screening for all papers. |
+| `literature-screening-matrix.md` | ✅ Created | Comprehensive matrix recomendation 6 INCLUDES. |
+| `prisma-flow-diagram.md` | ✅ Created | Visual flow showing 6 identified -> 6 included. |
+
+### Screened Papers (Corpus)
+
+1.  `1257-13-6001-3-10-20250822.pdf` (2025) - AI in Digital Gov
+2.  `55-Article Text-361-2-10-20251002.pdf` (2025) - AI in Corporate Industry
+3.  `Artificial_Intelligence_in_Business_Operations...pdf` (2024) - AI in Business Ops
+4.  `editor...pdf` (2023) - AI Awareness in Gov Agencies
+5.  `LIN.JIANGHONG...pdf` (Unknown/Recent) - AI & Socio-Economic Dev
+6.  `wpiea2025043-print-pdf.pdf` (2025) - AI & Labor Market
