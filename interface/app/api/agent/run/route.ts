@@ -43,15 +43,16 @@ function validateAndResolvePath(relativePath: string, allowedDir: string, projec
     return resolvedPath;
 }
 
-// Helper to check if provider CLI is available
-function isProviderAvailable(provider: string): boolean {
+// Helper to check if provider CLI is available and return its path
+function getProviderPath(provider: string): string | null {
     try {
         const command = process.platform === "win32" ? `where ${provider}` : `which ${provider}`;
-        // stdio: 'ignore' prevents output to console
-        import("child_process").then(cp => cp.execSync(command, { stdio: "ignore" }));
-        return true;
+        // stdio: 'pipe' to capture output
+        const output = execSync(command, { encoding: "utf-8", stdio: "pipe" });
+        // Get the first line (first match) and trim whitespace
+        return output.split(/\r?\n/)[0].trim();
     } catch {
-        return false;
+        return null;
     }
 }
 
@@ -77,7 +78,8 @@ export async function POST(req: NextRequest) {
         }
 
         // 1. Pre-flight Check: Provider Availability
-        if (!isProviderAvailable(provider)) {
+        const providerPath = getProviderPath(provider);
+        if (!providerPath) {
             return NextResponse.json({
                 error: `${provider} CLI not found`,
                 message: `The ${provider} CLI tool is not installed or not in your PATH. Please install it to use this agent.`
@@ -121,17 +123,13 @@ export async function POST(req: NextRequest) {
         // This prevents "Prompt is too long" errors and reduces context usage
 
         // Provider-specific configuration
-        let command: string = provider;
         const args: string[] = [];
-        const isWindows = process.platform === "win32";
 
         if (provider === "gemini") {
-            command = "gemini";
             if (yoloMode) {
                 args.push("--yolo");
             }
         } else if (provider === "claude") {
-            command = "claude";
             // Claude CLI has prompt length limits with stdin piping
             // Pass prompt as command argument instead
             args.push("--print");
@@ -139,17 +137,17 @@ export async function POST(req: NextRequest) {
             useStdin = false;
         }
 
-        // Spawn the selected CLI tool
-        child = spawn(command, args, {
+        // Spawn the selected CLI tool directly without shell
+        // This mitigates command injection risks
+        child = spawn(providerPath, args, {
             cwd: projectRoot,
-            shell: isWindows,
+            shell: false, // Explicitly disable shell
             env: { ...process.env, "NO_COLOR": "1", "FORCE_COLOR": "0" }
         });
 
         // Set up timeout
         timeoutId = setTimeout(() => {
             if (child && !child.killed) {
-                console.log("Execution timed out, terminating...");
                 child.kill("SIGTERM");
                 setTimeout(() => {
                     if (child && !child.killed) {
@@ -163,12 +161,10 @@ export async function POST(req: NextRequest) {
         req.signal.addEventListener('abort', () => {
             if (timeoutId) clearTimeout(timeoutId);
             if (child && !child.killed) {
-                console.log("Client aborted, terminating agent...");
                 child.kill("SIGTERM");
                 // Give it a chance to clean up gracefully
                 setTimeout(() => {
                     if (child && !child.killed) {
-                        console.log("Force killing agent...");
                         child.kill("SIGKILL");
                     }
                 }, 5000);
@@ -181,7 +177,7 @@ export async function POST(req: NextRequest) {
                 const sanitizedPath = path.normalize(promptPath).replace(/^(\.\.[\/\\])+/, "");
                 yield `[System] Starting ${provider.charAt(0).toUpperCase() + provider.slice(1)} Agent...\n`;
                 yield `[System] Reading prompt: ${sanitizedPath}\n`;
-                yield `[System] Executing: ${command} ${args.join(" ")}\n\n`;
+                // yield `[System] Executing: ${command} ${args.join(" ")}\n\n`; // Do not expose full path
 
                 // Pipe input (only for providers that use stdin)
                 if (useStdin && child?.stdin) {
