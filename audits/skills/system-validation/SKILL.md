@@ -1,15 +1,17 @@
 ---
 name: system-integrity-validation
-description: Performs comprehensive IQ/OQ/PQ validation of the Research Writer environment following FDA/ISO software validation standards. Validates file access, tool capabilities, configuration integrity, and generates compliance-ready audit reports with traceability.
+description: Performs comprehensive IQ/OQ/PQ validation of the Research Writer environment following software testing best practices. Validates file access, tool capabilities, configuration integrity, and generates professional-grade audit reports with traceability.
 license: Apache-2.0
 compatibility: Universal (Claude Code, Gemini CLI, OpenAI, Anthropic API)
 allowed-tools: Read Write Edit Glob Grep Bash
-validation-standard: FDA 21 CFR Part 11, ISO 13485, IEEE 829
+validation-standard: IEEE 829 (Software Test Documentation), ISO 9001 (Quality Management)
 ---
 
 # System Integrity Validation Skill
 
-This skill automates the **IQ/OQ/PQ Validation Protocol** for the Research Writer system, ensuring pharmaceutical-grade validation compliance before research begins.
+This skill automates the **IQ/OQ/PQ Validation Protocol** for the Research Writer system, ensuring production-ready quality before research begins.
+
+**Note:** While this validation approach follows industry best practices used in regulated environments (pharmaceutical, medical device software), it is **not required** for typical research use. Use the level of validation appropriate for your needs—basic IQ/OQ for general use, full IQ/OQ/PQ for production or high-stakes research.
 
 **Validation Approach:**
 - **IQ (Installation Qualification):** Verify correct installation and configuration
@@ -25,14 +27,14 @@ Activate this skill when:
 - **Platform migration:** Switching between AI providers (Claude Code, Gemini CLI, etc.)
 - **Post-update validation:** After git updates or dependency changes
 - **Troubleshooting:** "Tool not found", "File access denied", or execution errors
-- **Compliance audit:** Pre-research validation for regulated environments
+- **Quality assurance:** Pre-research validation for production use
 - **Multi-platform testing:** Cross-platform compatibility verification
 
 ---
 
 ## 2. Objective
 
-Produce a **GxP-compliant Validation Report** that certifies:
+Produce a **professional-grade Validation Report** that certifies:
 
 ### 2.1 Installation Qualification (IQ)
 - Required directories exist with correct structure
@@ -489,7 +491,7 @@ Produce a **GxP-compliant Validation Report** that certifies:
 **OS:** [Operating System + Version]
 **Validator:** [Agent Name/Human Name]
 **Validation Type:** [IQ/OQ | IQ/OQ/PQ]
-**Compliance Standard:** FDA 21 CFR Part 11, ISO 13485, IEEE 829
+**Testing Standard:** IEEE 829 (Software Test Documentation)
 
 ---
 
@@ -648,7 +650,7 @@ Produce a **GxP-compliant Validation Report** that certifies:
 - Tool Execution Logs: `execution_log_[timestamp].txt`
 - Output File Archive: `outputs_archive_[timestamp].zip`
 
-**Evidence Retention:** 7 years (as per FDA guidelines)
+**Evidence Retention:** As per institutional requirements (recommended: project lifecycle + 5 years)
 
 ---
 
@@ -733,16 +735,20 @@ Create evidence archive in `audits/validation-evidence/[DATE]/`:
 
 ---
 
-## 8. Compliance & Audit Trail
+## 8. Quality Standards & Audit Trail
 
-### 8.1 Regulatory Compliance
+### 8.1 Validation Standards
 
-This validation protocol aligns with:
-- **FDA 21 CFR Part 11:** Electronic records and signatures
-- **ISO 13485:** Medical devices quality management
-- **ISO 9001:** Quality management systems
-- **IEEE 829:** Software test documentation
-- **GxP Guidelines:** Good automated manufacturing practices
+This validation protocol aligns with industry best practices:
+- **IEEE 829:** Software test documentation standard
+- **ISO 9001:** Quality management systems (general industry)
+- **ISO/IEC 25010:** Software quality model (functionality, reliability, usability)
+
+**Note for Regulated Environments:**
+If using this tool for FDA-regulated research (clinical trials, medical device research, pharmaceutical R&D), the validation approach is compatible with:
+- FDA 21 CFR Part 11 (Electronic records)
+- ISO 13485 (Medical device quality management)
+- GxP Guidelines (Good practice for regulated industries)
 
 ### 8.2 Audit Trail Requirements
 
@@ -754,10 +760,10 @@ This validation protocol aligns with:
 
 ### 8.3 Evidence Retention
 
-- **Minimum Retention:** 7 years (FDA requirement)
+- **Recommended Retention:** Project lifecycle + 5 years (adjust per institutional policy)
 - **Storage Location:** `audits/validation-evidence/`
-- **Backup:** Required (not automated by this skill)
-- **Integrity:** SHA-256 hashes for all evidence files
+- **Backup:** Recommended (not automated by this skill)
+- **Integrity:** SHA-256 hashes for all evidence files (optional but recommended)
 
 ---
 
