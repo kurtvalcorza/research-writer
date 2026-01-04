@@ -243,7 +243,7 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  PHASE 5: Contribution & Implications Framing               │
+│  PHASE 6: Contribution & Implications Framing               │
 │  SKILL: research-contribution-implications-framer            │
 ├─────────────────────────────────────────────────────────────┤
 │  INPUT:                                                      │
@@ -288,14 +288,14 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  PHASE 6: Cross-Phase Validation                            │
+│  PHASE 7: Cross-Phase Validation                            │
 │  SKILL: cross-phase-validator                                │
 ├─────────────────────────────────────────────────────────────┤
 │  INPUT:                                                      │
 │    • literature-synthesis-matrix.md (Phase 2)               │
 │    • literature-review-outline.md (Phase 3)                 │
 │    • literature-review-draft.md (Phase 4)                   │
-│    • research-contributions-implications.md (Phase 5)       │
+│    • research-contributions-implications.md (Phase 6)       │
 │                                                              │
 │  AGENT ACTIONS:                                             │
 │    1. Validate Phase 2→3 consistency                        │
@@ -307,7 +307,7 @@
 │    3. Validate Phase 2→4 direct                             │
 │       ✓ Themes discussed in draft?                          │
 │       ✓ Papers cited where expected?                        │
-│    4. Validate Phase 4→5 consistency                        │
+│    4. Validate Phase 4→6 consistency                        │
 │       ✓ Contributions grounded in draft?                    │
 │       ✓ Boundaries respected?                               │
 │    5. End-to-end traceability audit                         │
@@ -325,7 +325,7 @@
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  📊 AUTO QC CHECKPOINT (Phase 6)                            │
+│  📊 AUTO QC CHECKPOINT (Phase 7)                            │
 ├─────────────────────────────────────────────────────────────┤
 │  IF PASS (score ≥75, zero critical): Proceed to finalization│
 │  IF WARNINGS: Review inconsistencies, decide action         │
@@ -374,10 +374,10 @@
 | **3** | Argument Structure & Outline | Existing | Agent | Advised | 30-45 min |
 | **4** | Literature Review Drafting | Existing | Agent | Advised | 1-2 hours |
 | **4.5** | Citation Integrity Validation | Existing | Automated | Auto QC | 2-5 min |
-| **5** | Contribution & Implications | Existing | Agent | Advised | 45-60 min |
-| **6** | Cross-Phase Validation | Existing | Automated | Auto QC | 3-7 min |
-| **7** | Methods & Results (optional) | Not implemented | Manual | N/A | Varies |
-| **8** | Dissemination (optional) | Not implemented | Manual | N/A | Varies |
+| **6** | Contribution & Implications | Existing | Agent | Advised | 45-60 min |
+| **7** | Cross-Phase Validation | Existing | Automated | Auto QC | 3-7 min |
+| **8** | Methods & Results (optional) | Not implemented | Manual | N/A | Varies |
+| **9** | Dissemination (optional) | Not implemented | Manual | N/A | Varies |
 
 **Total agent-assisted workflow:** ~5-9 hours for complete, QC-validated literature review
 **Equivalent manual effort:** ~15-25 hours
@@ -415,7 +415,7 @@ synthesis-matrix.md       drafting                     │
                                                        │
                                                        ▼
                                                        │
-all Phase 2-4    ──────▶  PHASE 5  ────▶  └── research-contributions-
+all Phase 2-4    ──────▶  PHASE 6  ────▶  └── research-contributions-
 outputs                   contribution                  implications.md
                           framing
 ```
@@ -502,7 +502,7 @@ Evidence Strength & Boundaries
 | **Theme identification** | 2 | What themes emerge? | Identify patterns | Validate accuracy |
 | **Argument structure** | 3 | How to organize review? | Propose logical sequence | Approve structure |
 | **Claim strength** | 4 | How strong is evidence? | Apply conservative language | Verify appropriateness |
-| **Contribution scope** | 5 | What does study contribute? | Identify grounded contributions | Prevent overclaiming |
+| **Contribution scope** | 6 | What does study contribute? | Identify grounded contributions | Prevent overclaiming |
 
 ---
 
@@ -513,7 +513,7 @@ Evidence Strength & Boundaries
 | **Irrelevant papers included** | 1 | Systematic criteria + human checkpoint |
 | **Fabricated citations** | 2 | Extraction from actual PDFs only |
 | **Unsupported claims** | 4 | Claims must trace to synthesis matrix |
-| **Novelty inflation** | 6 | Conservative contribution framing + limitations |
+| **Novelty inflation** | 7 | Conservative contribution framing + limitations |
 | **Hallucinated evidence** | All | No agent generates new sources; works only with provided corpus |
 
 ---
@@ -561,6 +561,6 @@ Manual screening → /corpus/ → Phase 2 (extraction)
 
 ---
 
-**Workflow Status:** ✅ Fully operational with Phases 1, 2, 3, 4, 4.5, 5, 6 (excluding optional Phases 7-8)
+**Workflow Status:** ✅ Fully operational with Phases 1, 2, 3, 4, 4.5, 6, 7 (excluding optional Phases 8-9)
 **Ready for:** Immediate production use on research projects
 **Maintenance:** All skills versioned and documented
