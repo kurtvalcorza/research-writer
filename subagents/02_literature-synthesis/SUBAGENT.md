@@ -5,7 +5,8 @@ requires:
   - outputs/literature-screening-matrix.md
   - corpus/
 produces:
-  - outputs/literature-extraction-matrix.md
+  - outputs/paper-pXXX-extraction.md (one file per paper for auditability)
+  - outputs/literature-extraction-matrix.md (consolidated table)
   - outputs/literature-synthesis-matrix.md
   - outputs/extraction-quality-report.md
 model: sonnet
@@ -92,16 +93,61 @@ Else:
    - Note if paper addresses multiple themes
 ```
 
-**Step 2: Record in extraction matrix**
+**Step 2: Save individual extraction file (MANDATORY)**
 ```
-Create/update literature-extraction-matrix.md:
+For each paper, create: outputs/paper-pXXX-extraction.md
+
+Format:
+---
+# Paper pXXX Extraction
+
+**Metadata**
+- Title: [full title]
+- Authors: [all authors]
+- Year: [year]
+- Source: [journal/conference]
+- DOI/URL: [if available]
+
+**Abstract**
+[full abstract text]
+
+**Methods Summary**
+[what was studied, how, sample size, methodology]
+
+**Key Findings**
+- Finding 1: [description]
+- Finding 2: [description]
+[...continue]
+
+**Limitations**
+- [author-stated limitation 1]
+- [author-stated limitation 2]
+
+**Author's Contributions**
+[what the paper claims to contribute]
+
+**Themes Identified**
+1. [Theme 1]
+2. [Theme 2]
+[...2-5 themes]
+---
+
+This individual file serves as:
+- Audit trail (can verify extraction against PDF)
+- Quality check (easy to review extraction accuracy)
+- Resumption aid (if extraction interrupted)
+```
+
+**Step 3: Record in consolidated extraction matrix**
+```
+Add row to literature-extraction-matrix.md:
 
 | Paper ID | Title | Authors | Year | Methods Summary | Key Findings | Limitations | Themes |
 |----------|-------|---------|------|-----------------|--------------|-------------|--------|
 | P001 | [Title] | [Authors] | 2024 | [Methods] | [Key findings summary] | [Limitations] | Theme A, Theme B |
 ```
 
-**Step 3: Save progress**
+**Step 4: Save progress**
 ```
 After every 5 papers:
 1. Save literature-extraction-matrix.md
