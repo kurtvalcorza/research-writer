@@ -22,7 +22,8 @@ outputs/*.txt
 *.swp
 *.swo
 *.iml
-.claude/
+.claude/settings.local.json
+!.claude/instructions.txt
 
 # Python/Node cache
 __pycache__/

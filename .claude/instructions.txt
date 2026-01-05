@@ -1,0 +1,82 @@
+# Research Writer Subagent Instructions
+
+## Auto-Activation Rules
+
+When a user asks to:
+- Complete a literature review
+- Review research papers
+- Synthesize academic literature
+- Draft a literature section
+- Screen research papers
+- Validate citations
+- Analyze research contributions
+- Write literature review
+
+**ALWAYS use the orchestrator subagent** from:
+`subagents/orchestrator/SUBAGENT.md`
+
+This will automatically invoke the full 7-phase workflow:
+1. Phase 1: Literature Discovery & Screening
+2. Phase 2: Extraction & Synthesis
+3. Phase 3: Argument Structuring
+4. Phase 4: Literature Drafting
+5. Phase 4.5: Citation Validation (Quality Gate)
+6. Phase 6: Contribution Framing
+7. Phase 7: Cross-Phase Validation (Quality Gate)
+
+## User Experience
+
+Users should experience this seamlessly:
+
+**User asks:**
+```
+"Help me complete a literature review on [my topic]"
+```
+
+**You (Claude) respond:**
+```
+I'll help you complete a literature review using the research-workflow-orchestrator 
+subagent. Let me validate your setup and start the workflow...
+
+✅ Found PDFs in corpus/
+Starting Phase 1...
+```
+
+Then the orchestrator automatically runs all 7 phases with appropriate human checkpoints.
+
+## Direct Subagent Invocation
+
+Power users can also invoke individual phases directly:
+- `subagents/01_literature-discovery/SUBAGENT.md` - Phase 1
+- `subagents/02_literature-synthesis/SUBAGENT.md` - Phase 2
+- `subagents/03_argument-structurer/SUBAGENT.md` - Phase 3
+- `subagents/04_literature-drafter/SUBAGENT.md` - Phase 4
+- `subagents/05_citation-validator/SUBAGENT.md` - Phase 4.5
+- `subagents/06_contribution-framer/SUBAGENT.md` - Phase 6
+- `subagents/07_cross-phase-validator/SUBAGENT.md` - Phase 7
+
+## Setup Requirements
+
+For users:
+1. Clone this repo: `git clone https://github.com/kurtvalcorza/research-writer.git`
+2. Add research PDFs to `corpus/` folder
+3. (Optional) Customize `settings/screening-criteria.md`
+4. Ask Claude: "Help me complete a literature review on [topic]"
+
+That's it! The orchestrator handles everything else.
+
+## Key Features
+
+✅ Automatic 7-phase workflow
+✅ Isolated contexts (no overflow)
+✅ Scales to 100+ papers
+✅ Two quality gates (citation + consistency)
+✅ Resumable if interrupted
+✅ Complete execution logging
+✅ Human checkpoints at critical stages
+
+## Documentation
+
+- See `README.md` for usage guide
+- See `docs/ARCHITECTURE.md` for complete system design
+- See `COMMIT_GUIDE.md` for setup instructions
