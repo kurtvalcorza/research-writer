@@ -75,9 +75,11 @@ Orchestrator (main conversation)
 
 ```
 research-writer/
-├── subagents/                          # Orchestration & execution
-│   ├── orchestrator/
-│   │   └── SUBAGENT.md                (Main workflow controller)
+├── .claude/                            # Claude Code integration
+│   └── agents/
+│       └── research-workflow-orchestrator.md  (Project agent - user entry point)
+│
+├── subagents/                          # Phase-specific implementations
 │   ├── 01_literature-discovery/
 │   │   └── SUBAGENT.md                (Phase 1: Screening)
 │   ├── 02_literature-synthesis/
@@ -141,16 +143,14 @@ nano settings/screening-criteria.md
 "Help me complete a literature review on [my research topic]"
 ```
 
-**Or more specifically:**
+**Or invoke the agent directly in Claude Code:**
 
 ```
-"Use the research-workflow-orchestrator subagent to manage my complete 
-literature review workflow. Here's my setup:
-- Topic: [Your research topic]
-- PDFs in: corpus/
-- Criteria: settings/screening-criteria.md
-- Start from Phase 1"
+/agents
+→ Select: research-workflow-orchestrator
 ```
+
+The agent will guide you through the complete workflow.
 
 ### 3. Approve Checkpoints
 

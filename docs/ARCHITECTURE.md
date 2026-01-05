@@ -30,12 +30,15 @@ New (Subagent-based):
 ┌─────────────────────────────────────────────────────────────────┐
 │                    User Request                                 │
 │  "Help me complete a literature review on [topic]"              │
-└─────────────────────┬───────────────────────────────────────────┘
+│                    OR                                           │
+│  /agents → research-workflow-orchestrator                       │
+└─────────────────────┬─────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  ORCHESTRATOR SUBAGENT (Main Conversation)                      │
+│  PROJECT AGENT (.claude/agents/research-workflow-orchestrator)  │
 │  - Validates prerequisites                                      │
+│  - Reads phase subagent specs from subagents/                   │
 │  - Manages phase sequencing                                     │
 │  - Handles human checkpoints                                    │
 │  - Tracks execution state (execution-log.json)                  │
@@ -73,9 +76,9 @@ New (Subagent-based):
 
 ---
 
-## Two-Tier Design: Orchestrator + Phase Subagents
+## Two-Tier Design: Project Agent + Phase Subagents
 
-### Tier 1: Orchestrator Subagent
+### Tier 1: Research Workflow Orchestrator (Project Agent)
 
 **What it does:**
 - Orchestrates the complete 7-phase workflow
@@ -84,7 +87,13 @@ New (Subagent-based):
 - Enables workflow resumption
 - Handles phase sequencing
 
-**Lives in**: `subagents/orchestrator/SUBAGENT.md`
+**Lives in**: `.claude/agents/research-workflow-orchestrator.md`
+
+**How it works:**
+- Registered as a Claude Code project agent
+- Appears in `/agents` list for easy invocation
+- References detailed phase specifications in `subagents/` directory
+- Reads subagent specs before executing each phase
 
 **Not responsible for:**
 - Phase logic (that's each phase subagent)
@@ -261,9 +270,26 @@ OUTCOME:
 
 ## File Organization
 
-### Execution Files (subagents/)
+### Project Agent (.claude/agents/)
 
-Each subagent is one file: `SUBAGENT.md`
+**Single entry point**: `research-workflow-orchestrator.md`
+
+Contains:
+- YAML frontmatter (name, description, model, color)
+- Trigger examples for Claude Code
+- Orchestration logic and workflow execution pattern
+- References to phase subagent specifications
+- Human checkpoint instructions
+- Quality assurance standards
+
+**User experience:**
+- Visible in `/agents` command
+- Auto-invoked by Claude Code when user requests literature review
+- Clean, single agent interface
+
+### Phase Subagents (subagents/)
+
+Each phase subagent is one file: `SUBAGENT.md`
 
 Contains:
 - YAML frontmatter (name, inputs, outputs, model, tools)
@@ -279,6 +305,12 @@ subagents/01_literature-discovery/SUBAGENT.md
 - Resumable state management
 - PRISMA compliance
 ```
+
+**Implementation pattern:**
+1. Project agent reads phase subagent spec
+2. Follows detailed instructions in spec
+3. Produces outputs as specified
+4. Returns control to project agent
 
 ### Output Files (outputs/)
 
