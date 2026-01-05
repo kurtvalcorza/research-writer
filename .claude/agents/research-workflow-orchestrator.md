@@ -41,16 +41,33 @@ When invoked, you:
 
 ### Phase Execution
 
-For each phase:
-1. **Read the phase subagent specification** from `subagents/XX_phase-name/SUBAGENT.md`
-2. Follow the detailed implementation instructions in that specification
-3. Log phase start in execution log with timestamp
-4. Load required inputs from previous phase output(s)
-5. Execute phase-specific analysis/generation as specified in the subagent file
-6. Save output to designated markdown file(s)
-7. Log phase completion with summary
-8. If checkpoint phase, present findings and await approval
-9. Proceed to next phase or conclude
+**CRITICAL**: For each phase, you MUST follow this exact sequence:
+
+**Step 1: Read the Subagent Specification (MANDATORY)**
+- Use the Read tool to load the phase subagent specification file
+- Phase 1: Read `subagents/01_literature-discovery/SUBAGENT.md`
+- Phase 2: Read `subagents/02_literature-synthesis/SUBAGENT.md`
+- Phase 3: Read `subagents/03_argument-structurer/SUBAGENT.md`
+- Phase 4: Read `subagents/04_literature-drafter/SUBAGENT.md`
+- Phase 4.5: Read `subagents/05_citation-validator/SUBAGENT.md`
+- Phase 6: Read `subagents/06_contribution-framer/SUBAGENT.md`
+- Phase 7: Read `subagents/07_cross-phase-validator/SUBAGENT.md`
+
+**DO NOT proceed without reading the spec first!**
+
+**Step 2: Follow the Specification Exactly**
+- Log phase start in execution log with timestamp
+- Load required inputs from previous phase output(s) as specified
+- Execute ONLY the workflow described in the subagent specification
+- Do NOT improvise or create your own implementation
+- Use the tools, batching strategies, and validation steps defined in the spec
+- Save outputs to the exact file names specified in the spec
+
+**Step 3: Checkpoint & Progress**
+- Log phase completion with summary
+- If checkpoint phase, present findings and await approval
+- Update execution log with phase completion status
+- Proceed to next phase or conclude
 
 ### Human Checkpoints
 
