@@ -55,17 +55,28 @@ Phase 3 → context grows more
 Phase 4 → OVERFLOW (breaks at ~5 papers)
 ```
 
-### The Solution: Isolated Contexts
+### The Solution: Reference Architecture
 
-New system (subagents) gives each phase a clean context:
+New system uses a **project agent that reads phase specifications**:
 ```
-Orchestrator (main conversation)
-├─ Phase 1 (isolated context) → returns artifacts
+Project Agent (.claude/agents/research-workflow-orchestrator.md)
+├─ Phase 1: Reads subagents/01_literature-discovery/SUBAGENT.md
+│           Follows the 3-pass screening workflow defined in spec
+│           → Produces screening matrix
 ├─ Human checkpoint
-├─ Phase 2 (fresh context) → returns artifacts
-├─ Phase 3 (fresh context) → returns artifacts
-└─ ... scales infinitely
+├─ Phase 2: Reads subagents/02_literature-synthesis/SUBAGENT.md
+│           Follows the batched extraction workflow defined in spec
+│           → Produces synthesis matrix
+├─ Phase 3: Reads subagents/03_argument-structurer/SUBAGENT.md
+│           Follows the structuring logic defined in spec
+│           → Produces outline
+└─ ... (continues reading specs for each phase)
 ```
+
+**Key Innovation**: The project agent doesn't contain implementation logic—it **reads and follows** the detailed specifications in `subagents/`. This means:
+- ✅ No hardcoded workflows (update specs without touching the agent)
+- ✅ Modular design (each phase independently specified)
+- ✅ Context-safe (agent only loads what it needs per phase)
 
 **Result**: Works with 3 papers OR 300 papers—no context overflow.
 
@@ -204,17 +215,41 @@ The orchestrator will:
 
 ## 🎓 Key Concepts
 
-### What's a Subagent?
+### How the Agent Works
 
-A **subagent** is an independent AI agent with:
-- **Isolated context**: Fresh start for each phase
-- **Clear inputs**: What it needs to work
-- **Clear outputs**: What it produces
-- **Resumable state**: Can pick up where it left off
+The **research-workflow-orchestrator** is a Claude Code project agent that:
 
-**Difference from Skills**:
-- **Skills**: Model-invoked, operate in same conversation context
-- **Subagents**: Explicitly invoked, isolated contexts, returned artifacts
+1. **Reads phase specifications** before executing each phase
+2. **Follows the detailed workflow** defined in each spec file
+3. **Does NOT improvise** or create its own implementation
+
+**Critical Execution Pattern** (for each phase):
+```
+Step 1: Read subagents/XX_phase-name/SUBAGENT.md
+Step 2: Follow the workflow defined in that spec exactly
+Step 3: Produce outputs as specified
+Step 4: Save state and proceed to next phase
+```
+
+This ensures:
+- ✅ Consistent execution (follows proven workflows)
+- ✅ No context overflow (only loads what's needed)
+- ✅ Easy updates (modify specs without changing agent)
+
+### What's a Phase Subagent Specification?
+
+Each file in `subagents/` contains:
+- **YAML frontmatter**: Required inputs, expected outputs, tools, time estimates
+- **Detailed workflow**: Step-by-step implementation instructions
+- **Batching strategies**: How to handle 5 papers vs 100 papers
+- **Error handling**: What to do when things go wrong
+- **Validation steps**: Quality checks before moving forward
+
+**Example**: `subagents/02_literature-synthesis/SUBAGENT.md` (600 lines) defines:
+- How to batch extraction (5 papers per context window)
+- What data to extract from each paper
+- How to identify cross-paper themes
+- Output format for synthesis matrix
 
 ### Quality Gates
 
