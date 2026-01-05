@@ -10,9 +10,15 @@
 
 ## Executive Summary
 
-A validation test of Phase 1 (Literature Discovery & Screening) using Claude Code CLI **FAILED** due to context window overflow during PASS 3 (final report generation). This failure contradicts the previous validation report dated 2026-01-04 which claimed the incremental workflow fix resolved context overflow issues.
+A validation test of Phase 1 (Literature Discovery & Screening) using Claude Code CLI **FAILED** due to context window overflow during PASS 3 (final report generation).
 
-**Critical Finding:** The incremental workflow design successfully handles PASS 1 and PASS 2, but **PASS 3 still attempts to load all PDFs into context simultaneously**, causing the same context overflow issue that was supposedly fixed.
+**Timeline Context:**
+- **Initial Development:** Claude Code CLI failed at PASS 1 (context overflow)
+- **Fix Implemented:** PASS 1 refactored to use incremental processing
+- **2026-01-04:** Other platforms tested (Gemini CLI, Antigravity, Desktop), but **Claude Code CLI NOT re-tested**
+- **2026-01-05 (Today):** **First re-test** of Claude Code CLI after the fix
+
+**Critical Finding:** The incremental workflow fix successfully handles PASS 1 and PASS 2, but **PASS 3 still attempts to load all PDFs into context simultaneously**, revealing the fix was incomplete.
 
 ---
 
@@ -91,7 +97,17 @@ A validation test of Phase 1 (Literature Discovery & Screening) using Claude Cod
 
 ### Problem Identified
 
-The SKILL.md file for Phase 1 (skills/01_literature-discovery/SKILL.md) was refactored to use **incremental processing** in PASS 1 and PASS 2, but **PASS 3 still loads all PDFs simultaneously** to extract comprehensive metadata.
+**Original Issue (Initial Development):**
+- PASS 1 (Triage) failed with context overflow when trying to load all PDFs simultaneously
+
+**Fix Applied:**
+- The SKILL.md file for Phase 1 was refactored to use **incremental processing in PASS 1**
+- PASS 2 appeared to work (was using existing files)
+
+**Current Issue (2026-01-05 Re-Test):**
+- PASS 1 now works correctly with incremental processing ✅
+- PASS 2 works (using existing files) ✅
+- **PASS 3 still loads all PDFs simultaneously** to extract comprehensive metadata ❌
 
 ### Code Review: PASS 3 Implementation
 
@@ -106,23 +122,27 @@ From the execution log, the agent read **all 6 PDFs sequentially** without relea
 
 ### Why the "Fix" Was Incomplete
 
-The 2026-01-04 validation report stated:
-> "Refactored skills/01_literature-discovery/SKILL.md to enforce an Incremental Triage Loop:
-> 1. Process one PDF at a time
-> 2. Extract metadata and append to triage file
-> 3. **Explicitly clear context** before processing the next PDF"
+**What Happened:**
+1. **Initial Development:** Claude Code CLI discovered context overflow in PASS 1
+2. **Fix Applied:** Refactored PASS 1 to use incremental processing (one PDF at a time)
+3. **2026-01-04:** Fix implemented, but **Claude Code CLI NOT re-tested**
+4. **2026-01-04:** Other platforms (Gemini CLI, Antigravity, Desktop) tested successfully
+5. **2026-01-05:** First re-test of Claude Code CLI reveals fix was incomplete
 
-**However**, this fix was only applied to **PASS 1 (Triage)**, not **PASS 3 (Final Report Generation)**.
+**The Problem:**
+- The fix only addressed **PASS 1 (Triage)** where the original failure occurred
+- **PASS 3 (Final Report Generation)** was not refactored and still uses batch processing
+- This was not discovered until the first re-test today
 
 ### Expected vs. Actual Behavior
 
-| Aspect | Expected (per 2026-01-04 report) | Actual (2026-01-05 test) |
-|--------|----------------------------------|--------------------------|
-| PASS 1 | Incremental processing ✅ | Incremental processing ✅ |
-| PASS 2 | Incremental processing ✅ | Incremental processing ✅ |
-| PASS 3 | Incremental processing ✅ | **Batch processing** ❌ |
-| Context Management | Clear between PDFs ✅ | **Accumulated all PDFs** ❌ |
-| Scalability | "Infinite Corpus Support" | **Limited to ~3-4 small PDFs** |
+| Aspect | Before Fix (Initial Dev) | After Fix (2026-01-05 Re-Test) |
+|--------|--------------------------|-------------------------------|
+| PASS 1 | ❌ Batch processing (failed) | ✅ Incremental processing (works) |
+| PASS 2 | ⚠️ Not tested (failed at PASS 1) | ✅ Works (using existing files) |
+| PASS 3 | ⚠️ Not tested (failed at PASS 1) | ❌ **Batch processing (fails)** |
+| Context Management | ❌ Accumulated all PDFs | ⚠️ PASS 1 clears, **PASS 3 accumulates** |
+| Scalability | ❌ Failed with 6 PDFs | ❌ Still fails with 6 PDFs (different stage) |
 
 ---
 
@@ -133,7 +153,8 @@ The 2026-01-04 validation report stated:
 **Production Impact:**
 - Claude Code CLI **CANNOT** complete Phase 1 with corpus sizes ≥6 PDFs
 - System is **NOT production-ready** for typical research use (10-50 papers)
-- Contradicts previous validation certification
+- **First re-test after fix** reveals the fix was incomplete
+- Claude Code CLI was **NEVER certified** on 2026-01-04 (it was not tested)
 
 ### Affected Workflows
 
@@ -154,7 +175,7 @@ Based on the 2026-01-04 report:
 | Claude Code Desktop | 6 PDFs | ✅ PASSED | ✅ CERTIFIED |
 | Antigravity Agent | 6 PDFs | ✅ PASSED | ✅ CERTIFIED |
 
-**Conclusion:** Claude Code CLI is now the **ONLY platform** that fails Phase 1 validation.
+**Conclusion:** Claude Code CLI is the **ONLY platform** that fails Phase 1 validation. Other platforms (Gemini CLI, Antigravity, Desktop) were tested on 2026-01-04 and all passed. Claude Code CLI was NOT tested on 2026-01-04; this is its first re-test after the PASS 1 fix.
 
 ---
 
@@ -263,9 +284,13 @@ Claude Code CLI v2.0.76 **CANNOT** complete Phase 1 with typical research corpus
 
 Claude Code CLI is **NOT production-ready** for research workflows requiring more than 3-4 small PDFs. Users should use **Claude Code Desktop** or **Gemini CLI** instead.
 
-**Previous Validation Status:** ⚠️ **INVALIDATED**
+**Previous Status Clarification:**
 
-The 2026-01-04 validation report claiming "Claude Code CLI fixed and validated" is **incorrect** and must be updated to reflect this failure.
+The 2026-01-04 validation report tested 3 platforms: Gemini CLI, Antigravity, and Claude Code Desktop (all passed).
+
+**Claude Code CLI was NOT tested on 2026-01-04.** The report documented the PASS 1 fix implementation but did not claim Claude Code CLI was re-tested or validated.
+
+This 2026-01-05 test is the **first re-test** of Claude Code CLI after the fix, revealing the fix was incomplete.
 
 ---
 
