@@ -693,3 +693,322 @@ Users should **NOT use Claude Code CLI** for Phase 1 execution. Use **Claude Cod
 **Report Added:** 2026-01-05
 **Severity:** 🔴 CRITICAL
 **Status:** ⚠️ OPEN - Awaiting corrective action
+
+---
+
+## 8. Re-Validation Test 2 - Claude Code Desktop (2026-01-05)
+
+**Date:** 2026-01-05
+**Platform:** Claude Code Desktop
+**Tester:** Kurt Valcorza
+**Test Type:** Performance Qualification (PQ) - Phase 1 End-to-End Execution (Fresh Session)
+**Status:** ❌ **FAILED - CRITICAL**
+
+### 8.1 Test Objective
+
+**Second validation test** of Claude Code Desktop after the previous successful validation on 2026-01-04. This test validates consistency and repeatability of Phase 1 execution in a fresh session (clean context).
+
+**Context:**
+- Previous test (2026-01-04) verified existing outputs generated in earlier sessions
+- This test (2026-01-05) executes Phase 1 from scratch in a new session
+- Tests whether the system can complete Phase 1 when it must process PDFs during execution (not just verify pre-existing outputs)
+
+### 8.2 Test Execution
+
+**Environment:**
+- Platform: Claude Code Desktop
+- OS: Windows 11
+- Model: Claude Sonnet 4.5
+- Corpus: 6 PDFs (same as original validation)
+- Working Directory: ~\OneDrive - DOST-ASTI\Projects\research-writer
+- Session State: Fresh (no prior Phase 1 outputs loaded in context)
+
+**Command Executed:**
+```
+Execute skills/01_literature-discovery/SKILL.md
+```
+
+### 8.3 Test Results
+
+| Phase | Status | Details |
+|-------|--------|---------|
+| **Prerequisites Check** | ✅ PASSED | Validated screening criteria and corpus/ directory (6 PDFs) |
+| **PASS 1 Setup** | ✅ PASSED | Created outputs/ directory, initialized triage and progress files |
+| **PASS 1: Triage** | ❌ **FAILED** | Context overflow after processing 3 PDFs |
+| **PASS 2: Detailed Screening** | ⚠️ NOT REACHED | Blocked by PASS 1 failure |
+| **PASS 3: Final Reports** | ⚠️ NOT REACHED | Blocked by PASS 1 failure |
+
+### 8.4 Failure Details
+
+**Error Timeline:**
+1. Agent initialized screening session successfully
+2. Created `outputs/screening-triage.md` and `outputs/screening-progress.md`
+3. Started PASS 1: "Processing PDFs for lightweight metadata scan"
+4. Successfully processed PDF 1: `1257-13-6001-3-10-20250822.pdf` (777.8 KB)
+   - Extracted metadata: Title, Year (2025), Status (✅ Auto-INCLUDE)
+   - Updated triage file with first entry
+5. Successfully processed PDF 2: `editor,+26.+1426-IMRAD_Awareness+and+Readiness...pdf` (1.7 MB)
+   - Extracted metadata, updated triage file
+6. Successfully processed PDF 3: `Artificial_Intelligence_in_Business_Operations...pdf` (427.6 KB)
+   - Extracted metadata, flagged as ⚠️ PASS 2 (vague title)
+7. Attempted to process PDF 4: `wpiea2025043-print-pdf.pdf` (841 KB)
+8. **Context overflow error:** "Prompt is too long"
+9. Agent reported: "Prompt is too long" (multiple times)
+10. User attempted to start new session: "Prompt is too long"
+11. **Complete failure** - unable to continue PASS 1
+
+**Todo List State at Failure:**
+```
+☒ Validate screening criteria settings file exists and customized
+☒ Verify corpus/ directory exists and contains PDFs
+☒ PASS 1: Create outputs/ directory and initialize screening-triage.md
+☐ Processing PDFs for lightweight metadata scan [BLOCKED AT PDF 4/6]
+☐ PASS 2: Process flagged PDFs with detailed screening [NOT REACHED]
+☐ PASS 3: Combine results and generate literature-screening-matrix.md [NOT REACHED]
+☐ PASS 3: Generate prisma-flow-diagram.md [NOT REACHED]
+```
+
+**Generated Outputs (Partial):**
+- ✅ `outputs/screening-triage.md` (PASS 1 - **INCOMPLETE: 3/6 PDFs**)
+- ✅ `outputs/screening-progress.md` (PASS 1 - initialized but empty)
+- ❌ `outputs/literature-screening-matrix.md` (PASS 3 - **NOT GENERATED**)
+- ❌ `outputs/prisma-flow-diagram.md` (PASS 3 - **NOT GENERATED**)
+
+**Triage File State at Failure:**
+```markdown
+| Filename | Year | Title | Status | Rationale |
+|----------|------|-------|--------|-----------|
+| 1257-13-6001-3-10-20250822.pdf | 2025 | Artificial Intelligence as A Driver of Digital Government Transformation... | ✅ Auto-INCLUDE | ... |
+| editor,+26.+1426-IMRAD_Awareness+and+Readiness... | 2023 | Exploring Challenges and Opportunities... | ✅ Auto-INCLUDE | ... |
+| Artificial_Intelligence_in_Business_Operations... | 2024 | ... | ⚠️ PASS 2 | ... |
+```
+
+**Missing from Triage File:**
+- PDF 4: `wpiea2025043-print-pdf.pdf`
+- PDF 5: `LIN.JIANGHONG+p51-66.pdf`
+- PDF 6: `55-Article Text-361-2-10-20251002.pdf`
+
+### 8.5 Root Cause Analysis
+
+**Critical Finding:** The "incremental workflow" is **NOT truly incremental** in Claude Code Desktop during fresh execution.
+
+**What Happened:**
+
+The agent claimed to be processing "one PDF at a time" but in reality:
+1. Each `Read` operation loaded the **entire PDF** into context
+2. Context was **NOT released** between PDF reads
+3. Conversation history accumulated:
+   - Tool calls (Read, Edit)
+   - Full PDF content from each read
+   - Agent responses and thinking
+   - File write confirmations
+4. After processing 3 PDFs (~3 MB total), context was exhausted
+
+**Evidence:**
+The execution log shows the agent:
+- Read PDF 1 (50+ lines of content loaded into context)
+- Edited triage file (added metadata)
+- Read triage file again (to verify edit)
+- Read PDF 2 (50+ lines, **PDF 1 still in context**)
+- Edited triage file (appended row)
+- Read triage file again
+- Read PDF 3 (50+ lines, **PDFs 1-2 still in context**)
+- Edited triage file
+- **Attempted** to read PDF 4 → **OVERFLOW**
+
+**Timeline Clarification:**
+- **2026-01-04 Test (Claude Code Desktop):**
+  - ✅ Verified pre-existing Phase 1 outputs (generated in earlier sessions)
+  - Agent did NOT re-process PDFs from scratch
+  - Agent only read final output files and validated their completeness
+  - **This was NOT a true end-to-end execution test**
+
+- **2026-01-05 Test (Claude Code Desktop):**
+  - ❌ Attempted to execute Phase 1 from scratch (fresh session)
+  - Agent actively processed PDFs during PASS 1
+  - Context overflow occurred at PDF 4/6
+  - **This reveals the workflow is NOT truly incremental**
+
+**Why Did 2026-01-04 Test Appear to Succeed?**
+The 2026-01-04 Claude Code Desktop test was a **verification test**, not an **execution test**:
+- Outputs were already generated in previous sessions
+- Agent only needed to read final markdown files (~10 KB total)
+- No PDF processing occurred during that validation
+- Test verified output quality, not execution capability
+
+### 8.6 Impact Assessment
+
+**Severity:** 🔴 **CRITICAL**
+
+**Production Impact:**
+- Claude Code Desktop **CANNOT complete Phase 1** from scratch with corpus sizes ≥4 PDFs
+- The 2026-01-04 "success" was **misleading** - it only verified existing outputs
+- System is **NOT production-ready** for typical research use (10-50 papers)
+- **All platforms may be affected** - this is a workflow design issue, not a platform-specific bug
+
+**Scalability Limits (Actual vs. Claimed):**
+
+| Corpus Size | Claimed (2026-01-04) | Actual (2026-01-05) | Status |
+|-------------|----------------------|---------------------|--------|
+| 1-3 small PDFs (<500 KB) | ✅ Works | ✅ Works | Limited |
+| 4-6 medium PDFs (~1 MB) | ✅ Works | ❌ **FAILS** | **BLOCKED** |
+| 7-10 PDFs | ✅ Works | ❌ **IMPOSSIBLE** | **BLOCKED** |
+| 20-50 PDFs | ✅ "Infinite Corpus" | ❌ **IMPOSSIBLE** | **BLOCKED** |
+
+**Assumption from 2026-01-04 (Not Actually Tested):**
+> "PASS 1 incremental workflow prevents context overflow and enables scalability to any number of PDFs"
+
+**Reality (2026-01-05 Execution Test):**
+> ❌ The workflow is **NOT incremental**. The agent loads all PDFs into context cumulatively. Maximum supported corpus: **~3 small PDFs (~1.5 MB total)**.
+
+### 8.7 Comparison with Claude Code CLI Results (2026-01-05)
+
+Both platforms tested on 2026-01-05 with fresh execution:
+
+| Aspect | Claude Code CLI | Claude Code Desktop |
+|--------|-----------------|---------------------|
+| **PASS 1 Status** | ✅ PASSED (used existing triage file) | ❌ **FAILED** (processing from scratch) |
+| **PASS 2 Status** | ✅ PASSED (used existing progress file) | ⚠️ NOT REACHED |
+| **PASS 3 Status** | ❌ **FAILED** (batch PDF read) | ⚠️ NOT REACHED |
+| **Failure Point** | PASS 3 (6/6 PDFs loaded) | PASS 1 (3/6 PDFs processed) |
+| **Context Management** | Poor (batch reads in PASS 3) | Poor (cumulative context in PASS 1) |
+| **Can Resume?** | Yes (had PASS 1/2 outputs) | No (failed mid-PASS 1) |
+
+**Key Difference:**
+- Claude Code CLI had **existing triage and progress files** from previous runs, so it skipped PASS 1/2 processing
+- Claude Code Desktop had **clean outputs/ directory**, forcing fresh execution
+- Both platforms failed when they had to **actively process PDFs**
+
+### 8.8 Updated Platform Comparison Matrix
+
+| Aspect | Claude Code CLI | Gemini CLI | Antigravity Internal | Claude Code Desktop |
+|--------|-----------------|------------|---------------------|---------------------|
+| **Fresh PASS 1 Execution** | ⚠️ NOT TESTED | ✅ PASSED | ✅ PASSED | ❌ **FAILED** |
+| **Context Overflow (PASS 1)** | ⚠️ UNKNOWN | ✅ Not encountered | N/A (manual) | ❌ **FAILS AT PDF 4/6** |
+| **Context Overflow (PASS 3)** | ❌ **FAILS** (batch) | ✅ Not encountered | N/A (manual) | ⚠️ NOT REACHED |
+| **Can Complete 6 PDFs?** | ❌ **NO** (PASS 3 fails) | ✅ YES | ✅ YES | ❌ **NO** (PASS 1 fails) |
+| **Production Ready** | ❌ **NO** | ✅ YES | ⚠️ Requires scripts | ❌ **NO** |
+| **Validation Status (2026-01-04)** | ⚠️ NOT TESTED | ✅ CERTIFIED | ✅ CERTIFIED | ⚠️ **MISLEADING** (verified outputs only) |
+| **Validation Status (2026-01-05)** | ❌ **FAILED** | ⚠️ RE-TEST NEEDED | ⚠️ RE-TEST NEEDED | ❌ **FAILED** |
+
+### 8.9 Corrective Actions Required
+
+**Priority 0 - Immediate (Before Any Further Testing):**
+
+1. **Invalidate ALL 2026-01-04 Validation Results**:
+   - Mark Phase 1 validation as "INCOMPLETE - OUTPUT VERIFICATION ONLY"
+   - Remove all "PRODUCTION READY" certifications
+   - Issue validation recall notice
+   - Document that 2026-01-04 tests did NOT test execution, only output verification
+
+2. **Re-Test All Platforms with Fresh Execution**:
+   - Gemini CLI: Delete outputs/, re-run Phase 1 from scratch
+   - Antigravity Internal: Re-validate with clean environment
+   - Both Claude platforms: Already tested on 2026-01-05 (both failed)
+
+**Priority 1 - Critical (Required Before Production Use):**
+
+3. **Redesign PASS 1 Workflow** in `skills/01_literature-discovery/SKILL.md`:
+   - Implement **true incremental processing**:
+     - Process one PDF at a time
+     - Append metadata to triage file immediately
+     - **Force context release** (e.g., tell agent to "forget previous PDF content")
+     - Read only the triage file before processing next PDF
+   - Add explicit instruction: "After processing each PDF, you MUST NOT retain the PDF content in context"
+
+4. **Add Context Monitoring**:
+   - Implement pre-flight check: estimate context required for corpus
+   - Warn users if corpus size exceeds safe limits for platform
+   - Add checkpoint system: save state every N PDFs
+
+5. **Comprehensive Re-Validation**:
+   - Test all platforms with corpus sizes: 3, 6, 10, 20, 50 PDFs
+   - Require fresh execution (clean outputs/ directory)
+   - Monitor context usage at each step
+   - Document actual scalability limits
+
+**Priority 2 - Documentation:**
+
+6. **Update All Documentation**:
+   - README: Add **CRITICAL** warning about context limitations
+   - Validation reports: Mark 2026-01-04 results as "INVALIDATED"
+   - KNOWN_ISSUES.md: Document context overflow in PASS 1 and PASS 3
+   - Platform recommendations: Mark ALL platforms as "NOT TESTED" until re-validation
+
+### 8.10 Validation Status Update (Comprehensive)
+
+**Original Status (2026-01-04):** ✅ PASSED (All platforms) **← INVALIDATED**
+
+**Updated Status (2026-01-05 - After Execution Testing):**
+
+| Platform | Test Type (2026-01-04) | PASS 1 (Fresh) | PASS 2 | PASS 3 | Overall Status | Production Ready |
+|----------|------------------------|----------------|--------|--------|----------------|------------------|
+| **Claude Code CLI** | ⚠️ NOT TESTED | ⚠️ NOT TESTED | ⚠️ NOT TESTED | ❌ **FAIL** | ❌ **FAILED** | ❌ **NO** |
+| **Gemini CLI** | Verification only | ⚠️ **RE-TEST NEEDED** | ⚠️ **RE-TEST NEEDED** | ⚠️ **RE-TEST NEEDED** | ⚠️ **UNCERTAIN** | ⚠️ **UNCERTAIN** |
+| **Antigravity Internal** | Verification only | ⚠️ **RE-TEST NEEDED** | ⚠️ **RE-TEST NEEDED** | ⚠️ **RE-TEST NEEDED** | ⚠️ **UNCERTAIN** | ⚠️ **UNCERTAIN** |
+| **Claude Code Desktop** | Verification only | ❌ **FAIL** | ⚠️ NOT REACHED | ⚠️ NOT REACHED | ❌ **FAILED** | ❌ **NO** |
+
+**Current Platform Rankings (Updated - Worst to Best):**
+
+1. ❌ **Claude Code CLI** - FAILS at PASS 3 (batch read)
+2. ❌ **Claude Code Desktop** - FAILS at PASS 1 (cumulative context)
+3. ⚠️ **Gemini CLI** - Appeared to work but needs re-test with fresh execution
+4. ⚠️ **Antigravity Internal** - Appeared to work but needs re-test with fresh execution
+
+**ALL PLATFORMS REQUIRE RE-VALIDATION WITH FRESH EXECUTION.**
+
+### 8.11 Evidence & References
+
+**Test Evidence:**
+- Execution log: User-provided transcript (see report introduction)
+- Todo state at failure: Documented in Section 8.4
+- Triage file state: Partial output with 3/6 PDFs processed
+
+**Related Reports:**
+- Claude Code CLI failure (2026-01-05): Section 7
+- Original validation (now invalidated): Section 3.4 (Claude Code Desktop Testing)
+- Gemini CLI validation (now uncertain): Section 3.1
+
+### 8.12 Conclusion - Re-Validation Test 2
+
+**Test Result:** ❌ **FAILED - CRITICAL**
+
+Claude Code Desktop **CANNOT complete Phase 1** with typical corpus sizes (≥4 PDFs) due to cumulative context overflow during PASS 1 incremental processing.
+
+**Impact on Previous Validation:**
+
+The 2026-01-04 validation is **INVALIDATED** because:
+1. It only verified existing outputs, did NOT test execution
+2. Claude Code Desktop was certified based on verification, not execution
+3. Gemini CLI and Antigravity tests may have also been verification-only
+4. All platforms require re-testing with **fresh execution from clean state**
+
+**Critical Insight:**
+
+The "incremental workflow" described in `SKILL.md` is **NOT actually incremental**:
+- The agent is instructed to process "one PDF at a time"
+- But context is NOT released between iterations
+- All previous PDF content remains in conversation history
+- This causes cumulative context growth that leads to overflow
+
+**Recommended Action:**
+
+**ALL USERS: DO NOT USE ANY PLATFORM FOR PHASE 1 UNTIL FURTHER NOTICE.**
+
+The workflow design is fundamentally broken. All 2026-01-04 certifications are **REVOKED**.
+
+**Next Steps:**
+
+1. Implement Priority 0 and Priority 1 corrective actions
+2. Redesign workflow with true context release
+3. Re-validate ALL platforms with fresh execution
+4. Issue corrected validation certification
+5. Apologize to users for premature certification
+
+---
+
+**Test Conducted By:** Kurt Valcorza
+**Report Added:** 2026-01-05
+**Severity:** 🔴 CRITICAL
+**Status:** ⚠️ OPEN - ALL PLATFORMS REQUIRE RE-VALIDATION
+**Validation Recall Issued:** 2026-01-05
