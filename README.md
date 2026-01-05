@@ -1,1118 +1,503 @@
-# Research Writing Agent Orchestration
+# Research Writer: Subagent-Based Research Orchestration
 
-This repository implements a **modular, agent-assisted research writing workflow**, designed to support rigorous academic, policy, and R&D research while minimizing hallucination and preserving evidence traceability.
+Transform your research PDFs into a complete, validated literature review in one automated workflow.
 
-The workflow decomposes research writing into **clearly defined phases**, each handled by a dedicated SKILL.
+## 🚀 Quick Start
 
-Each phase produces auditable artifacts that feed the next phase.
+**Tell Claude Code (or your AI assistant):**
 
----
-
-## Introduction & Design Principles
-
-This orchestration is built on five core principles:
-
-1. **Analysis precedes writing**
-   No drafting occurs before evidence is extracted, synthesized, and structured.
-
-2. **Traceability over fluency**
-   Every claim can be traced back to synthesized evidence.
-
-3. **Separation of cognitive tasks**
-   Extraction, synthesis, structuring, drafting, and interpretation are handled by distinct agents.
-
-4. **Human-in-the-loop at high-risk points**
-   Humans approve scope, structure, and claims of contribution.
-
-5. **Composable & auditable outputs**
-   Each phase outputs Markdown artifacts that can be inspected, revised, or reused.
-
-### What This System Is (and Is Not)
-
-✅ This system is:
-- A research thinking scaffold
-- An evidence-first writing pipeline
-- Suitable for:
-    - Academic papers
-    - Theses/dissertations
-    - Policy and R&D reports
-
-❌ This system is not:
-- A "write my paper" shortcut
-- A citation generator
-- A replacement for domain expertise
-
----
-
-## End-to-End Workflow Overview
-
-```text
-PHASE 1 — Literature Discovery & Screening        (SKILL)
-        ↓
-PHASE 2 — Literature Extraction & Synthesis       (SKILL)
-        ↓
-PHASE 3 — Argument Structure & Review Outline     (SKILL)
-        ↓
-PHASE 4 — Literature Review Drafting              (SKILL)
-        ↓
-PHASE 4.5 — Citation Integrity Validation         (SKILL - Quality Control)
-        ↓
-PHASE 6 — Contribution & Implications Framing     (SKILL)
-        ↓
-PHASE 7 — Cross-Phase Validation                  (SKILL - Quality Control)
+```
+"Help me complete a literature review on [your research topic]"
 ```
 
-> **Note:** Phase numbering follows the complete research pipeline: 1 (Discovery) → 2 (Synthesis) → 3 (Outline) → 4 (Draft) → 4.5 (Citation Validation) → 6 (Contributions) → 7 (Cross-Phase Validation). Quality control phases (4.5, 7) are automated validation checkpoints.
+The orchestrator subagent will:
+1. ✅ Screen your research PDFs systematically
+2. ✅ Extract and synthesize findings
+3. ✅ Generate an outline structure
+4. ✅ Draft academic prose
+5. ✅ Validate citations (catch fabrications)
+6. ✅ Frame contributions and implications
+7. ✅ Validate consistency across all phases
 
-> **Skills Compliance:** All skills comply with the [Agent Skills specification](https://agentskills.io/specification) using actual tool names (`Read Write Edit Glob Grep Bash`) and include comprehensive Pre-Execution Validation, Execution Models, Error Handling, Output Validation, and Integration documentation.
+**Result**: Publication-ready literature review draft, ready for your manuscript.
 
 ---
 
-## Repository Structure
+## 📋 What is This?
 
-```text
+Research Writer is a **7-phase literature review workflow** powered by **subagent orchestration**. Each phase runs in isolated context with built-in quality gates.
+
+### Phases
+
+| Phase | Name | Input | Output | Time |
+|-------|------|-------|--------|------|
+| **1** | Literature Discovery | PDFs | Screening matrix (INCLUDE/EXCLUDE/UNCERTAIN) | 5-20 min |
+| **2** | Extraction & Synthesis | Approved PDFs | Extraction + synthesis matrices, themes | 15-30 min |
+| **3** | Argument Structure | Synthesis matrix | Literature review outline | 5-10 min |
+| **4** | Drafting | Outline + synthesis | Academic prose draft | 15-30 min |
+| **4.5** | Citation Validation | Draft | Citation integrity report (quality gate) | 3-5 min |
+| **6** | Contributions | Draft | Implications + future research | 10-15 min |
+| **7** | Cross-Phase Validation | All outputs | Consistency score report (quality gate) | 5-10 min |
+
+**Total time**: 1-2 hours for 20 papers, scales to 100+ papers
+
+---
+
+## 🎯 Why Subagents?
+
+### The Problem with Skills-Based Workflow
+
+Old system (skills) accumulated context with each phase:
+```
+Phase 1 → context grows
+Phase 2 → context grows more
+Phase 3 → context grows more
+Phase 4 → OVERFLOW (breaks at ~5 papers)
+```
+
+### The Solution: Isolated Contexts
+
+New system (subagents) gives each phase a clean context:
+```
+Orchestrator (main conversation)
+├─ Phase 1 (isolated context) → returns artifacts
+├─ Human checkpoint
+├─ Phase 2 (fresh context) → returns artifacts
+├─ Phase 3 (fresh context) → returns artifacts
+└─ ... scales infinitely
+```
+
+**Result**: Works with 3 papers OR 300 papers—no context overflow.
+
+---
+
+## 📁 Directory Structure
+
+```
 research-writer/
-├── corpus/                    (Your PDFs - start here!)
-│   └── *.pdf                  (Add your research PDFs to be screened)
+├── subagents/                          # Orchestration & execution
+│   ├── orchestrator/
+│   │   └── SUBAGENT.md                (Main workflow controller)
+│   ├── 01_literature-discovery/
+│   │   └── SUBAGENT.md                (Phase 1: Screening)
+│   ├── 02_literature-synthesis/
+│   │   └── SUBAGENT.md                (Phase 2: Extraction + Themes)
+│   ├── 03_argument-structurer/
+│   │   └── SUBAGENT.md                (Phase 3: Outline)
+│   ├── 04_literature-drafter/
+│   │   └── SUBAGENT.md                (Phase 4: Drafting)
+│   ├── 05_citation-validator/
+│   │   └── SUBAGENT.md                (Phase 4.5: Quality gate)
+│   ├── 06_contribution-framer/
+│   │   └── SUBAGENT.md                (Phase 6: Implications)
+│   └── 07_cross-phase-validator/
+│       └── SUBAGENT.md                (Phase 7: Quality gate)
 │
-├── scripts/
-│   └── setup.sh               (Automated setup and validation)
+├── corpus/                            # Your research PDFs (input)
+│   └── [place your PDFs here]
+│
+├── outputs/                           # Generated artifacts
+│   ├── literature-screening-matrix.md
+│   ├── literature-extraction-matrix.md
+│   ├── literature-synthesis-matrix.md
+│   ├── literature-review-outline.md
+│   ├── literature-review-draft.md
+│   ├── research-contributions-implications.md
+│   ├── citation-integrity-report.md
+│   ├── cross-phase-validation-report.md
+│   ├── execution-log.json              # Workflow state tracking
+│   └── workflow-execution-summary.md
 │
 ├── settings/
-│   └── screening-criteria-template.md  (Customize before Phase 1)
+│   └── screening-criteria.md  (Customize your criteria)
 │
-├── quick-start/
-│   ├── phase1.md              (Phase 1 execution prompt)
-│   ├── phase2.md              (Phase 2 prompt)
-│   ├── phase3.md              (Phase 3 prompt)
-│   ├── phase4.md              (Phase 4 prompt)
-│   ├── phase4.5.md            (Citation validation)
-│   ├── phase6.md              (Contribution framing)
-│   └── phase7.md              (Cross-phase validation)
+├── docs/
+│   ├── ARCHITECTURE.md                 (System design overview)
+│   ├── SUBAGENT_GUIDE.md               (How to use subagents)
+│   └── MIGRATION_GUIDE.md              (Upgrading from skills)
 │
-├── skills/
-│   ├── 01_literature-discovery/
-│   │   └── SKILL.md
-│   ├── 02_literature-synthesis/
-│   │   └── SKILL.md
-│   ├── 03_argument-structurer/
-│   │   └── SKILL.md
-│   ├── 04_literature-drafter/
-│   │   └── SKILL.md
-│   ├── 05_citation-validator/
-│   │   └── SKILL.md           (Quality control)
-│   ├── 06_contribution-framer/
-│   │   └── SKILL.md
-│   └── 07_cross-phase-validator/
-│       └── SKILL.md           (Quality control)
-│
-├── outputs/                   (Auto-generated)
-│   ├── literature-screening-matrix.md       (Phase 1)
-│   ├── prisma-flow-diagram.md               (Phase 1)
-│   ├── screening-progress.md                (Phase 1 - state management)
-│   ├── literature-extraction-matrix.md      (Phase 2)
-│   ├── literature-synthesis-matrix.md       (Phase 2)
-│   ├── literature-review-outline.md         (Phase 3)
-│   ├── literature-review-draft.md           (Phase 4)
-│   ├── citation-integrity-report.md         (Phase 4.5)
-│   ├── research-contributions-implications.md (Phase 6)
-│   └── cross-phase-validation-report.md     (Phase 7)
-│
-├── audits/                    (Validation & audit reports)
-│   ├── README.md              (Audit history and methodology)
-│   ├── matrices/              (Traceability matrices)
-│   ├── reports/               (Validation and audit reports)
-│   │   ├── VALIDATION_REPORT_*.md           (IQ/OQ/PQ/CQ validation)
-│   │   ├── PROCESS_AUDIT_REPORT.md          (Phase 1 setup audit)
-│   │   ├── PHASES_2-7_AUDIT_REPORT.md       (Phases 2-7 docs audit)
-│   │   └── PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md
-│   ├── skills/                (System validation skill)
-│   │   └── system-validation/
-│   └── validation-evidence/   (Test evidence archives)
-│
-├── interface/                 (Web UI - Optional)
-│   ├── app/                   (Next.js pages and API routes)
-│   ├── components/            (React components)
-│   ├── lib/                   (Utilities and types)
-│   ├── middleware.ts          (Security headers)
-│   ├── SECURITY.md            (Security documentation)
-│   ├── CHANGELOG.md           (Version history)
-│   └── package.json           (Node.js dependencies)
-│
-├── requirements.txt           (Python dependencies)
-├── .gitignore                 (Git ignore rules)
-├── README.md                  (This file)
-└── WORKFLOW_DIAGRAM.md        (Visual workflow)
+└── README.md                           (This file)
 ```
 
 ---
 
-## How Skills Work
+## 🚀 How to Use
 
-This system uses **Skills** as the primary interface for executing each research phase:
-
-### **Skills** (`skills/0X_*/SKILL.md`)
-- **Purpose:** Complete technical specifications that guide AI execution
-- **Content:** Workflow steps, error handling, constraints, quality thresholds, validation rules
-- **Length:** 300-700 lines per skill
-- **Invocation:** Direct execution via `Execute skills/XX_skillname/SKILL.md`
-
-### **Quick Start Templates** (`quick-start/phaseX.md` - Optional)
-- **Purpose:** Thin wrapper files that point to skills (for UI integrations)
-- **Content:** Brief summary + instruction to execute the corresponding SKILL.md
-- **Length:** 30-120 lines
-- **Note:** Most users can skip these and invoke skills directly
-
-### Execution Flow
-
-```
-User → Tells AI: "Execute skills/02_literature-synthesis/SKILL.md"
-       ↓
-AI reads SKILL → Loads complete workflow specification
-       ↓
-AI executes → Systematic extraction and synthesis with validation
-       ↓
-Outputs generated → User reviews results (extraction + synthesis matrices)
-```
-
-**Design Benefits:**
-- **Direct invocation:** No intermediary files needed
-- **Complete specification:** All logic in one place (SKILL.md)
-- **Consistency:** Same workflow every time
-- **Modularity:** Skills are independent and composable
-- **Auditability:** Full traceability from spec to execution
-
----
-
-## Workflow (Phase-by-Phase Details)
-
-> **Visual diagram:** See [WORKFLOW_DIAGRAM.md](WORKFLOW_DIAGRAM.md) for complete visual representation of all phases.
-
-### PHASE 1 — Literature Discovery & Screening
-
-**SKILL:** `literature-discovery-screening`
-
-**Purpose:** Automate systematic screening of research papers with PRISMA-compliant documentation. Provides structured recommendations for inclusion/exclusion while maintaining full human oversight.
-
-**Universal Three-Pass Workflow** (works for ALL corpus sizes: 1-100+ papers)
-- **PASS 1:** Quick triage (lightweight metadata scan)
-- **PASS 2:** Detailed screening one-by-one (context-safe, resumable)
-- **PASS 3:** Aggregate and finalize (PRISMA documentation)
-
-**Key Features:**
-- ✅ No context window limitations (max ~30K tokens at any point)
-- ✅ CLI-agnostic (works with Gemini CLI, ChatGPT CLI, Claude Desktop, etc.)
-- ✅ State management (resume from interruptions)
-- ✅ Same workflow for 3 PDFs or 300 PDFs
-- ⚠️ Note: Claude Code CLI is NOT supported (critical validation failure - see audits/reports/PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md)
-
-**Time Estimates:**
-- 1-5 PDFs: 5-15 min | 6-20 PDFs: 15-40 min | 20-50 PDFs: 40-90 min | 50+ PDFs: 90-180 min
-
-**Inputs:** PDFs in `corpus/` + screening criteria in `settings/screening-criteria-template.md`
-**Outputs:** `literature-screening-matrix.md`, `prisma-flow-diagram.md`, `screening-progress.md`
-
-### PHASE 2 — Literature Extraction & Synthesis
-
-SKILL: `literature-review-synthesis-matrix`
-
-Purpose:
-- Extract standardized information from each paper
-- Synthesize themes across the corpus
-
-Inputs:
-- Folder of screened research PDFs
-
-Outputs:
-- `literature-extraction-matrix.md`
-- `literature-synthesis-matrix.md`
-
-This phase transforms reading into structured evidence.
-
-### PHASE 3 — Argument Structure & Review Outline
-
-SKILL: `literature-review-argument-structurer`
-
-Purpose:
-- Convert synthesis into a defensible argument structure
-- Decide what the literature says, disagrees on, and omits
-
-Inputs:
-- `literature-synthesis-matrix.md`
-
-Outputs:
-- `literature-review-outline.md`
-
-⚠️ Human checkpoint recommended here
-
-Approve outline before drafting begins.
-
-### PHASE 4 — Literature Review Drafting
-
-SKILL: `literature-review-drafter`
-
-Purpose:
-- Translate approved structure into academic prose
-- Maintain theme-driven, evidence-grounded writing
-
-Inputs:
-- `literature-review-outline.md`
-- `literature-synthesis-matrix.md`
-
-Outputs:
-- `literature-review-draft.md`
-
-This phase is intentionally constrained to prevent:
-- Paper-by-paper summaries
-- Unsupported claims
-- Essay-style hallucination
-
-### PHASE 4.5 — Citation Integrity Validation
-
-SKILL: `citation-integrity-validator`
-
-Purpose:
-- Validate all citations against extraction matrix
-- Detect fabricated or hallucinated citations
-- Identify potential misattributions
-- Assess citation distribution and balance
-- Check format consistency
-
-Inputs:
-- `literature-review-draft.md`
-- `literature-extraction-matrix.md`
-- `literature-synthesis-matrix.md`
-
-Outputs:
-- `citation-integrity-report.md`
-
-⚠️ Quality control checkpoint
-
-This phase automatically catches citation errors before human review, ensuring:
-- No fabricated citations (not in corpus)
-- Claims align with documented findings
-- Balanced source usage (no over-reliance on single paper)
-- Consistent citation formatting
-
-**Pass criteria:** Zero fabricated citations, zero high-severity misattributions
-
-### PHASE 6 — Contribution & Implications Framing
-
-SKILL: `research-contribution-implications-framer`
-
-Purpose:
-- Articulate what the research contributes
-- Frame implications proportionate to evidence strength
-- Define future research directions
-
-Inputs:
-- Synthesis matrix
-- Review outline
-- Literature review draft
-- (Optional) study findings
-
-Outputs:
-- `research-contributions-implications.md`
-
-⚠️ This phase controls overclaiming and novelty inflation.
-
-### PHASE 7 — Cross-Phase Validation
-
-SKILL: `cross-phase-validator`
-
-Purpose:
-- Validate consistency across all phase outputs
-- Ensure complete traceability from corpus to final claims
-- Identify orphaned content or broken evidence chains
-- Check alignment of evidence strength characterizations
-
-Inputs:
-- All phase outputs (minimum: Phases 2, 3, 4)
-- Extended: Phases 2, 3, 4, 6
-
-Outputs:
-- `cross-phase-validation-report.md`
-
-⚠️ Final quality control checkpoint
-
-This phase validates the integrity of the entire analytical pipeline:
-- Phase 2→3: All synthesis themes appear in outline
-- Phase 3→4: All outline sections are drafted
-- Phase 2→4: Themes and citations properly carried through
-- Phase 4→6: Contributions grounded in draft evidence
-- End-to-end traceability for sample claims
-
-**Pass criteria:** Consistency score ≥75, zero critical issues
-
----
-
-## Human-in-the-Loop Checkpoints (Recommended)
-
-| Checkpoint      | Type     | Why                                                      |
-| --------------- | -------- | -------------------------------------------------------- |
-| After Phase 1   | REQUIRED | Approve final corpus; resolve UNCERTAIN screening cases |
-| After Phase 2   | Advised  | Validate corpus coverage and synthesis accuracy          |
-| After Phase 3   | Advised  | Approve argument structure before drafting               |
-| After Phase 4   | Advised  | Review tone, balance, and writing quality                |
-| After Phase 4.5 | Auto QC  | Citation validation (automated - review if issues found) |
-| After Phase 6   | Advised  | Validate contribution claims and implications            |
-| After Phase 7   | Auto QC  | Cross-phase consistency (automated - review if warnings) |
-
----
-
-## Installation
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/kurtvalcorza/research-writer
-   cd research-writer
-   ```
-
-2. **Run the setup script:**
-   ```bash
-   bash scripts/setup.sh
-   ```
-
-   This will:
-   - Create required directories (`corpus/`, `outputs/`)
-   - Check Python installation
-   - Install PDF processing dependencies
-   - Validate your environment
-
-   **Or install manually:**
-   ```bash
-   # Create directories
-   mkdir -p corpus outputs
-
-   # Install PDF processing libraries
-   pip install -r requirements.txt
-   ```
-
-3. **Set up your AI coding assistant:**
-   - [**Claude Desktop**](https://claude.ai/download) (recommended - web interface)
-   - [**Gemini CLI**](https://geminicli.com/) (Requires `--yolo` flag for full tool support)
-   - [**ChatGPT**](https://chat.openai.com/) (web interface)
-   - Any AI coding assistant with file reading capabilities
-   - ⚠️ **NOT supported:** Claude Code CLI (critical validation failure - context overflow with ≥6 PDFs)
-
----
-
-## 🌐 Web Interface (Optional)
-
-For users who prefer a graphical interface, the Research Writer includes a **production-ready web application** that provides:
-
-### Features
-- **Visual Dashboard**: Real-time progress tracking with phase locking
-- **Corpus Management**: Drag-and-drop PDF upload with validation
-- **Settings Editor**: Visual editor for screening criteria
-- **Skills Library**: View, copy, or directly execute research skills
-- **Output Viewer**: Beautiful Markdown rendering of generated artifacts
-- **Gemini CLI Integration**: Direct integration with Gemini CLI (Claude Code CLI removed due to validation failures)
-- **Real-Time Execution**: Watch agent execution in an embedded terminal
-
-### Quick Start
+### 1. Prepare Your Materials
 
 ```bash
-# Navigate to interface directory
-cd interface
+# Place your research PDFs in corpus/
+cp /path/to/your/pdfs/* corpus/
 
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Open http://localhost:3000
-```
-
-### Production Deployment
-
-```bash
-# Build for production
-npm run build
-
-# Start production server
-npm run start
-```
-
-### Security & Quality
-
-The web interface is built with **robust security and engineering best practices**:
-- ✅ Designed to prevent common vulnerabilities
-- ✅ PDF validation and file size limits
-- ✅ Path traversal protection
-- ✅ Security headers (HSTS, CSP, X-Frame-Options)
-- ✅ 100% TypeScript with full type safety
-- ✅ Accessibility support (WCAG 2.1 AA)
-- ✅ Error boundaries and graceful recovery
-
-**Documentation:**
-- [Interface README](interface/README.md) - Complete setup and usage guide
-- [Security Documentation](interface/SECURITY.md) - Security implementation details
-- [Changelog](interface/CHANGELOG.md) - Version history and improvements
-
-**Technology Stack:** Next.js 16, React 19, TypeScript 5, Tailwind CSS 4
-
-### When to Use the Interface
-
-**Use the web interface if you:**
-- Prefer visual dashboards over CLI
-- Want drag-and-drop file management
-- Need real-time execution monitoring with Gemini CLI
-- Prefer clicking buttons over typing commands
-- Want integrated corpus and output management
-
-**Use the CLI workflow if you:**
-- Are comfortable with command-line tools
-- Want maximum flexibility and control
-- Prefer working directly in your AI assistant
-- Need to customize prompts on the fly
-- Want to work entirely in terminal
-
-Both approaches use the same underlying research workflow and produce identical outputs. Choose what works best for your workflow!
-
----
-
-## Step by Step Procedure
-
-### Workflow Progress Tracker
-
-Track your progress through the research writing workflow. Check off each step as you complete it:
-
-```
-Phase 1: Literature Discovery & Screening
-  [ ] 1. Prepare PDFs in corpus/
-  [ ] 2. Customize screening criteria template
-  [ ] 3. Run Phase 1 (screening)
-  [ ] 4. Review screening matrix
-  [ ] 5. Human checkpoint: Approve final corpus
-
-Phase 2: Literature Extraction & Synthesis
-  [ ] 6. Run Phase 2 (extraction + synthesis)
-  [ ] 7. Review quality report (>80% success rate)
-  [ ] 8. Review synthesis matrix (3-7 themes)
-
-Phase 3: Argument Structure
-  [ ] 9. Run Phase 3 (outline generation)
-  [ ] 10. Review outline structure
-  [ ] 11. Human checkpoint: Approve outline
-
-Phase 4: Literature Review Drafting
-  [ ] 12. Run Phase 4 (draft writing)
-  [ ] 13. Review draft (theme-driven, not paper-by-paper)
-
-Phase 4.5: Citation Validation (Quality Control)
-  [ ] 14. Run Phase 4.5 (citation validation)
-  [ ] 15. Review validation report
-  [ ] 16. Fix any critical issues (fabrications, misattributions)
-  [ ] 17. Re-run Phase 4.5 if fixes made
-
-Phase 6: Contribution Framing (Optional)
-  [ ] 18. Run Phase 6 (contributions + implications)
-  [ ] 19. Review contribution claims (grounded in evidence?)
-
-Phase 7: Cross-Phase Validation (Quality Control)
-  [ ] 20. Run Phase 7 (consistency validation)
-  [ ] 21. Review consistency score (≥75?)
-  [ ] 22. Fix critical issues if any
-  [ ] 23. Re-run Phase 7 if fixes made
-
-Final Steps
-  [ ] 24. Human review: Approve final outputs
-  [ ] 25. Ready for manuscript integration
-```
-
-**Current outputs location:** `outputs/` directory
-
-**Expected completion time:** 1-2 hours for small corpus (5-10 papers), 3-5 hours for medium corpus (20-50 papers)
-
----
-
-### 1. Prepare Your PDFs
-
-Add your research PDF files to the `corpus/` directory (these are the papers you want to screen).
-
-```bash
-# Example: Copy PDFs to corpus
-cp ~/Downloads/*.pdf corpus/
-```
-
-**Tips:**
-- Ensure filenames are descriptive (e.g., `smith2024_ai_adoption.pdf`)
-- Files must be text-readable (use OCR if needed for scanned PDFs)
-- Directories `corpus/` and `outputs/` are already created if you ran the setup script
-
-### 2. Define Screening Criteria
-Customize the template for your research topic:
-- Research context (topic, review type, geographic/temporal scope)
-- Inclusion criteria (topic, study type, publication type, date range, language)
-- Exclusion criteria (out of scope, methodological, quality thresholds)
-- Edge case decision rules and example applications
-
-```
-Topic: AI Adoption in the Philippines
-Please revise settings/screening-criteria-template.md accordingly.
-# Add instructions on screen criteria
-```
-
-### 3. Run Phase 1 Screening
-
-**Tell your AI coding assistant (e.g., Claude Code):**
-
-```
-Execute skills/01_literature-discovery/SKILL.md
-
-Process the PDFs in the corpus/ directory and apply the screening criteria from settings/screening-criteria-template.md.
-```
-
-**What happens:**
-The agent will automatically execute a three-pass workflow:
-- **PASS 1:** Quick triage of all PDFs (lightweight metadata scan)
-- **PASS 2:** Detailed screening one-by-one (resumable if interrupted)
-- **PASS 3:** Generate final screening matrix and PRISMA diagram
-
-**Estimated time:** 5-15 min (1-5 PDFs), 15-40 min (6-20 PDFs), 40-90 min (20-50 PDFs)
-
-### 4. Review Phase 1 Results
-Open `outputs/literature-screening-matrix.md` and review:
-- ✅ **INCLUDE** papers (proceed to Phase 2)
-- ❌ **EXCLUDE** papers (verify rationales)
-- ⚠️ **UNCERTAIN** cases (require human judgment)
-- ⚙️ **METADATA_INSUFFICIENT** papers (may need OCR or manual entry)
-
-⚠️ **Human checkpoint:** Phase 1 provides recommendations only. You must approve the final corpus before Phase 2.
-
-### 5. Run Phase 2: Literature Extraction & Synthesis
-
-**Prerequisites:**
-- ✅ Phase 1 complete (screening matrix generated)
-- ✅ Approved corpus in `corpus/` directory
-- ✅ Human checkpoint: Final corpus approved
-
-**Tell your AI coding assistant:**
-
-```
-Execute skills/02_literature-synthesis/SKILL.md
-
-Process the approved PDFs from the corpus/ directory.
-```
-
-**What happens:**
-The agent will:
-- Extract standardized information from each paper (metadata, methods, findings, contributions)
-- Generate a PDF processing quality report (success/failure rates)
-- Synthesize themes across the corpus
-- Output: `literature-extraction-matrix.md` and `literature-synthesis-matrix.md`
-
-**Quality Thresholds:**
-- EXCELLENT: >95% success rate
-- GOOD: 80-95% success rate
-- ACCEPTABLE: 60-80% success rate (proceed with caution)
-- POOR: <60% success rate (resolve issues before Phase 3)
-
-**If >20% of PDFs fail to process:** Review the processing report and resolve high-priority failures before continuing.
-
-**Estimated time:** 15-30 min for 10 papers
-
-**Success Indicators:**
-- ✅ Both output files generated (extraction + synthesis matrices)
-- ✅ PDF processing report shows GOOD or EXCELLENT quality
-- ✅ All corpus papers appear in extraction matrix
-- ✅ Synthesis matrix identifies 3-7 themes
-- ✅ Processing metadata shows >80% success rate
-
-### 6. Run Phase 3: Argument Structure & Review Outline
-
-**Prerequisites:**
-- ✅ Phase 2 complete (extraction + synthesis matrices generated)
-- ✅ Synthesis matrix reviewed and validated
-
-**Tell your AI coding assistant:**
-
-```
-Execute skills/03_argument-structurer/SKILL.md
-
-Use the synthesis matrix to create a logical argument structure and literature review outline.
-```
-
-**What happens:**
-The agent will:
-- Convert synthesis into a defensible argument structure
-- Decide what the literature says, disagrees on, and omits
-- Generate `literature-review-outline.md`
-
-**Estimated time:** 5-10 min
-
-**Success Indicators:**
-- ✅ Outline file generated with clear section structure
-- ✅ All synthesis themes represented in outline
-- ✅ Evidence strength labels assigned (Strong consensus, Mixed, Emerging, Sparse)
-- ✅ Consolidated gaps section included
-- ✅ Argument flow summary explains section ordering
-
-⚠️ **Human checkpoint:** Approve the outline before drafting begins.
-
-### 7. Run Phase 4: Literature Review Drafting
-
-**Prerequisites:**
-- ✅ Phase 3 complete (outline generated)
-- ✅ Human checkpoint: Outline approved
-- ✅ Phase 2 synthesis matrix available
-
-**Tell your AI coding assistant:**
-
-```
-Execute skills/04_literature-drafter/SKILL.md
-
-Use the approved outline and synthesis matrix to draft the literature review.
-```
-
-**What happens:**
-The agent will:
-- Translate approved structure into academic prose
-- Maintain theme-driven, evidence-grounded writing (not paper-by-paper summaries)
-- Use appropriate hedging language based on evidence strength
-- Generate `literature-review-draft.md`
-
-**Estimated time:** 10-20 min for 10 papers
-
-**Success Indicators:**
-- ✅ Draft file generated with all outline sections
-- ✅ Theme-driven organization (not individual paper summaries)
-- ✅ Citations present for all major claims
-- ✅ Hedging language matches evidence strength from outline
-- ✅ No fabricated sources or claims beyond synthesis
-
----
-
-### 🔍 QUALITY CONTROL CHECKPOINT
-
-**Phase 4.5 is an automated validation gate.** It checks for:
-- Fabricated citations (CRITICAL - blocks progression)
-- Misattributions and over-citation (WARNINGS)
-- Citation format consistency
-
-**Pass Criteria:**
-- Zero fabricated citations
-- Zero high-severity misattributions
-- <5 format inconsistencies
-
-**If validation FAILS:** Fix issues in Phase 4 draft before proceeding to Phase 6.
-
----
-
-### 8. Run Phase 4.5: Citation Integrity Validation (Quality Control)
-
-**Prerequisites:**
-- ✅ Phase 4 complete (draft generated)
-- ✅ Phase 2 extraction matrix available
-- ✅ Phase 2 synthesis matrix available
-
-**Tell your AI coding assistant:**
-
-```
-Execute skills/05_citation-validator/SKILL.md
-
-Validate all citations in the draft against the extraction matrix.
-```
-
-**What happens:**
-The agent will:
-- Extract all citations from the draft
-- Cross-reference each citation against extraction matrix (detect fabrications)
-- Validate claim-evidence alignment (detect misattributions)
-- Assess citation distribution and balance
-- Check format consistency
-- Generate `citation-integrity-report.md`
-
-**Estimated time:** 3-5 min
-
-**Success Indicators:**
-- ✅ Validation report generated
-- ✅ Zero fabricated citations detected
-- ✅ Zero high-severity misattributions
-- ✅ Balanced citation distribution (no single paper >30%)
-- ✅ Format inconsistencies <5
-
-**If issues found:** Review the report, fix flagged citations in draft, re-run Phase 4.5 to verify fixes.
-
-### 9. Run Phase 6: Contribution & Implications Framing (Optional)
-
-**Prerequisites:**
-- ✅ Phase 4 complete (draft generated)
-- ✅ Phase 4.5 validation passed (or issues resolved)
-- ✅ Phase 2-3 outputs available
-
-**Tell your AI coding assistant:**
-
-```
-Execute skills/06_contribution-framer/SKILL.md
-
-Use the literature review draft and synthesis to frame contributions and implications.
-```
-
-**What happens:**
-The agent will:
-- Identify defensible contributions grounded in prior phases
-- Classify contributions (theoretical, methodological, practical, policy)
-- Articulate implications proportionate to evidence strength
-- Acknowledge limitations and boundary conditions
-- Define future research directions tied to documented gaps
-- Generate `research-contributions-implications.md`
-
-**Estimated time:** 5-10 min
-
-**Success Indicators:**
-- ✅ Contributions file generated with clear sections
-- ✅ All contributions grounded in draft evidence
-- ✅ Implications match evidence strength (no overclaiming)
-- ✅ Limitations explicitly acknowledged
-- ✅ Future research tied to identified gaps
-
----
-
-### 🔍 QUALITY CONTROL CHECKPOINT
-
-**Phase 7 is the final validation gate.** It checks for:
-- Cross-phase consistency (synthesis → outline → draft → contributions)
-- Complete traceability (corpus → synthesis → outline → draft)
-- Orphaned content or broken evidence chains
-- Evidence strength alignment across phases
-
-**Pass Criteria:**
-- Consistency score ≥75
-- Zero critical issues
-- All warnings reviewed
-
-**If validation FAILS:** Review and fix inconsistencies before finalizing manuscript.
-
----
-
-### 10. Run Phase 7: Cross-Phase Validation (Quality Control)
-
-**Prerequisites:**
-- ✅ Minimum: Phases 2, 3, 4 complete
-- ✅ Extended: Phases 2, 3, 4, 6 complete
-- ✅ Optional: Phase 4.5 report available
-
-**Tell your AI coding assistant:**
-
-```
-Execute skills/07_cross-phase-validator/SKILL.md
-
-Validate consistency and traceability across all completed phase outputs.
-```
-
-**What happens:**
-The agent will:
-- Validate Phase 2→3 consistency (all synthesis themes in outline?)
-- Validate Phase 3→4 consistency (all outline sections drafted?)
-- Validate Phase 2→4 direct (themes properly cited in draft?)
-- Validate Phase 4→6 (if available - contributions grounded in draft?)
-- Perform end-to-end traceability audit on sample claims
-- Calculate overall consistency score
-- Generate `cross-phase-validation-report.md`
-
-**Estimated time:** 5-10 min
-
-**Success Indicators:**
-- ✅ Validation report generated
-- ✅ Consistency score ≥75
-- ✅ Zero critical issues detected
-- ✅ All synthesis themes represented in outline and draft
-- ✅ All outline sections have corresponding draft sections
-- ✅ Sample claims trace back through complete evidence chain
-
-⚠️ **Final checkpoint:** Review validation report. If critical issues found, fix affected phases and re-run validation.
-
----
-
-### One-Command Workflow Execution (Experimental)
-
-⚠️ **Note:** This workflow is experimental and works best with small corpora (<5 papers). For larger corpora or complex projects, use the step-by-step approach (Steps 1-10) for better control and reliability.
-
-For experienced users who want to run the complete workflow in sequence, provide this instruction to your AI coding assistant:
-
-```
-Execute the complete research writing workflow:
-
-1. Phase 1: Screen PDFs using skills/01_literature-discovery/SKILL.md
-2. Pause for human review of screening-matrix.md
-3. Phase 2: Extract and synthesize using skills/02_literature-synthesis/SKILL.md
-4. Phase 3: Generate outline using skills/03_argument-structurer/SKILL.md
-5. Pause for human approval of outline
-6. Phase 4: Draft literature review using skills/04_literature-drafter/SKILL.md
-7. Phase 4.5: Validate citations using skills/05_citation-validator/SKILL.md
-8. Phase 6: Frame contributions using skills/06_contribution-framer/SKILL.md
-9. Phase 7: Cross-phase validation using skills/07_cross-phase-validator/SKILL.md
-
-Stop at each human checkpoint for approval before proceeding.
-```
-
-**Limitations:**
-- May hit context limits with 20+ papers
-- Error handling less robust than step-by-step approach
-- Human checkpoints not enforced (requires manual intervention)
-- **Recommended:** Use step-by-step approach for production work
-
----
-
-### Tips for Success
-
-- **Define criteria first** before running Phase 1
-- **Start conservative:** Use liberal criteria initially (prefer UNCERTAIN over auto-EXCLUDE)
-- **State management allows resuming** if interrupted during PASS 2
-- **Validate metadata:** Spot-check critical fields (year, authors) in the matrix
-- **Trust the process:** The agent provides systematic consistency; you provide domain expertise
-- **Review checkpoints:** Human approval at Phases 1, 3, 4.5, and 7 ensures quality control
-
-**Key principle:** The agent recommends; humans decide.
-
----
-
-## Extending the Orchestration
-
-Optional extensions include:
-- Methods & results narrativizer (Phase 5)
-- Reviewer response generator (Phase 8)
-- Policy brief / executive summary generator
-- Incremental checkpointing for Phase 2 (large corpora)
-- Reference manager integration (Zotero, Mendeley)
-
-Each can be added as a composable SKILL.
-
----
-
-## Troubleshooting & FAQ
-
-### Troubleshooting
-
-#### Phase 1 Issues
-
-**Problem: Context window limit hit during PASS 1**
-```
-Solution: This issue has been fixed in the current version
-- The skill now uses incremental processing (one PDF at a time)
-- If you still encounter this, ensure you're using the latest SKILL.md
-- The universal three-pass workflow handles any corpus size
-- Note: Initial testing with Claude Code CLI revealed this issue, which was fixed before multi-platform validation
-```
-
-**Problem: PDF parsing failure**
-```
-Solution: Check PDF quality
-- Re-download corrupted files
-- Use OCR for image-only PDFs: ocrmypdf input.pdf output.pdf
-- Check file isn't password-protected
-```
-
-**Problem: Can't find screening-triage.md**
-```
-Solution: PASS 1 hasn't run yet
-- Execute PASS 1 first
-- Check outputs/ directory
-```
-
-**Problem: Interrupted during PASS 2**
-```
-Solution: Resume from checkpoint
-- Check screening-progress.md for last completed PDF
-- Re-run PASS 2 command - it will pick up from next PENDING paper
-- No data loss!
-```
-
-#### Phase 2 Issues
-
-**Problem: High PDF failure rate (>20%)**
-```
-Solution: Check PDF processing report
-- Re-download corrupted files from original sources
-- Run OCR on image-only PDFs: ocrmypdf input.pdf output.pdf
-- Remove password protection from encrypted PDFs
-- Verify files are actual PDFs (not renamed files)
-```
-
-**Problem: "POOR quality assessment" (<60% success rate)**
-```
-Solution: CRITICAL - Resolve before Phase 3
-- Review "Failed PDF Details" table in extraction matrix
-- Fix high-priority papers (critical to synthesis)
-- Can proceed with medium-priority issues (note limitations in draft)
-- Document which papers were excluded and why
-```
-
-**Problem: No themes generated in synthesis matrix**
-```
-Solution: Check corpus content
-- Ensure papers are actually relevant to research topic
-- Verify extraction matrix has meaningful "Key Themes" column
-- May need minimum 3-5 successfully extracted papers
-- Review if corpus is too narrow or too broad
-```
-
-#### Phase 3 Issues
-
-**Problem: Outline sections don't make sense**
+# Customize screening criteria (optional, default template provided)
+nano settings/screening-criteria.md
 ```
-Solution: Review synthesis matrix quality
-- Check if synthesis themes are well-defined
-- May need to re-run Phase 2 with better theme identification
-- Provide feedback to AI if themes need reorganization
-```
-
-**Problem: Evidence strength labels seem wrong**
-```
-Solution: Check synthesis matrix documentation
-- "Strong consensus" requires ALL or MOST papers addressing theme
-- "Limited" means 1-2 papers only
-- Labels should match synthesis evidence, not subjective assessment
-```
-
-#### Phase 4 Issues
-
-**Problem: Draft reads like paper-by-paper summaries**
-```
-Solution: Re-run Phase 4 with stricter instructions
-- Emphasize theme-driven synthesis (not paper summaries)
-- May indicate outline wasn't sufficiently thematic
-- Consider revising outline (Phase 3) first
-```
 
-**Problem: Draft has unsupported claims**
-```
-Solution: Check against synthesis matrix
-- All claims must trace to synthesis themes
-- Revise draft to match evidence in synthesis
-- Flag for Phase 4.5 citation validation
-```
+### 2. Start the Workflow
 
-#### Phase 4.5 Issues
+**In Claude Desktop, Claude Code, or this chat:**
 
-**Problem: Fabricated citations detected (CRITICAL)**
 ```
-Solution: MUST FIX before proceeding
-- Review each flagged citation in report
-- Option 1: Remove citation and rephrase claim
-- Option 2: Add paper to corpus (run through Phases 1-2 first)
-- Re-run Phase 4 after fixes
-- Re-run Phase 4.5 to verify all fabrications resolved
+"Help me complete a literature review on [my research topic]"
 ```
 
-**Problem: Over-citation warning (>30% from one paper)**
-```
-Solution: Review draft for balance
-- Check if over-cited paper is truly central to all themes
-- Ensure claims supported by multiple sources where possible
-- May indicate over-reliance on single source
-- Consider citing other corpus papers for similar claims
-```
+**Or more specifically:**
 
-**Problem: Misattribution warnings**
 ```
-Solution: Review context for each flagged citation
-- Read full sentence containing citation
-- Check extraction matrix for paper's actual findings
-- Adjust claim language to match evidence strength
-- High-severity: Replace citation or remove claim
-- Medium-severity: Add hedging language
+"Use the research-workflow-orchestrator subagent to manage my complete 
+literature review workflow. Here's my setup:
+- Topic: [Your research topic]
+- PDFs in: corpus/
+- Criteria: settings/screening-criteria.md
+- Start from Phase 1"
 ```
 
-#### Phase 6 Issues
+### 3. Approve Checkpoints
 
-**Problem: Contribution claims seem overclaimed**
-```
-Solution: Check against draft evidence
-- All contributions must be grounded in draft
-- Review Phase 6 output against Phase 7 validation
-- Reduce scope of claims to match evidence boundaries
-- Add more limitations and caveats
-```
-
-#### Phase 7 Issues
+The orchestrator pauses at critical checkpoints:
 
-**Problem: Consistency score <75**
-```
-Solution: Review validation report systematically
-1. Fix CRITICAL issues first (broken traces, missing sections)
-2. Address WARNING issues (misalignments, gaps)
-3. Review INFO items (may be acceptable)
-4. Re-run affected phases
-5. Re-run Phase 7 to verify fixes raised score
-```
+- **Phase 1**: Approve your final research corpus (or modify screening)
+- **Phase 3**: Approve outline structure (or request revisions)
+- **Phase 4.5**: Automatic validation (blocks if citations fabricated)
+- **Phase 7**: Automatic validation (blocks if consistency <75%)
 
-**Problem: "Missing outline section in draft"**
-```
-Solution: CRITICAL error
-- Option 1: Add missing section to draft (re-run Phase 4)
-- Option 2: Remove from outline if no longer relevant (re-run Phase 3)
-- Re-run Phase 7 to verify consistency
-```
+### 4. Use Your Outputs
 
-**Problem: "Theme in synthesis not in outline"**
-```
-Solution: Review orphaned themes
-- Check if theme is actually important
-- If yes: Add to outline (re-run Phase 3)
-- If no: Document why excluded
-- Ensure exclusion doesn't create synthesis gaps
-```
+After completion, you have:
 
-**Problem: Broken traceability chain**
 ```
-Solution: Trace claim manually
-- Find claim in draft
-- Check if in outline → if not, remove or add to outline
-- Check if in synthesis → if not, check if supported
-- If chain broken: Remove claim or rebuild evidence
-```
+✅ literature-review-draft.md
+   → Publication-ready literature review section
+   → Integrate directly into your manuscript
 
-#### General Issues
+✅ research-contributions-implications.md
+   → Contribution framing
+   → Policy/practice implications
+   → Future research directions
 
-**Problem: Which AI coding assistant should I use?**
-```
-Solution: Recommended options
-- Claude Desktop (recommended - web interface with excellent PDF parsing)
-- Google Gemini CLI (command-line, good for automation)
-- ChatGPT (web interface)
-- NOT SUPPORTED: Claude Code CLI (critical validation failure)
-```
+✅ citation-integrity-report.md
+   → Proof all citations verified
+   → No fabricated claims
 
-**Problem: How do I know if it's working?**
-```
-Solution: Check outputs/ directory
-- Each phase creates specific output files
-- Progress files show state (for incremental modes)
-- Review outputs after each phase
+✅ execution-log.json
+   → Complete audit trail
+   → Can resume from any phase
 ```
 
 ---
 
-### FAQ
+## 🔄 Resumable Workflows
 
-**Q: Do I need to use all 7 phases?**
-A: No. Use what you need. Core workflow: Phases 1, 2, 3, 4. Quality control: 4.5, 7. Optional: 6.
+**If interrupted:**
 
-**Q: Can I modify the screening criteria mid-process?**
-A: Not recommended. If criteria change, restart Phase 1 for consistency.
+```
+"Continue my research workflow"
+```
 
-**Q: What if I only have 2 PDFs?**
-A: Use the same universal workflow. Takes 5-10 minutes total.
-
-**Q: Can this handle 100+ PDFs?**
-A: Yes! Universal workflow scales. Expect 2-3 hours for 100 PDFs in Phase 1.
-
-**Q: Do I need programming skills?**
-A: No. Just ability to run AI coding assistant commands and review Markdown files.
-
-**Q: What if my PDFs are in a language other than English?**
-A: Screening criteria can specify language requirements. Non-English PDFs will be flagged or excluded based on your criteria.
+The orchestrator will:
+1. Load your execution log
+2. Show last completed phase
+3. Ask to resume from next phase
+4. Continue without re-processing earlier work
 
 ---
 
-## Final Note
+## 🎓 Key Concepts
 
-This orchestration mirrors how experienced researchers actually work, but makes the reasoning explicit, modular, and auditable.
+### What's a Subagent?
 
-The goal is not faster writing — the goal is better thinking, expressed clearly.
+A **subagent** is an independent AI agent with:
+- **Isolated context**: Fresh start for each phase
+- **Clear inputs**: What it needs to work
+- **Clear outputs**: What it produces
+- **Resumable state**: Can pick up where it left off
 
-Tool-agnostic by design. Use the AI coding assistant that works best for your workflow.
+**Difference from Skills**:
+- **Skills**: Model-invoked, operate in same conversation context
+- **Subagents**: Explicitly invoked, isolated contexts, returned artifacts
+
+### Quality Gates
+
+Two mandatory quality gates ensure output integrity:
+
+1. **Phase 4.5 (Citation Validation)**: 
+   - ❌ BLOCKS if fabricated citations found
+   - ⚠️ WARNS if misattributions found
+   - ✅ PASSES if all citations verified
+
+2. **Phase 7 (Cross-Phase Validation)**:
+   - ✅ PASSES if consistency ≥75
+   - ⚠️ WARNS if consistency 65-74
+   - ❌ BLOCKS if consistency <65 or critical issues
+
+### Execution Log
+
+`outputs/execution-log.json` tracks:
+- Every phase executed
+- Agent ID for each phase
+- Human approvals at checkpoints
+- Timestamps
+- Output files generated
+
+**Use for**: Auditing workflow, resuming, understanding execution history
+
+---
+
+## 📊 Workflow State Machine
+
+```
+START
+  ↓
+[Phase 1: Discovery & Screening]
+  ↓
+CHECKPOINT 1: "Approve corpus?"
+  ↓
+[Phase 2: Extraction & Synthesis]
+  ↓
+[Phase 3: Argument Structuring]
+  ↓
+CHECKPOINT 2: "Approve outline?"
+  ↓
+[Phase 4: Drafting]
+  ↓
+[Phase 4.5: Citation Validation] ← QUALITY GATE (must pass)
+  ↓
+[Phase 6: Contribution Framing]
+  ↓
+[Phase 7: Cross-Phase Validation] ← FINAL QUALITY GATE (must pass)
+  ↓
+COMPLETE ✅
+```
+
+---
+
+## ⚡ Advanced: Individual Subagent Invocation
+
+You can also invoke individual phases directly:
+
+```
+"Use the phase-01-literature-discovery subagent to screen my PDFs"
+```
+
+This is useful for:
+- Re-running specific phases
+- Testing individual components
+- Fine-grained control over workflow
+- Troubleshooting
+
+---
+
+## 🛠️ Configuration
+
+### Screening Criteria (settings/screening-criteria.md)
+
+Customize what papers to include/exclude:
+
+```markdown
+# Literature Review Screening Criteria
+
+## Research Topic
+AI Adoption in Philippine Healthcare
+
+## Inclusion Criteria
+- [ ] Topic: AI/Machine Learning
+- [ ] Geographic scope: Any region
+- [ ] Language: English
+- [ ] Date: 2015-present
+- [ ] Study type: Empirical research
+
+## Exclusion Criteria
+- [ ] Opinion pieces or editorials
+- [ ] Not healthcare-related
+- [ ] Published before 2015
+- [ ] Non-English publications
+
+## Edge Cases
+[Document how to handle unclear papers]
+```
+
+### Execution Context
+
+After Phase 1, the orchestrator creates `outputs/execution-context.json`:
+
+```json
+{
+  "research_topic": "AI Adoption in Philippine Healthcare",
+  "corpus_path": "corpus/",
+  "screening_criteria_file": "settings/screening-criteria.md",
+  "phases_to_run": [1, 2, 3, 4, 4.5, 6, 7],
+  "started_at": "2025-01-05T10:30:00Z"
+}
+```
+
+---
+
+## 📈 Scaling: From 5 Papers to 500
+
+| Corpus Size | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Total Time |
+|-------------|---------|---------|---------|---------|-----------|
+| 5 papers | 5 min | 10 min | 3 min | 10 min | ~30 min |
+| 20 papers | 15 min | 25 min | 5 min | 20 min | ~1.5 hours |
+| 50 papers | 30 min | 60 min | 5 min | 30 min | ~2 hours |
+| 100 papers | 60 min | 90+ min | 5 min | 45 min | ~3 hours |
+| 300+ papers | Requires batching (Phase 2 splits into chunks) | | | | |
+
+**For 300+ papers**: Phase 2 automatically batches extraction into 50-paper chunks
+
+---
+
+## 🔍 Understanding the Output Files
+
+### Phase 1: literature-screening-matrix.md
+Raw decisions: INCLUDE / EXCLUDE / UNCERTAIN for each PDF
+
+**Use case**: Verify you approved the right papers
+
+### Phase 2: literature-synthesis-matrix.md
+Cross-paper themes with evidence strength labels
+
+**Use case**: Understand the themes your papers address
+
+### Phase 3: literature-review-outline.md
+Structured outline ready for drafting
+
+**Use case**: Approve outline before drafting begins
+
+### Phase 4: literature-review-draft.md
+**THE MAIN DELIVERABLE** - Academic prose literature review
+
+**Use case**: Copy directly into your manuscript
+
+### Phase 4.5: citation-integrity-report.md
+Citation validation results with any warnings
+
+**Use case**: Proof that all citations verified, no fabrications
+
+### Phase 6: research-contributions-implications.md
+Your review's contributions, implications, future research
+
+**Use case**: Add to your manuscript's Discussion/Conclusion
+
+### Phase 7: cross-phase-validation-report.md
+Final consistency check across all phases
+
+**Use case**: Proof of workflow quality and integrity
+
+---
+
+## 🚨 Troubleshooting
+
+### "Phase 1 fails to read PDFs"
+```
+Cause: Corrupted PDFs or non-PDF files
+Fix: 
+1. Check file types: file corpus/* | grep -i pdf
+2. Remove corrupted files
+3. Retry Phase 1
+```
+
+### "Phase 4.5 finds fabricated citations"
+```
+Cause: Citations don't match extraction matrix
+Fix:
+1. Review citation-integrity-report.md
+2. Edit literature-review-draft.md to fix citations
+3. Re-run Phase 4.5
+4. Retry Phase 7
+```
+
+### "Phase 7 consistency score too low"
+```
+Cause: Themes don't trace through phases consistently
+Fix:
+1. Review cross-phase-validation-report.md
+2. Identify where trace breaks
+3. Re-run affected phases
+4. Retry Phase 7
+```
+
+### "Want to resume mid-workflow"
+```
+Ask: "Continue my research workflow"
+
+Orchestrator will:
+1. Load execution-log.json
+2. Show last completed phase
+3. Resume from next phase
+4. No re-processing earlier phases
+```
+
+---
+
+## 🔐 Quality Assurance
+
+Every workflow has TWO quality gates that MUST pass:
+
+1. **Phase 4.5**: Citation Validation
+   - Verifies all citations exist in corpus
+   - Detects fabricated claims
+   - Blocks workflow if critical issues
+
+2. **Phase 7**: Cross-Phase Validation
+   - Checks consistency across all phases
+   - Verifies evidence chains
+   - Calculates consistency score (≥75 to pass)
+
+**Result**: No low-quality output reaches your manuscript.
+
+---
+
+## 📚 Documentation
+
+- **ARCHITECTURE.md**: Deep dive into system design
+- **SUBAGENT_GUIDE.md**: How to invoke individual subagents
+- **MIGRATION_GUIDE.md**: Upgrading from old skill-based workflow
+
+---
+
+## 🤝 Contributing
+
+Want to improve research-writer?
+
+1. **Report issues**: Found a bug? Create an issue
+2. **Suggest features**: Want new phases? Suggest it
+3. **Improve subagents**: Better execution logic? Submit a PR
+
+---
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+---
+
+## 🎓 Citation
+
+If you use Research Writer in your work:
+
+```bibtex
+@software{research_writer_2025,
+  title={Research Writer: Subagent-Based Research Orchestration},
+  author={Your Name},
+  year={2025},
+  url={https://github.com/kurtvalcorza/research-writer}
+}
+```
+
+---
+
+## 🎯 Getting Started Checklist
+
+- [ ] Clone or download research-writer
+- [ ] Place your PDFs in `corpus/`
+- [ ] Review `settings/screening-criteria.md` (optional customization)
+- [ ] Tell Claude Code: "Help me complete a literature review on [topic]"
+- [ ] Approve checkpoints when asked
+- [ ] Collect outputs from `outputs/` directory
+- [ ] Integrate `literature-review-draft.md` into your manuscript
+
+**Questions?** See docs/ folder or review individual SUBAGENT.md files for detailed specifications.
+
+---
+
+**Happy researching! 🚀**
