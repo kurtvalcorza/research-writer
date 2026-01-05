@@ -1,87 +1,42 @@
-# Research Writer - Git Ignore File
-
-# PDF Corpus (large files, potentially copyrighted)
-# Keep .gitkeep to track directory, but ignore PDFs
-
-corpus/*.pdf
+# Research PDFs (user's private files - don't commit)
+corpus/
 *.pdf
-# Output Files (generated artifacts, may contain sensitive research data)
-# Keep .gitkeep to track directory, but ignore generated files
+
+# Generated outputs (regenerate each run)
+outputs/
 outputs/*.md
-outputs/**/*.md
+outputs/*.json
 outputs/*.txt
-outputs/**/*.txt
+*.log
+*.json.bak
 
-# Python Artifacts
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-!interface/lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# Temporary/backup files
+*.tmp
+*.bak
+*~
+.DS_Store
 
-# Virtual Environments
-venv/
-env/
-ENV/
-env.bak/
-venv.bak/
-.venv/
-
-# IDE and Editor Files
+# IDE/Editor files
 .vscode/
 .idea/
-.claude/
 *.swp
 *.swo
-*~
-.project
-.pydevproject
-.settings/
+*.iml
+.claude/
 
-# OS Files
+# Python/Node cache
+__pycache__/
+node_modules/
+*.pyc
+
+# Logs
+logs/
+*.log
+
+# OS files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
 
-# Logs and Databases
-*.log
-*.sql
-*.sqlite
-*.db
-
-# Temporary Files
-*.tmp
-*.temp
-*.bak
-*.backup
-
-# API Keys and Secrets
-.env
-.env.local
-secrets.json
-credentials.json
-
-# Documentation Build Artifacts
-docs/_build/
-site/
+# Except: Keep execution-log.json as example (shows structure)
+!outputs/.gitkeep
+!outputs/execution-log.example.json
