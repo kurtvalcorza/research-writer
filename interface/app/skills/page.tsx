@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { PHASES } from "@/lib/constants";
 
-function PromptsContent() {
+function SkillsContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const initialPhase = searchParams.get("phase") || "1";
@@ -24,7 +24,9 @@ function PromptsContent() {
     // Persist logs map: phaseId -> logs[]
     const [logsMap, setLogsMap] = useState<Record<string, string[]>>({});
     const [yoloMode, setYoloMode] = useState(false);
-    const [provider, setProvider] = useState<"gemini" | "claude">("gemini");
+    // Provider is now fixed to Gemini CLI only
+    // Claude Code CLI removed due to critical validation failures (see audits/reports/PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md Section 7)
+    const provider = "gemini";
     const [error, setError] = useState<string | null>(null);
     const [progress, setProgress] = useState<{ current: number; total: number } | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -91,21 +93,8 @@ function PromptsContent() {
         setActivePhase(initialPhase);
     }, [initialPhase]);
 
-    // Load provider preference from localStorage
     useEffect(() => {
-        const savedProvider = localStorage.getItem("ai-provider");
-        if (savedProvider === "gemini" || savedProvider === "claude") {
-            setProvider(savedProvider);
-        }
-    }, []);
-
-    // Save provider preference to localStorage
-    useEffect(() => {
-        localStorage.setItem("ai-provider", provider);
-    }, [provider]);
-
-    useEffect(() => {
-        const fetchPrompt = async () => {
+        const fetchSkill = async () => {
             setLoading(true);
             const phase = PHASES.find(p => p.id === activePhase);
             if (!phase) return;
@@ -116,16 +105,16 @@ function PromptsContent() {
                 if (data.content) {
                     setContent(data.content);
                 } else {
-                    setContent("Prompt file not found.");
+                    setContent("Skill file not found.");
                 }
             } catch (error) {
-                setContent("Error loading prompt.");
+                setContent("Error loading skill.");
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchPrompt();
+        fetchSkill();
     }, [activePhase]);
 
     // Auto-scroll terminal
@@ -249,7 +238,7 @@ function PromptsContent() {
                         key={phase.id}
                         onClick={() => {
                             setActivePhase(phase.id);
-                            router.replace(`/prompts?phase=${phase.id}`);
+                            router.replace(`/skills?phase=${phase.id}`);
                             // Do NOT clear logs on switch anymore (Log Persistence)
                         }}
                         className={cn(
@@ -278,45 +267,28 @@ function PromptsContent() {
 
                         <div className="flex items-center space-x-3">
                             <div className="flex items-center space-x-2 mr-2">
-                                <div className="relative">
-                                    <select
-                                        value={provider}
-                                        onChange={(e) => {
-                                            setProvider(e.target.value as "gemini" | "claude");
-                                            setSystemCheckResult(null); // Clear previous check when switching
-                                        }}
-                                        disabled={isExecuting || isCheckingSystem}
-                                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-foreground border border-white/10 hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title="Select AI Provider"
-                                    >
-                                        <option value="gemini">Gemini CLI</option>
-                                        <option value="claude">Claude CLI</option>
-                                    </select>
-                                    {/* Warning badge if system check failed */}
-                                    {systemCheckResult && !systemCheckResult.hasShellCapability && (
-                                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-500 rounded-full animate-pulse" title="System check detected issues" />
-                                    )}
+                                {/* Provider fixed to Gemini CLI - Claude CLI removed due to validation failures */}
+                                <div className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/5 text-foreground border border-white/10">
+                                    Gemini CLI
                                 </div>
 
-                                {provider === "gemini" && (
-                                    <div className="group relative">
-                                        <button
-                                            onClick={() => setYoloMode(!yoloMode)}
-                                            className={cn(
-                                                "px-3 py-1.5 rounded-full text-xs font-medium flex items-center transition-colors border",
-                                                yoloMode
-                                                    ? "bg-red-500/10 text-red-400 border-red-500/50 hover:bg-red-500/20"
-                                                    : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10"
-                                            )}
-                                        >
-                                            <Zap className={cn("w-3 h-3 mr-1", yoloMode && "fill-current")} />
-                                            {yoloMode ? "YOLO Mode ON" : "YOLO Mode OFF"}
-                                        </button>
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-black/90 text-[10px] text-gray-300 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-center">
-                                            Auto-approves all tool confirmations. Only available for Gemini.
-                                        </div>
+                                <div className="group relative">
+                                    <button
+                                        onClick={() => setYoloMode(!yoloMode)}
+                                        className={cn(
+                                            "px-3 py-1.5 rounded-full text-xs font-medium flex items-center transition-colors border",
+                                            yoloMode
+                                                ? "bg-red-500/10 text-red-400 border-red-500/50 hover:bg-red-500/20"
+                                                : "bg-white/5 text-muted-foreground border-white/10 hover:bg-white/10"
+                                        )}
+                                    >
+                                        <Zap className={cn("w-3 h-3 mr-1", yoloMode && "fill-current")} />
+                                        {yoloMode ? "YOLO Mode ON" : "YOLO Mode OFF"}
+                                    </button>
+                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-black/90 text-[10px] text-gray-300 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-center">
+                                        Auto-approves all tool confirmations.
                                     </div>
-                                )}
+                                </div>
                             </div>
 
                             <Button
@@ -383,7 +355,7 @@ function PromptsContent() {
                             <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <div>
                                 <strong className="font-semibold">CLI Execution Not Recommended:</strong> The "Run Agent" feature has limitations with large PDF processing (context exhaustion).
-                                <strong className="ml-1">Recommended approach:</strong> Copy the prompt and paste into Claude.ai or your preferred AI assistant for better context management.
+                                <strong className="ml-1">Recommended approach:</strong> Copy the skill and paste into Claude.ai or your preferred AI assistant for better context management.
                             </div>
                         </div>
                     </div>
@@ -499,7 +471,7 @@ function PromptsContent() {
     );
 }
 
-export default function PromptsPage() {
+export default function SkillsPage() {
     return (
         <main className="h-screen flex flex-col p-8 max-w-7xl mx-auto space-y-6 overflow-hidden">
             <header className="flex items-center space-x-4 flex-shrink-0">
@@ -509,14 +481,14 @@ export default function PromptsPage() {
                     </Button>
                 </Link>
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Prompts</h1>
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Skills</h1>
                     <p className="text-muted-foreground">Select a phase and execute with AI agents</p>
                 </div>
             </header>
 
             <div className="flex-1 min-h-0">
-                <Suspense fallback={<div>Loading Prompts...</div>}>
-                    <PromptsContent />
+                <Suspense fallback={<div>Loading Skills...</div>}>
+                    <SkillsContent />
                 </Suspense>
             </div>
         </main>

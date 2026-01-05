@@ -50,8 +50,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Invalid yoloMode value" }, { status: 400 });
         }
 
-        if (!["gemini", "claude"].includes(provider)) {
-            return NextResponse.json({ error: "Invalid provider. Must be 'gemini' or 'claude'" }, { status: 400 });
+        // Claude Code CLI removed due to critical validation failures
+        // See audits/reports/PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md Section 7
+        // Only Gemini CLI is supported
+        if (provider !== "gemini") {
+            return NextResponse.json({
+                error: "Invalid provider. Only 'gemini' is supported.",
+                message: "Claude Code CLI has been removed due to critical validation failures (context overflow with ≥6 PDFs). Please use Gemini CLI or copy the prompt to Claude.ai."
+            }, { status: 400 });
         }
 
         // 1. Pre-flight Check: Provider Availability
@@ -99,19 +105,11 @@ export async function POST(req: NextRequest) {
         // Agents will use their Read tool to access skill files as needed
         // This prevents "Prompt is too long" errors and reduces context usage
 
-        // Provider-specific configuration
+        // Provider-specific configuration (Gemini CLI only)
         const args: string[] = [];
 
-        if (provider === "gemini") {
-            if (yoloMode) {
-                args.push("--yolo");
-            }
-        } else if (provider === "claude") {
-            // Claude CLI has prompt length limits with stdin piping
-            // Pass prompt as command argument instead
-            args.push("--print");
-            args.push(promptContent);
-            useStdin = false;
+        if (yoloMode) {
+            args.push("--yolo");
         }
 
         // Spawn the selected CLI tool directly without shell

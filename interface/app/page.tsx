@@ -153,15 +153,15 @@ export default function Home() {
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
               <Play className="w-5 h-5 text-purple-500" />
-              <span>Prompts</span>
+              <span>Skills</span>
             </CardTitle>
-            <CardDescription>Access research prompts</CardDescription>
+            <CardDescription>Access research skills</CardDescription>
           </CardHeader>
           <div className="px-6 pb-6 space-y-3 flex-1 flex flex-col justify-end">
-            <Link href="/prompts" className="block">
+            <Link href="/skills" className="block">
               <Button variant="outline" size="sm" className="w-full">
                 <Play className="w-4 h-4 mr-2" />
-                Go to Prompts
+                Go to Skills
               </Button>
             </Link>
           </div>
@@ -239,10 +239,10 @@ export default function Home() {
                       </span>
                     ) : (
                       <Link
-                        href={phase.id === "0" ? "/settings" : phase.id === "corpus" ? "/corpus" : `/prompts?phase=${phase.id}`}
+                        href={phase.id === "0" ? "/settings" : phase.id === "corpus" ? "/corpus" : `/skills?phase=${phase.id}`}
                         className={cn("text-xs font-medium hover:underline flex items-center", phase.color)}
                       >
-                        {phase.id === "0" ? "Configure" : phase.id === "corpus" ? "Upload" : "Get Prompt"} <ArrowRight className="w-3 h-3 ml-1" />
+                        {phase.id === "0" ? "Configure" : phase.id === "corpus" ? "Upload" : "Get Skill"} <ArrowRight className="w-3 h-3 ml-1" />
                       </Link>
                     )}
 

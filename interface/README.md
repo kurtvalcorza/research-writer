@@ -9,10 +9,10 @@ A **production-ready, secure** web interface designed to orchestrate the agentic
 ### Core Features
 - **Dashboard**: Real-time overview of your research progress with "Phase Locking" to enforce a rigorous evidence-first workflow
 - **Corpus Management**: Drag-and-drop upload, listing, and deletion of research PDFs with validation
-- **Quick Start Library**: View and copy quick-start templates for each research phase (Screening, Synthesis, Drafting, etc.)
+- **Skills Library**: View and copy skill templates for each research phase (Screening, Synthesis, Drafting, etc.)
 - **Criteria Editor**: Visual editor for your Inclusion/Exclusion screening criteria
 - **Output Viewer**: Beautiful Markdown rendering for generated research artifacts (matrices, drafts, reports)
-- **Multi-Provider CLI Integration**: Direct execution of quick-start using either `gemini` or `claude` command-line tools with real-time terminal view
+- **Gemini CLI Integration**: Direct execution of skills using the `gemini` command-line tool with real-time terminal view (Claude CLI removed due to validation failures)
 
 ### Security Features
 - ✅ **Enterprise-Grade Security**: No critical vulnerabilities, comprehensive input validation
@@ -33,9 +33,9 @@ A **production-ready, secure** web interface designed to orchestrate the agentic
 
 ### Prerequisites
 - **Node.js 18+** installed
-- At least one AI CLI tool installed and available in your PATH (for "Run Agent" feature):
+- **Gemini CLI** installed and available in your PATH (for "Run Agent" feature):
   - [\`gemini\` CLI](https://geminicli.com/) (Google Gemini)
-  - [\`claude\` CLI](https://claude.ai/download) (Anthropic Claude)
+  - Note: Claude Code CLI has been removed due to critical validation failures (see audits/reports/PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md)
 - **Python 3.8+** with \`pypdf\` installed for backend agent operations
 - **Parent repository**: This interface must be in the \`interface/\` directory of the research-writer repository
 
@@ -87,19 +87,20 @@ Visit **Settings** to define your *Screening Criteria*. This updates the \`../se
 - Template-specific write access
 
 ### 3. Execute Research Phases
-Navigate to the **Prompt Library**. You have two options for execution:
+Navigate to the **Skills Library**. You have two options for execution:
 
-#### Option A: Manual Execution (Copy-Paste)
+#### Option A: Manual Execution (Copy-Paste) - RECOMMENDED
 1. Select the current phase
 2. Click **Copy to Clipboard**
-3. Paste the prompt into your preferred AI tool (Claude Desktop, ChatGPT, etc.)
+3. Paste the skill into your preferred AI tool (Claude Desktop, ChatGPT, etc.)
 
-#### Option B: Auto Execution (AI CLI)
-1. Select your preferred AI provider (Gemini CLI or Claude CLI) from the dropdown
-2. Select the current phase
-3. Click **Run Agent**
-4. (Gemini only) Toggle **YOLO Mode** if you want the agent to auto-approve all tool use (proceed with caution)
-5. Watch the real-time execution logs in the embedded terminal
+#### Option B: Auto Execution (Gemini CLI)
+1. Select the current phase
+2. Click **Run Agent** (uses Gemini CLI)
+3. Toggle **YOLO Mode** if you want the agent to auto-approve all tool use (proceed with caution)
+4. Watch the real-time execution logs in the embedded terminal
+
+**Note**: CLI execution has limitations with large PDF processing (context exhaustion). Manual execution via Claude.ai or other AI assistants is recommended for better context management.
 
 **Security:**
 - 10-minute execution timeout
@@ -128,7 +129,7 @@ interface/
 │   │   └── upload/              # File upload
 │   ├── corpus/                   # Corpus management page
 │   ├── outputs/                  # Output viewer page
-│   ├── quick-start/                  # Prompt library page
+│   ├── skills/                   # Skills library page
 │   ├── settings/                 # Settings editor page
 │   ├── layout.tsx               # Root layout with metadata
 │   ├── page.tsx                 # Dashboard
@@ -154,8 +155,8 @@ interface/
 ### Directory References
 - \`../corpus\` - Directory for input PDFs (parent repository)
 - \`../outputs\` - Directory for generated research artifacts (parent repository)
-- \`../quick-start\` - Directory containing the system quick-start for each phase (parent repository)
-- \`../template\` - Directory for screening criteria template (parent repository)
+- \`../skills\` - Directory containing the research skills for each phase (parent repository)
+- \`../settings\` - Directory for screening criteria template (parent repository)
 
 ## 🔒 Security
 
