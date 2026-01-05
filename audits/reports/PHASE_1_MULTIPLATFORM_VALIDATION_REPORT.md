@@ -468,3 +468,212 @@ Automated IQ/OQ/PQ/CQ validation was executed to certify production readiness.
 ### 6.2 Conclusion
 
 The system has passed all automated validation checks. Deployment for research operations is **APPROVED**.
+
+---
+
+## 7. Re-Validation Test - Claude Code CLI (2026-01-05)
+
+**Date:** 2026-01-05
+**Platform:** Claude Code CLI v2.0.76
+**Tester:** Kurt Valcorza
+**Test Type:** Performance Qualification (PQ) - Phase 1 End-to-End Execution
+**Status:** ❌ **FAILED - CRITICAL**
+
+### 7.1 Test Objective
+
+Re-validate Phase 1 execution on Claude Code CLI following the 2026-01-04 certification that claimed the incremental workflow fix resolved context overflow issues.
+
+### 7.2 Test Execution
+
+**Environment:**
+- Platform: Claude Code CLI v2.0.76
+- OS: Windows 11
+- Model: Claude Sonnet 4.5 (Claude Pro)
+- Corpus: 6 PDFs (same as original validation)
+- Working Directory: ~\OneDrive - DOST-ASTI\Projects\research-writer
+
+**Command Executed:**
+```
+execute skills\01_literature-discovery\SKILL.md
+```
+
+### 7.3 Test Results
+
+| Phase | Status | Details |
+|-------|--------|---------|
+| **PASS 1: Triage** | ✅ PASSED | Successfully processed existing triage file (6 PDFs flagged for PASS 2) |
+| **PASS 2: Detailed Screening** | ✅ PASSED | Successfully processed existing progress file (6 papers → INCLUDE) |
+| **PASS 3: Final Reports** | ❌ **FAILED** | Context overflow during comprehensive metadata extraction |
+
+### 7.4 Failure Details
+
+**Error Timeline:**
+1. Agent began PASS 3: "Now generating comprehensive screening reports with detailed metadata..."
+2. Successfully read PDF 1 (777.8 KB)
+3. Successfully read PDF 2 (421.2 KB)
+4. Successfully read PDF 3 (427.6 KB)
+5. Successfully read PDF 4 (1.7 MB)
+6. Successfully read PDF 5 (352.5 KB)
+7. Read PDF 6 (841 KB) → **Context low warning**
+8. User attempted `/compact` → **Error: "Conversation too long"**
+9. **Complete failure** - unable to generate final outputs
+
+**Todo List State at Failure:**
+```
+☒ Validate screening criteria settings file exists and customized
+☒ Verify corpus/ directory exists and contains PDFs
+☒ PASS 1: Lightweight metadata scan for quick triage
+☒ PASS 2: Detailed screening for flagged papers
+☐ PASS 3: Aggregate results and generate final reports [BLOCKED]
+```
+
+**Generated Outputs:**
+- ✅ `outputs/screening-triage.md` (PASS 1 - complete)
+- ✅ `outputs/screening-progress.md` (PASS 2 - complete)
+- ❌ `outputs/literature-screening-matrix.md` (PASS 3 - **INCOMPLETE/MISSING**)
+- ❌ `outputs/prisma-flow-diagram.md` (PASS 3 - **NOT GENERATED**)
+
+### 7.5 Root Cause Analysis
+
+**Critical Finding:** The incremental workflow fix applied on 2026-01-04 was **INCOMPLETE**.
+
+**What Was Fixed (2026-01-04):**
+- ✅ PASS 1 (Triage): Uses incremental processing (one PDF at a time)
+- ✅ PASS 2 (Screening): Uses incremental processing (one PDF at a time)
+
+**What Was NOT Fixed:**
+- ❌ PASS 3 (Final Reports): **Still loads all PDFs into context simultaneously**
+
+**Evidence:**
+The execution log shows the agent read all 6 PDFs sequentially **without releasing context** between reads:
+- After reading PDF 1: ~777 KB in context
+- After reading PDF 2: ~1.2 MB in context
+- After reading PDF 3: ~1.6 MB in context
+- After reading PDF 4: ~3.3 MB in context
+- After reading PDF 5: ~3.7 MB in context
+- After reading PDF 6: ~4.5 MB in context → **OVERFLOW**
+
+### 7.6 Impact Assessment
+
+**Severity:** 🔴 **CRITICAL**
+
+**Production Impact:**
+- Claude Code CLI **CANNOT complete Phase 1** with corpus sizes ≥6 PDFs
+- Previous validation certification (2026-01-04) is **INVALID**
+- System is **NOT production-ready** for typical research use (10-50 papers)
+
+**Scalability Limits:**
+
+| Corpus Size | Expected (per 2026-01-04) | Actual (2026-01-05) | Status |
+|-------------|---------------------------|---------------------|--------|
+| 1-3 small PDFs (<1 MB each) | ✅ Works | ⚠️ May work | Limited |
+| 4-6 medium PDFs (~500 KB each) | ✅ Works | ❌ **FAILS** | **BLOCKED** |
+| 7+ PDFs | ✅ Works | ❌ **FAILS** | **BLOCKED** |
+| 20-50 PDFs | ✅ "Infinite Corpus Support" | ❌ **IMPOSSIBLE** | **BLOCKED** |
+
+**Claim from 2026-01-04 Report:**
+> "✅ The skill is now scalable to any number of PDFs (Infinite Corpus Support)"
+
+**Reality (2026-01-05 Test):**
+> ❌ The skill **FAILS** with just 6 PDFs. Maximum supported corpus: ~3-4 small PDFs.
+
+### 7.7 Updated Platform Comparison Matrix
+
+| Aspect | Claude Code CLI | Gemini CLI | Antigravity Internal | Claude Code Desktop |
+|--------|-----------------|------------|---------------------|---------------------|
+| **Initial Setup** | No special flags | Required `--yolo` flag | Custom Python scripts | No special flags |
+| **Tool Availability** | Native | `conductor` extension | Manual implementation | Native |
+| **Context Overflow (PASS 1)** | ✅ Fixed (incremental) | ✅ Not encountered | N/A (manual) | ✅ Not encountered |
+| **Context Overflow (PASS 2)** | ✅ Fixed (incremental) | ✅ Not encountered | N/A (manual) | ✅ Not encountered |
+| **Context Overflow (PASS 3)** | ❌ **FAILS** (batch) | ✅ Not encountered | N/A (manual) | ✅ Not encountered |
+| **6 PDF Test** | ❌ **FAILED** | ✅ PASSED | ✅ PASSED | ✅ PASSED |
+| **Production Ready** | ❌ **NO** | ✅ YES | ⚠️ Requires scripts | ✅ YES |
+| **Validation Status** | ❌ **FAILED** | ✅ CERTIFIED | ✅ CERTIFIED | ✅ CERTIFIED |
+
+### 7.8 Corrective Actions Required
+
+**Priority 1 - Immediate (Required Before Production Use):**
+
+1. **Fix PASS 3 Workflow** in `skills/01_literature-discovery/SKILL.md`:
+   - Refactor PASS 3 to use **incremental processing** (same as PASS 1/2)
+   - Explicitly release context between PDF reads
+   - Append metadata incrementally to screening matrix file
+
+2. **Re-Validate** After Fix:
+   - Re-run PQ validation with 6 PDFs
+   - Run stress test with 20 PDFs
+   - Run stress test with 50 PDFs
+   - Verify "infinite corpus support" claim
+
+3. **Update Documentation**:
+   - Add warning to README: "⚠️ Claude Code CLI currently has context overflow issues in PASS 3"
+   - Recommend Claude Code Desktop or Gemini CLI as alternatives
+   - Create KNOWN_ISSUES.md documenting this limitation
+
+**Priority 2 - Follow-Up:**
+
+4. **Invalidate Previous Certification**:
+   - Mark 2026-01-04 validation as "PARTIAL - PASS 1/2 only"
+   - Remove "Infinite Corpus Support" claim
+   - Update Overall Validation Summary section
+
+5. **Implement Preventive Measures**:
+   - Add context monitoring to detect overflow early
+   - Add pre-flight checks to warn users if corpus too large for platform
+   - Create platform compatibility matrix in README
+
+### 7.9 Validation Status Update
+
+**Original Status (2026-01-04):** ✅ PASSED (All platforms)
+
+**Updated Status (2026-01-05):**
+
+| Platform | PASS 1 | PASS 2 | PASS 3 | Overall Status | Production Ready |
+|----------|--------|--------|--------|----------------|------------------|
+| **Claude Code CLI** | ✅ PASS | ✅ PASS | ❌ **FAIL** | ❌ **FAILED** | ❌ **NO** |
+| **Gemini CLI** | ✅ PASS | ✅ PASS | ✅ PASS | ✅ PASSED | ✅ YES |
+| **Antigravity Internal** | ✅ PASS | ✅ PASS | ✅ PASS | ✅ PASSED | ⚠️ Manual |
+| **Claude Code Desktop** | ✅ PASS | ✅ PASS | ✅ PASS | ✅ PASSED | ✅ YES |
+
+**Current Platform Rankings (Best to Worst):**
+
+1. 🥇 **Claude Code Desktop** - Most seamless, fastest, no issues
+2. 🥈 **Gemini CLI** - Works well, requires `--yolo` flag
+3. 🥉 **Antigravity Internal** - Works, requires manual scripts
+4. ❌ **Claude Code CLI** - **FAILS** Phase 1 with 6+ PDFs
+
+### 7.10 Evidence & References
+
+**Test Evidence:**
+- Full failure report: `audits/validation-evidence/2026-01-05/CLAUDE_CODE_CLI_FAILURE_REPORT.md`
+- Execution log: Embedded in failure report
+- Todo state at failure: Documented in failure report
+
+**Related Reports:**
+- Original validation (now invalidated): Section 3.2 (Claude Code CLI Testing)
+- System validation skill: `audits/skills/system-validation/SKILL.md`
+
+### 7.11 Conclusion - Re-Validation Test
+
+**Test Result:** ❌ **FAILED**
+
+Claude Code CLI v2.0.76 **CANNOT complete Phase 1** with typical corpus sizes (6+ PDFs) due to unresolved context overflow in PASS 3.
+
+**Impact on Previous Validation:**
+The 2026-01-04 validation report's conclusion that "all platforms passed" is **INCORRECT**. The incremental workflow fix was **incomplete** and only addressed PASS 1/2, not PASS 3.
+
+**Recommended Action:**
+Users should **NOT use Claude Code CLI** for Phase 1 execution. Use **Claude Code Desktop** or **Gemini CLI** instead until this issue is resolved.
+
+**Next Steps:**
+1. Implement corrective actions (Priority 1 items)
+2. Re-validate Claude Code CLI after fix
+3. Update all documentation to reflect current limitations
+4. Issue corrected validation certification
+
+---
+
+**Test Conducted By:** Kurt Valcorza
+**Report Added:** 2026-01-05
+**Severity:** 🔴 CRITICAL
+**Status:** ⚠️ OPEN - Awaiting corrective action
