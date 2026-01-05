@@ -135,7 +135,7 @@ nano settings/screening-criteria.md
 
 ### 2. Start the Workflow
 
-**In Claude Desktop, Claude Code, or this chat:**
+**In Claude Desktop, or Claude Code:**
 
 ```
 "Help me complete a literature review on [my research topic]"
@@ -478,7 +478,7 @@ If you use Research Writer in your work:
 ```bibtex
 @software{research_writer_2025,
   title={Research Writer: Subagent-Based Research Orchestration},
-  author={Your Name},
+  author={Kurt Valcorza},
   year={2025},
   url={https://github.com/kurtvalcorza/research-writer}
 }
