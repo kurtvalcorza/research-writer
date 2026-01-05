@@ -201,9 +201,10 @@ Outputs generated → User reviews results (extraction + synthesis matrices)
 
 **Key Features:**
 - ✅ No context window limitations (max ~30K tokens at any point)
-- ✅ CLI-agnostic (works with Claude Code, Gemini CLI, ChatGPT CLI, etc.)
+- ✅ CLI-agnostic (works with Gemini CLI, ChatGPT CLI, Claude Desktop, etc.)
 - ✅ State management (resume from interruptions)
 - ✅ Same workflow for 3 PDFs or 300 PDFs
+- ⚠️ Note: Claude Code CLI is NOT supported (critical validation failure - see audits/reports/PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md)
 
 **Time Estimates:**
 - 1-5 PDFs: 5-15 min | 6-20 PDFs: 15-40 min | 20-50 PDFs: 40-90 min | 50+ PDFs: 90-180 min
@@ -388,10 +389,11 @@ This phase validates the integrity of the entire analytical pipeline:
    ```
 
 3. **Set up your AI coding assistant:**
-   - [**Claude Code**](https://claude.com/product/claude-code) (recommended)
+   - [**Claude Desktop**](https://claude.ai/download) (recommended - web interface)
    - [**Gemini CLI**](https://geminicli.com/) (Requires `--yolo` flag for full tool support)
-   - [**Codex CLI**](https://developers.openai.com/codex/cli/)
+   - [**ChatGPT**](https://chat.openai.com/) (web interface)
    - Any AI coding assistant with file reading capabilities
+   - ⚠️ **NOT supported:** Claude Code CLI (critical validation failure - context overflow with ≥6 PDFs)
 
 ---
 
@@ -403,9 +405,9 @@ For users who prefer a graphical interface, the Research Writer includes a **pro
 - **Visual Dashboard**: Real-time progress tracking with phase locking
 - **Corpus Management**: Drag-and-drop PDF upload with validation
 - **Settings Editor**: Visual editor for screening criteria
-- **Prompt Library**: View, copy, or directly execute prompts
+- **Skills Library**: View, copy, or directly execute research skills
 - **Output Viewer**: Beautiful Markdown rendering of generated artifacts
-- **Multi-Provider Support**: Direct integration with Gemini CLI and Claude CLI
+- **Gemini CLI Integration**: Direct integration with Gemini CLI (Claude Code CLI removed due to validation failures)
 - **Real-Time Execution**: Watch agent execution in an embedded terminal
 
 ### Quick Start
@@ -456,9 +458,9 @@ The web interface is built with **robust security and engineering best practices
 **Use the web interface if you:**
 - Prefer visual dashboards over CLI
 - Want drag-and-drop file management
-- Need real-time execution monitoring
-- Want to switch between AI providers easily
+- Need real-time execution monitoring with Gemini CLI
 - Prefer clicking buttons over typing commands
+- Want integrated corpus and output management
 
 **Use the CLI workflow if you:**
 - Are comfortable with command-line tools
@@ -1068,11 +1070,11 @@ Solution: Trace claim manually
 
 **Problem: Which AI coding assistant should I use?**
 ```
-Solution: Any AI coding assistant works
-- Claude Code (recommended for PDF parsing)
-- Google Gemini CLI (good for large corpora)
-- ChatGPT CLI
-- Use what you have available
+Solution: Recommended options
+- Claude Desktop (recommended - web interface with excellent PDF parsing)
+- Google Gemini CLI (command-line, good for automation)
+- ChatGPT (web interface)
+- NOT SUPPORTED: Claude Code CLI (critical validation failure)
 ```
 
 **Problem: How do I know if it's working?**

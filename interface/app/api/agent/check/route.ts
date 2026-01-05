@@ -119,9 +119,12 @@ export async function POST(req: NextRequest) {
     try {
         const { provider = "gemini" } = await req.json();
 
-        if (!["gemini", "claude"].includes(provider)) {
+        // Claude Code CLI removed due to critical validation failures
+        // See audits/reports/PHASE_1_MULTIPLATFORM_VALIDATION_REPORT.md Section 7
+        if (provider !== "gemini") {
             return NextResponse.json({
-                error: "Invalid provider. Must be 'gemini' or 'claude'"
+                error: "Invalid provider. Only 'gemini' is supported.",
+                message: "Claude Code CLI has been removed due to critical validation failures (context overflow with ≥6 PDFs)."
             }, { status: 400 });
         }
 
@@ -162,14 +165,11 @@ export async function POST(req: NextRequest) {
         let message = "";
         let recommendation = "";
 
-        if (provider === "gemini" && !hasShellCapability) {
+        if (!hasShellCapability) {
             message = "Gemini CLI found but may lack shell command execution capability";
-            recommendation = "Install the 'conductor' extension for Gemini to enable file operations and shell commands, or switch to Claude CLI";
-        } else if (hasShellCapability) {
-            message = `${provider} CLI is properly configured with all required tools`;
+            recommendation = "Install the 'conductor' extension for Gemini to enable file operations and shell commands";
         } else {
-            message = `${provider} CLI found but tool capabilities could not be verified`;
-            recommendation = "Tool detection inconclusive. Try running a phase to verify functionality.";
+            message = "Gemini CLI is properly configured with all required tools";
         }
 
         return NextResponse.json({
