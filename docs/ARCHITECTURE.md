@@ -76,7 +76,52 @@ New (Subagent-based):
 
 ---
 
-## Two-Tier Design: Project Agent + Phase Subagents
+## Multi-Agent Design: Orchestrator + Specialized Agents
+
+### Directory Structure
+
+```
+.claude/agents/
+├── research-workflow-orchestrator.md   # Main coordinator
+├── literature-screener.md              # Phase 1: Screening
+├── extraction-synthesizer.md           # Phase 2: Extraction & Synthesis
+├── argument-structurer.md              # Phase 3: Outline Generation
+├── literature-drafter.md               # Phase 4: Academic Prose
+├── citation-validator.md               # Phase 5: Citation Quality Gate
+├── contribution-framer.md              # Phase 6: Contributions
+└── consistency-validator.md            # Phase 7: Final Quality Gate
+```
+
+### Agent Execution Pattern
+
+The orchestrator uses Claude Code's **Task tool** to spawn each agent in isolation:
+
+```javascript
+// Orchestrator spawns Phase 1
+Task(subagent_type: "literature-screener", prompt: "Screen papers in corpus/")
+  → literature-screener agent runs in fresh context
+  → Produces outputs/literature-screening-matrix.md
+  → Returns summary to orchestrator
+
+// Orchestrator spawns Phase 2
+Task(subagent_type: "extraction-synthesizer", prompt: "Extract from approved papers")
+  → extraction-synthesizer agent runs in fresh context
+  → Reads screening-matrix.md
+  → Produces synthesis outputs
+  → Returns summary to orchestrator
+
+// Pattern continues for all 7 phases...
+```
+
+### Key Architectural Benefits
+
+1. **Context Isolation**: Each agent gets fresh ~200K token context window
+2. **Scalability**: Handle 100+ papers without context overflow
+3. **Maintainability**: Update individual agents without touching orchestrator
+4. **Discoverability**: All agents visible in Claude Code's `/agents` menu
+5. **Semantic Names**: Agent names describe function, not execution order
+
+## Two-Tier Design: Orchestrator + Phase Agents
 
 ### Tier 1: Research Workflow Orchestrator (Project Agent)
 

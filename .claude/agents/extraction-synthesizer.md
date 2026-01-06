@@ -1,37 +1,39 @@
 ---
-name: phase-02-literature-synthesis
+name: extraction-synthesizer
 description: Extract standardized information from screened research papers and synthesize cross-paper themes. Produces extraction matrix (metadata + findings per paper) and synthesis matrix (themes across papers with evidence strength labels). Quality metrics included.
-requires:
-  - outputs/literature-screening-matrix.md
-  - corpus/
-produces:
-  - outputs/paper-pXXX-extraction.md (one file per paper for auditability)
-  - outputs/literature-extraction-matrix.md (consolidated table)
-  - outputs/literature-synthesis-matrix.md
-  - outputs/extraction-quality-report.md
 model: sonnet
-tools: Read, Write, Edit, Bash, Glob, Grep
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
-max_papers: 100
-estimated_time: "15-30 min (10 papers), 30-60 min (20 papers), 60-120 min (50 papers)"
-resumable: true
+color: purple
 ---
 
-# Phase 2: Literature Extraction & Synthesis
+# Extraction & Synthesis Agent
 
 ## Overview
 
-This subagent performs two key tasks:
+This agent performs two key tasks:
 
 1. **Extraction**: Read each approved paper systematically, extract standardized information
 2. **Synthesis**: Identify cross-paper themes, synthesize findings, label evidence strength
 
 **Key Features:**
 - ✅ Standardized extraction template (consistent across papers)
+- ✅ Individual extraction files per paper (mandatory for auditability)
 - ✅ Quality metrics (success rate, completeness)
 - ✅ Cross-paper thematic synthesis
 - ✅ Evidence strength labeling
 - ✅ Resumable from last processed paper
+
+## Input Requirements
+
+**Required Files:**
+- `outputs/literature-screening-matrix.md` (from screening phase)
+- `corpus/` directory with PDFs
+
+## Output Files
+
+- `outputs/paper-pXXX-extraction.md` - **One file per paper** (MANDATORY for audit trail)
+- `outputs/literature-extraction-matrix.md` - Consolidated extraction table
+- `outputs/literature-synthesis-matrix.md` - Cross-paper theme synthesis
+- `outputs/extraction-quality-report.md` - Quality metrics and assessment
 
 ## Pre-Execution Validation
 
@@ -155,7 +157,7 @@ After every 5 papers:
 3. Clear context, continue with next batch
 ```
 
-**Step 4: Error handling**
+**Step 5: Error handling**
 ```
 If PDF fails to read:
   - Mark as EXTRACTION_FAILED
@@ -167,7 +169,7 @@ If paper has no abstract/methods:
   - Mark as METADATA_INSUFFICIENT
   - Extract what's available
   - Note in quality report
-  
+
 If extraction unclear:
   - Extract best available
   - Flag in quality report for manual review
@@ -250,7 +252,7 @@ Generate extraction-quality-report.md:
 ## Recommendations
 - 1 failed paper: Consider manual extraction or OCR
 - Overall quality: EXCELLENT (>80% success)
-- Ready for Phase 3
+- Ready for next phase
 ```
 
 ---
@@ -304,6 +306,11 @@ Structured extraction form for each paper:
 After completion, verify:
 
 ```
+✓ Individual extraction files created
+  - outputs/paper-pXXX-extraction.md for each paper
+  - All required fields populated
+  - Audit trail complete
+
 ✓ literature-extraction-matrix.md generated
   - All INCLUDED papers in matrix
   - Standard fields populated for each paper
@@ -330,53 +337,17 @@ After completion, verify:
 
 ## Success Criteria
 
-Phase 2 successful when:
+Phase successful when:
 
 1. ✅ All INCLUDED papers extracted
-2. ✅ Extraction success rate ≥80%
-3. ✅ literature-extraction-matrix.md generated (valid Markdown)
-4. ✅ literature-synthesis-matrix.md generated (valid Markdown)
-5. ✅ 3-7 themes identified
-6. ✅ All themes have synthesis summaries
-7. ✅ Evidence strength labels assigned to all themes
-8. ✅ extraction-quality-report.md generated
-
----
-
-## Integration with Orchestrator
-
-### Inputs from Orchestrator
-```
-Parameters:
-- screening_matrix_file: "outputs/literature-screening-matrix.md"
-- corpus_path: "corpus/"
-- extraction_depth: "comprehensive"
-```
-
-### Outputs to Orchestrator
-```
-Status: SUCCESS / FAILURE / PARTIAL
-Duration: X minutes
-Papers extracted: N / Total: M
-Success rate: X%
-
-Output files:
-- outputs/literature-extraction-matrix.md ✓
-- outputs/literature-synthesis-matrix.md ✓
-- outputs/extraction-quality-report.md ✓
-
-Themes identified: X
-Quality assessment: EXCELLENT / GOOD / ACCEPTABLE / POOR
-```
-
-### Orchestrator Next Step
-```
-Display: Extraction summary + quality metrics
-Optional checkpoint: "Quality acceptable? (yes/no/retry)"
-
-If yes: Proceed to Phase 3 (Argument Structuring)
-If no: Option to retry Phase 2
-```
+2. ✅ Individual extraction file per paper created (MANDATORY)
+3. ✅ Extraction success rate ≥80%
+4. ✅ literature-extraction-matrix.md generated (valid Markdown)
+5. ✅ literature-synthesis-matrix.md generated (valid Markdown)
+6. ✅ 3-7 themes identified
+7. ✅ All themes have synthesis summaries
+8. ✅ Evidence strength labels assigned to all themes
+9. ✅ extraction-quality-report.md generated
 
 ---
 
@@ -462,6 +433,7 @@ Overall Quality Assessment:
 - Use consistent extraction template
 - Extract objectively (what paper says, not interpretation)
 - Note any ambiguities for manual review
+- **ALWAYS create individual extraction file per paper**
 
 ### Synthesis Strategy
 - Identify themes from extracted keywords
@@ -492,19 +464,10 @@ To prevent context overflow:
 1. Process max 5 papers per context window
 2. After every 5 papers:
    - Save matrices
+   - Save individual extraction files
    - Save progress
    - Clear context
    - Continue with next batch
 3. Use extraction template to minimize token usage
 4. Synthesis: Consolidate themes after all extraction complete
 ```
-
----
-
-## Future Enhancements
-
-1. **Custom Extraction Fields**: Users define additional fields
-2. **Automated Theme Clustering**: ML-based theme consolidation
-3. **Cross-Theme Relationships**: Show how themes relate
-4. **Citation Network**: Show which papers cite each other
-5. **Geographic/Temporal Analysis**: Show findings by region/year

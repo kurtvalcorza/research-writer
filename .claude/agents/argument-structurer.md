@@ -1,28 +1,30 @@
 ---
-name: phase-03-argument-structurer
+name: argument-structurer
 description: Convert synthesis matrix into a defensible argument structure and literature review outline. Organizes themes into logical sections, assigns evidence strength labels, and creates actionable outline for drafting phase.
-requires:
-  - outputs/literature-synthesis-matrix.md
-  - outputs/literature-screening-matrix.md
-produces:
-  - outputs/literature-review-outline.md
 model: sonnet
-tools: Read, Write, Edit
-allowed-tools: Read, Write, Edit
-estimated_time: "5-10 min"
-resumable: false
+color: cyan
 ---
 
-# Phase 3: Argument Structure & Outline Generation
+# Argument Structure & Outline Agent
 
 ## Overview
 
-This subagent takes the synthesis matrix (raw themes) and converts it into an **outline**:
+This agent takes the synthesis matrix (raw themes) and converts it into an **outline**:
 - Organized argument structure
 - Logical section hierarchy
 - Evidence strength labels
 - Clear dependencies between sections
 - Draft-ready structure
+
+## Input Requirements
+
+**Required Files:**
+- `outputs/literature-synthesis-matrix.md`
+- `outputs/literature-screening-matrix.md`
+
+## Output Files
+
+- `outputs/literature-review-outline.md` - Complete hierarchical outline with evidence labels
 
 ## Pre-Execution Validation
 
@@ -127,7 +129,7 @@ Add section for each outline entry:
 
 **Topic**: AI Adoption in Philippine Healthcare
 
-**Scope**: 
+**Scope**:
 - Geographic: Philippines
 - Sector: Healthcare
 - Technologies: AI/Machine Learning
@@ -249,7 +251,7 @@ This review establishes:
 
 ## Success Criteria
 
-Phase 3 successful when:
+Phase successful when:
 
 1. ✅ literature-review-outline.md generated
 2. ✅ All themes from synthesis matrix appear in outline
@@ -261,47 +263,13 @@ Phase 3 successful when:
 
 ---
 
-## Integration with Orchestrator
-
-### Inputs
-```
-Parameters:
-- synthesis_matrix_file: "outputs/literature-synthesis-matrix.md"
-- research_topic: "[from execution context]"
-```
-
-### Outputs
-```
-Status: SUCCESS
-Duration: X minutes
-
-Output file:
-- outputs/literature-review-outline.md ✓
-
-Summary:
-- Sections: X
-- Evidence strength distribution: X strong, Y mixed, Z emerging
-- Argument flow: [brief description]
-```
-
-### Human Checkpoint (REQUIRED)
-```
-Display: Outline structure + summary
-Ask: "Approve outline for drafting? (yes/no/revise)"
-
-If no: Ask what to change, can re-run Phase 3 or manually edit
-If yes: Proceed to Phase 4 (Draft Writing)
-```
-
----
-
 ## Error Handling
 
 ### Missing Synthesis Data
 ```
 If synthesis matrix incomplete:
   - Identify missing themes
-  - Ask: Re-run Phase 2 or continue with available themes?
+  - Ask: Re-run extraction or continue with available themes?
   - Document limitation in outline
 ```
 
@@ -327,10 +295,10 @@ If outline structure unbalanced:
 
 **Key principle**: Outline should be draft-ready
 
-Drafters (Phase 4) should be able to:
+Drafters should be able to:
 1. Read outline section
 2. Identify which papers to cite
 3. Write paragraph(s) on that section
 4. Reference next section for continuity
 
-Make outline explicit and actionable for Phase 4.
+Make outline explicit and actionable for drafting phase.

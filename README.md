@@ -43,11 +43,11 @@ Research Writer is a **7-phase literature review workflow** powered by **subagen
 
 ---
 
-## 🎯 Why Subagents?
+## 🎯 Why Multi-Agent Architecture?
 
-### The Problem with Skills-Based Workflow
+### The Problem with Single-Agent Workflows
 
-Old system (skills) accumulated context with each phase:
+Old approach accumulated context with each phase:
 ```
 Phase 1 → context grows
 Phase 2 → context grows more
@@ -55,28 +55,33 @@ Phase 3 → context grows more
 Phase 4 → OVERFLOW (breaks at ~5 papers)
 ```
 
-### The Solution: Reference Architecture
+### The Solution: Task Tool-Based Agent Orchestration
 
-New system uses a **project agent that reads phase specifications**:
+New system uses **orchestrator + specialized agents** (Claude Code pattern):
 ```
-Project Agent (.claude/agents/research-workflow-orchestrator.md)
-├─ Phase 1: Reads subagents/01_literature-discovery/SUBAGENT.md
-│           Follows the 3-pass screening workflow defined in spec
-│           → Produces screening matrix
+Orchestrator (.claude/agents/research-workflow-orchestrator.md)
+├─ Phase 1: Spawns literature-screener agent via Task tool
+│           → Agent runs in fresh context, produces screening matrix
 ├─ Human checkpoint
-├─ Phase 2: Reads subagents/02_literature-synthesis/SUBAGENT.md
-│           Follows the batched extraction workflow defined in spec
-│           → Produces synthesis matrix
-├─ Phase 3: Reads subagents/03_argument-structurer/SUBAGENT.md
-│           Follows the structuring logic defined in spec
-│           → Produces outline
-└─ ... (continues reading specs for each phase)
+├─ Phase 2: Spawns extraction-synthesizer agent via Task tool
+│           → Fresh context, reads Phase 1 outputs, produces synthesis
+├─ Phase 3: Spawns argument-structurer agent via Task tool
+│           → Fresh context, produces outline
+├─ Phase 4: Spawns literature-drafter agent via Task tool
+│           → Fresh context, produces draft
+├─ Phase 5: Spawns citation-validator agent via Task tool (Quality Gate 1)
+│           → Fresh context, validates citations
+├─ Phase 6: Spawns contribution-framer agent via Task tool
+│           → Fresh context, frames implications
+└─ Phase 7: Spawns consistency-validator agent via Task tool (Quality Gate 2)
+            → Fresh context, validates consistency
 ```
 
-**Key Innovation**: The project agent doesn't contain implementation logic—it **reads and follows** the detailed specifications in `subagents/`. This means:
-- ✅ No hardcoded workflows (update specs without touching the agent)
-- ✅ Modular design (each phase independently specified)
-- ✅ Context-safe (agent only loads what it needs per phase)
+**Key Innovation**: Each phase runs as an **independent agent** with its own context window using Claude Code's Task tool. This means:
+- ✅ True context isolation (each agent starts fresh)
+- ✅ Scalable to 100+ papers (no context accumulation)
+- ✅ Modular design (each agent is self-contained)
+- ✅ Proper Claude Code pattern (agents discoverable in `.claude/agents/`)
 
 **Result**: Works with 3 papers OR 300 papers—no context overflow.
 
