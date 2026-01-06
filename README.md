@@ -29,15 +29,15 @@ Research Writer is a **7-phase literature review workflow** powered by **subagen
 
 ### Phases
 
-| Phase | Name | Input | Output | Time |
-|-------|------|-------|--------|------|
-| **1** | Literature Discovery | PDFs | Screening matrix (INCLUDE/EXCLUDE/UNCERTAIN) | 5-20 min |
-| **2** | Extraction & Synthesis | Approved PDFs | Extraction + synthesis matrices, themes | 15-30 min |
-| **3** | Argument Structure | Synthesis matrix | Literature review outline | 5-10 min |
-| **4** | Drafting | Outline + synthesis | Academic prose draft | 15-30 min |
-| **4.5** | Citation Validation | Draft | Citation integrity report (quality gate) | 3-5 min |
-| **6** | Contributions | Draft | Implications + future research | 10-15 min |
-| **7** | Cross-Phase Validation | All outputs | Consistency score report (quality gate) | 5-10 min |
+| Phase | Agent Name | Input | Output | Time |
+|-------|------------|-------|--------|------|
+| **1** | literature-screener | PDFs | Screening matrix (INCLUDE/EXCLUDE/UNCERTAIN) | 5-20 min |
+| **2** | extraction-synthesizer | Approved PDFs | Extraction + synthesis matrices, themes | 15-30 min |
+| **3** | argument-structurer | Synthesis matrix | Literature review outline | 5-10 min |
+| **4** | literature-drafter | Outline + synthesis | Academic prose draft | 15-30 min |
+| **5** | citation-validator | Draft | Citation integrity report (quality gate) | 3-5 min |
+| **6** | contribution-framer | Draft | Implications + future research | 10-15 min |
+| **7** | consistency-validator | All outputs | Consistency score report (quality gate) | 5-10 min |
 
 **Total time**: 1-2 hours for 20 papers, scales to 100+ papers
 
@@ -93,23 +93,14 @@ Orchestrator (.claude/agents/research-workflow-orchestrator.md)
 research-writer/
 ├── .claude/                            # Claude Code integration
 │   └── agents/
-│       └── research-workflow-orchestrator.md  (Project agent - user entry point)
-│
-├── subagents/                          # Phase-specific implementations
-│   ├── 01_literature-discovery/
-│   │   └── SUBAGENT.md                (Phase 1: Screening)
-│   ├── 02_literature-synthesis/
-│   │   └── SUBAGENT.md                (Phase 2: Extraction + Themes)
-│   ├── 03_argument-structurer/
-│   │   └── SUBAGENT.md                (Phase 3: Outline)
-│   ├── 04_literature-drafter/
-│   │   └── SUBAGENT.md                (Phase 4: Drafting)
-│   ├── 05_citation-validator/
-│   │   └── SUBAGENT.md                (Phase 4.5: Quality gate)
-│   ├── 06_contribution-framer/
-│   │   └── SUBAGENT.md                (Phase 6: Implications)
-│   └── 07_cross-phase-validator/
-│       └── SUBAGENT.md                (Phase 7: Quality gate)
+│       ├── research-workflow-orchestrator.md  (Orchestrator - user entry point)
+│       ├── literature-screener.md             (Phase 1: Screening)
+│       ├── extraction-synthesizer.md          (Phase 2: Extraction + Synthesis)
+│       ├── argument-structurer.md             (Phase 3: Outline)
+│       ├── literature-drafter.md              (Phase 4: Drafting)
+│       ├── citation-validator.md              (Phase 5: Citation quality gate)
+│       ├── contribution-framer.md             (Phase 6: Contributions)
+│       └── consistency-validator.md           (Phase 7: Final quality gate)
 │
 ├── corpus/                            # Your research PDFs (input)
 │   └── [place your PDFs here]
@@ -174,7 +165,7 @@ The orchestrator pauses at critical checkpoints:
 
 - **Phase 1**: Approve your final research corpus (or modify screening)
 - **Phase 3**: Approve outline structure (or request revisions)
-- **Phase 4.5**: Automatic validation (blocks if citations fabricated)
+- **Phase 5**: Automatic validation (blocks if citations fabricated)
 - **Phase 7**: Automatic validation (blocks if consistency <75%)
 
 ### 4. Use Your Outputs
@@ -224,48 +215,52 @@ The orchestrator will:
 
 The **research-workflow-orchestrator** is a Claude Code project agent that:
 
-1. **Reads phase specifications** before executing each phase
-2. **Follows the detailed workflow** defined in each spec file
-3. **Does NOT improvise** or create its own implementation
+1. **Spawns specialized agents** for each phase via Task tool
+2. **Each agent runs independently** in its own fresh context window
+3. **Agents communicate through files** in the outputs/ directory
+4. **Orchestrator coordinates** the workflow and manages checkpoints
 
 **Critical Execution Pattern** (for each phase):
 ```
-Step 1: Read subagents/XX_phase-name/SUBAGENT.md
-Step 2: Follow the workflow defined in that spec exactly
-Step 3: Produce outputs as specified
-Step 4: Save state and proceed to next phase
+Step 1: Orchestrator spawns phase agent via Task tool
+Step 2: Agent executes in fresh context, reads required inputs
+Step 3: Agent produces outputs as specified
+Step 4: Agent returns summary to orchestrator
+Step 5: Orchestrator logs state and proceeds to next phase
 ```
 
 This ensures:
-- ✅ Consistent execution (follows proven workflows)
-- ✅ No context overflow (only loads what's needed)
-- ✅ Easy updates (modify specs without changing agent)
+- ✅ True context isolation (each agent has fresh ~200K token window)
+- ✅ No context overflow (unlimited scalability)
+- ✅ Independent agents (update one without touching others)
+- ✅ Proper Claude Code pattern (discoverable in /agents menu)
 
-### What's a Phase Subagent Specification?
+### What's a Phase Agent?
 
-Each file in `subagents/` contains:
-- **YAML frontmatter**: Required inputs, expected outputs, tools, time estimates
-- **Detailed workflow**: Step-by-step implementation instructions
-- **Batching strategies**: How to handle 5 papers vs 100 papers
-- **Error handling**: What to do when things go wrong
-- **Validation steps**: Quality checks before moving forward
+Each agent in `.claude/agents/` contains:
+- **YAML frontmatter**: Name, description, model, color
+- **Complete implementation**: All logic for that phase
+- **Input/output specifications**: What files it reads/writes
+- **Error handling**: How to handle edge cases
+- **Quality checks**: Validation before completion
 
-**Example**: `subagents/02_literature-synthesis/SUBAGENT.md` (600 lines) defines:
-- How to batch extraction (5 papers per context window)
-- What data to extract from each paper
-- How to identify cross-paper themes
-- Output format for synthesis matrix
+**Example**: `extraction-synthesizer.md` agent:
+- Runs in fresh context for Phase 2
+- Reads screening-matrix.md from Phase 1
+- Extracts data from each approved paper
+- Identifies cross-paper themes
+- Produces synthesis-matrix.md for Phase 3
 
 ### Quality Gates
 
 Two mandatory quality gates ensure output integrity:
 
-1. **Phase 4.5 (Citation Validation)**: 
+1. **Phase 5 (Citation Validation)**:
    - ❌ BLOCKS if fabricated citations found
    - ⚠️ WARNS if misattributions found
    - ✅ PASSES if all citations verified
 
-2. **Phase 7 (Cross-Phase Validation)**:
+2. **Phase 7 (Consistency Validation)**:
    - ✅ PASSES if consistency ≥75
    - ⚠️ WARNS if consistency 65-74
    - ❌ BLOCKS if consistency <65 or critical issues
@@ -300,7 +295,7 @@ CHECKPOINT 2: "Approve outline?"
   ↓
 [Phase 4: Drafting]
   ↓
-[Phase 4.5: Citation Validation] ← QUALITY GATE (must pass)
+[Phase 5: Citation Validation] ← QUALITY GATE (must pass)
   ↓
 [Phase 6: Contribution Framing]
   ↓
@@ -313,10 +308,11 @@ COMPLETE ✅
 
 ## ⚡ Advanced: Individual Subagent Invocation
 
-You can also invoke individual phases directly:
+You can also invoke individual phase agents directly:
 
 ```
-"Use the phase-01-literature-discovery subagent to screen my PDFs"
+"Use the literature-screener agent to screen my PDFs"
+"Run the citation-validator agent on my draft"
 ```
 
 This is useful for:
@@ -324,6 +320,8 @@ This is useful for:
 - Testing individual components
 - Fine-grained control over workflow
 - Troubleshooting
+
+All phase agents are visible in `/agents` menu in Claude Code.
 
 ---
 
@@ -365,7 +363,7 @@ After Phase 1, the orchestrator creates `outputs/execution-context.json`:
   "research_topic": "AI Adoption in Philippine Healthcare",
   "corpus_path": "corpus/",
   "screening_criteria_file": "settings/screening-criteria.md",
-  "phases_to_run": [1, 2, 3, 4, 4.5, 6, 7],
+  "phases_to_run": [1, 2, 3, 4, 5, 6, 7],
   "started_at": "2025-01-05T10:30:00Z"
 }
 ```
@@ -408,7 +406,7 @@ Structured outline ready for drafting
 
 **Use case**: Copy directly into your manuscript
 
-### Phase 4.5: citation-integrity-report.md
+### Phase 5: citation-integrity-report.md
 Citation validation results with any warnings
 
 **Use case**: Proof that all citations verified, no fabrications
@@ -436,14 +434,14 @@ Fix:
 3. Retry Phase 1
 ```
 
-### "Phase 4.5 finds fabricated citations"
+### "Phase 5 finds fabricated citations"
 ```
 Cause: Citations don't match extraction matrix
 Fix:
 1. Review citation-integrity-report.md
 2. Edit literature-review-draft.md to fix citations
-3. Re-run Phase 4.5
-4. Retry Phase 7
+3. Re-run Phase 5 (citation-validator agent)
+4. Proceed to Phase 6
 ```
 
 ### "Phase 7 consistency score too low"
@@ -473,12 +471,12 @@ Orchestrator will:
 
 Every workflow has TWO quality gates that MUST pass:
 
-1. **Phase 4.5**: Citation Validation
+1. **Phase 5**: Citation Validation
    - Verifies all citations exist in corpus
    - Detects fabricated claims
    - Blocks workflow if critical issues
 
-2. **Phase 7**: Cross-Phase Validation
+2. **Phase 7**: Consistency Validation
    - Checks consistency across all phases
    - Verifies evidence chains
    - Calculates consistency score (≥75 to pass)
@@ -536,7 +534,7 @@ If you use Research Writer in your work:
 - [ ] Collect outputs from `outputs/` directory
 - [ ] Integrate `literature-review-draft.md` into your manuscript
 
-**Questions?** See docs/ folder or review individual SUBAGENT.md files for detailed specifications.
+**Questions?** See docs/ folder or review individual agent files in `.claude/agents/` for detailed specifications.
 
 ---
 

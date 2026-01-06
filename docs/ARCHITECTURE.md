@@ -36,9 +36,9 @@ New (Subagent-based):
                       │
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  PROJECT AGENT (.claude/agents/research-workflow-orchestrator)  │
+│  ORCHESTRATOR (.claude/agents/research-workflow-orchestrator)   │
 │  - Validates prerequisites                                      │
-│  - Reads phase subagent specs from subagents/                   │
+│  - Spawns phase agents via Task tool                            │
 │  - Manages phase sequencing                                     │
 │  - Handles human checkpoints                                    │
 │  - Tracks execution state (execution-log.json)                  │
@@ -55,7 +55,7 @@ New (Subagent-based):
      Matrix.md]    Synthesis]
 
         ┌─────────▼──┐   ┌──────▼───┐   ┌────▼──────┐
-        │  PHASE 4   │   │PHASE 4.5 │   │ PHASE 6   │
+        │  PHASE 4   │   │ PHASE 5  │   │ PHASE 6   │
         │ Drafting   │   │  Citation│   │Contribution
         │(Isolated)  │   │ Validator│   │Framing
         └─────┬──────┘   └──────┬───┘   └────┬──────┘
@@ -137,31 +137,33 @@ Task(subagent_type: "extraction-synthesizer", prompt: "Extract from approved pap
 **How it works:**
 - Registered as a Claude Code project agent
 - Appears in `/agents` list for easy invocation
-- References detailed phase specifications in `subagents/` directory
-- Reads subagent specs before executing each phase
+- Spawns phase agents via Task tool
+- Each agent runs in fresh context window
+- Coordinates workflow through file-based communication
 
 **Not responsible for:**
-- Phase logic (that's each phase subagent)
-- Domain knowledge (that was in skills)
-- Implementation details (each phase handles its own)
+- Phase logic (that's each phase agent)
+- Domain knowledge (agents are self-contained)
+- Implementation details (each phase agent handles its own)
 
-### Tier 2: Phase Subagents (7 total)
+### Tier 2: Phase Agents (7 total)
 
-Each phase is a **self-contained subagent**:
-- Gets clear inputs
-- Produces specific outputs
-- Runs in isolated context
-- Can be invoked directly
-- Tracks own state
+Each phase is a **self-contained independent agent**:
+- Spawned via Task tool by orchestrator
+- Runs in fresh context window
+- Reads required inputs from outputs/
+- Produces specific outputs to outputs/
+- Can be invoked directly from `/agents` menu
+- Returns summary to orchestrator
 
-**Phases**:
-1. **Literature Discovery** - Screen PDFs by criteria
-2. **Extraction & Synthesis** - Extract info, identify themes
-3. **Argument Structurer** - Organize themes into outline
-4. **Literature Drafter** - Write academic prose
-5. **Citation Validator** - Quality gate #1 (verify citations)
-6. **Contribution Framer** - Frame implications
-7. **Cross-Phase Validator** - Quality gate #2 (consistency check)
+**Agents**:
+1. **literature-screener** - Screen PDFs by criteria
+2. **extraction-synthesizer** - Extract info, identify themes
+3. **argument-structurer** - Organize themes into outline
+4. **literature-drafter** - Write academic prose
+5. **citation-validator** - Quality gate #1 (verify citations)
+6. **contribution-framer** - Frame implications
+7. **consistency-validator** - Quality gate #2 (consistency check)
 
 ---
 
@@ -219,7 +221,7 @@ Each phase is a **self-contained subagent**:
    - Approves or requests changes
    - Can re-run phase if needed
 
-2. **Auto Quality Gates** (Phases 4.5, 7)
+2. **Auto Quality Gates** (Phases 5, 7)
    - Run automatically
    - BLOCK if critical issues found
    - WARN if minor issues found
@@ -271,7 +273,7 @@ Phase 3: 90K tokens available → uses 5K → done
 
 ## Quality Assurance: Two-Gate System
 
-### Gate 1: Phase 4.5 - Citation Integrity Validation
+### Gate 1: Phase 5 - Citation Integrity Validation
 
 ```
 CHECKS:
@@ -315,47 +317,41 @@ OUTCOME:
 
 ## File Organization
 
-### Project Agent (.claude/agents/)
+### Orchestrator (.claude/agents/)
 
-**Single entry point**: `research-workflow-orchestrator.md`
+**Entry point**: `research-workflow-orchestrator.md`
 
 Contains:
 - YAML frontmatter (name, description, model, color)
 - Trigger examples for Claude Code
-- Orchestration logic and workflow execution pattern
-- References to phase subagent specifications
-- Human checkpoint instructions
+- Task tool invocation patterns for each phase
+- Human checkpoint management logic
 - Quality assurance standards
 
 **User experience:**
 - Visible in `/agents` command
 - Auto-invoked by Claude Code when user requests literature review
-- Clean, single agent interface
+- Clean, single orchestrator interface
 
-### Phase Subagents (subagents/)
+### Phase Agents (.claude/agents/)
 
-Each phase subagent is one file: `SUBAGENT.md`
+Each phase agent is one file in `.claude/agents/`:
 
-Contains:
-- YAML frontmatter (name, inputs, outputs, model, tools)
-- Full specification (what to do, how to do it)
-- Error handling
-- Integration notes
-
-**Example: Phase 1 subagent**
-```
-subagents/01_literature-discovery/SUBAGENT.md
-- 600 lines
+**Example: literature-screener.md**
+- YAML frontmatter (name, description, model, color)
+- Complete implementation for Phase 1
 - Three-pass screening workflow
 - Resumable state management
 - PRISMA compliance
-```
+- 400+ lines of detailed logic
 
 **Implementation pattern:**
-1. Project agent reads phase subagent spec
-2. Follows detailed instructions in spec
-3. Produces outputs as specified
-4. Returns control to project agent
+1. Orchestrator spawns agent via Task tool
+2. Agent runs in fresh context window
+3. Agent reads required inputs
+4. Agent executes phase logic independently
+5. Agent produces outputs
+6. Agent returns summary to orchestrator
 
 ### Output Files (outputs/)
 
@@ -370,7 +366,7 @@ outputs/
 ├── literature-synthesis-matrix.md        # Phase 2 output
 ├── literature-review-outline.md          # Phase 3 output
 ├── literature-review-draft.md            # Phase 4 output ← MAIN
-├── citation-integrity-report.md          # Phase 4.5 output
+├── citation-integrity-report.md          # Phase 5 output
 ├── research-contributions-implications.md # Phase 6 output
 ├── cross-phase-validation-report.md      # Phase 7 output
 └── workflow-execution-summary.md         # Final summary
@@ -565,8 +561,8 @@ A: Check file format. Phase 1 requires valid PDF files. Use `file corpus/*` to v
 **Q: Context overflow during Phase 2**
 A: Automatic batching should prevent this. If it occurs, split corpus into smaller batches.
 
-**Q: Phase 4.5 blocks due to fabricated citations**
-A: Expected! Fix the draft (edit claimed citations or remove unsupported claims), then re-run Phase 4.5.
+**Q: Phase 5 blocks due to fabricated citations**
+A: Expected! Fix the draft (edit claimed citations or remove unsupported claims), then re-run Phase 5 (citation-validator agent).
 
 ### Quality Issues
 
@@ -596,7 +592,7 @@ A: Ask orchestrator: "Start fresh research workflow" (or rename old execution-lo
 | 2 | 10 min | 25 min | 60 min | Batching prevents overflow |
 | 3 | 3 min | 5 min | 5 min | Independent of corpus size |
 | 4 | 10 min | 20 min | 30 min | Scales with complexity |
-| 4.5 | 2 min | 3 min | 5 min | Citation checking |
+| 5 | 2 min | 3 min | 5 min | Citation checking |
 | 6 | 5 min | 10 min | 10 min | Implication framing |
 | 7 | 3 min | 5 min | 5 min | Final validation |
 | **Total** | **~40 min** | **~1.5 hrs** | **~2 hrs** | Scales well |
