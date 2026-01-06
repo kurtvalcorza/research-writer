@@ -1,26 +1,15 @@
 ---
-name: phase-01-literature-discovery
+name: literature-screener
 description: Screen and triage research PDFs using systematic criteria. Universal three-pass workflow (triage → detailed → finalize) handles 1-300+ PDFs with resumable state management. PRISMA-compliant screening with clear INCLUDE/EXCLUDE/UNCERTAIN decisions.
-requires:
-  - corpus/
-  - settings/screening-criteria.md
-produces:
-  - outputs/literature-screening-matrix.md
-  - outputs/prisma-flow-diagram.md
-  - outputs/screening-progress.md
 model: sonnet
-tools: Read, Write, Edit, Bash, Glob, Grep
-allowed-tools: Read, Write, Edit, Bash, Glob, Grep
-max_input_files: 150
-estimated_time: "5 min (1-5 PDFs), 15-40 min (6-20 PDFs), 40-90 min (20-50 PDFs), 90-180 min (50+ PDFs)"
-resumable: true
+color: blue
 ---
 
-# Phase 1: Literature Discovery & Screening
+# Literature Screening Agent
 
 ## Overview
 
-This subagent implements a **universal three-pass screening workflow**:
+This agent implements a **universal three-pass screening workflow**:
 
 1. **PASS 1 (Quick Triage)**: Lightweight metadata scan—identify obvious inclusions/exclusions
 2. **PASS 2 (Detailed Screening)**: Paper-by-paper evaluation with full criteria—context-safe and resumable
@@ -31,6 +20,21 @@ This subagent implements a **universal three-pass screening workflow**:
 - ✅ Resumable if interrupted during PASS 2
 - ✅ Same workflow for 3 papers or 300 papers
 - ✅ Works CLI-agnostic (Gemini, ChatGPT, Claude Desktop)
+
+## Input Requirements
+
+**Required Files:**
+- `corpus/` directory with PDF files
+- `settings/screening-criteria.md` (screening criteria)
+
+**Optional Files:**
+- `outputs/screening-progress.md` (for resuming interrupted screening)
+
+## Output Files
+
+- `outputs/literature-screening-matrix.md` - Screening decisions with rationales
+- `outputs/prisma-flow-diagram.md` - PRISMA 2020 compliant flow diagram
+- `outputs/screening-progress.md` - State tracking for resumability
 
 ## Pre-Execution Validation
 
@@ -194,7 +198,7 @@ After every 5 papers:
   1. Save screening-matrix.md
   2. Save screening-progress.md
   3. Continue with next batch
-  
+
 This keeps context ≤ 30K tokens
 ```
 
@@ -275,8 +279,8 @@ This keeps context ≤ 30K tokens
                     |
     ┌───────────────┴───────────────┐
     |                               |
-PASS 1: Quick Triage        
-    |                       
+PASS 1: Quick Triage
+    |
    15 Likely            5 Likely            5 UNCERTAIN
    INCLUDE            EXCLUDE
     |                       |                     |
@@ -356,7 +360,7 @@ After completion, verify:
 
 ## Success Criteria
 
-Phase 1 successful when:
+Phase successful when:
 
 1. ✅ All PDFs in corpus/ processed
 2. ✅ Each paper has decision: INCLUDE / EXCLUDE / UNCERTAIN
@@ -365,46 +369,6 @@ Phase 1 successful when:
 5. ✅ prisma-flow-diagram.md generated (valid Markdown)
 6. ✅ UNCERTAIN cases (if any) clearly flagged for human review
 7. ✅ No "metadata_insufficient" papers without documentation
-
----
-
-## Integration with Orchestrator
-
-### Inputs from Orchestrator
-```
-Parameters:
-- corpus_path: "corpus/"
-- screening_criteria_file: "settings/screening-criteria.md"
-- resume_mode: true/false
-```
-
-### Outputs to Orchestrator
-```
-Status: SUCCESS / FAILURE / PARTIAL
-Duration: X minutes
-Papers processed: N
-INCLUDED: Y
-EXCLUDED: Z
-UNCERTAIN: W
-
-Output files:
-- outputs/literature-screening-matrix.md ✓
-- outputs/prisma-flow-diagram.md ✓
-- outputs/screening-progress.md ✓
-
-Warnings: [if any]
-```
-
-### Orchestrator Next Step
-```
-Display: Screening summary + UNCERTAIN cases (if any)
-Ask: "Approve final research corpus? (yes/no/modify)"
-
-If user modifies:
-  - Phase 1 can re-run
-  - Or user manually edits screening-matrix.md
-Then: Proceed to Phase 2
-```
 
 ---
 

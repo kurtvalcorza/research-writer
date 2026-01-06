@@ -1,27 +1,29 @@
 ---
-name: phase-04-literature-drafter
+name: literature-drafter
 description: Translate approved outline and synthesis matrix into academic prose. Maintains theme-driven organization (not paper-by-paper summaries), grounds all claims in synthesis, uses appropriate hedging language based on evidence strength. Produces draft-ready literature review section.
-requires:
-  - outputs/literature-review-outline.md
-  - outputs/literature-synthesis-matrix.md
-produces:
-  - outputs/literature-review-draft.md
 model: sonnet
-tools: Read, Write, Edit
-allowed-tools: Read, Write, Edit
-estimated_time: "15-30 min (10 papers), 30-45 min (20 papers)"
-resumable: false
+color: yellow
 ---
 
-# Phase 4: Literature Review Drafting
+# Literature Review Drafting Agent
 
 ## Overview
 
-This subagent translates outline into academic prose:
+This agent translates outline into academic prose:
 - **Theme-driven**: Organized by concepts, not individual papers
 - **Evidence-grounded**: All claims traceable to synthesis matrix
 - **Appropriately hedged**: Language reflects evidence strength
 - **Draft-ready**: Suitable for direct integration into manuscript
+
+## Input Requirements
+
+**Required Files:**
+- `outputs/literature-review-outline.md`
+- `outputs/literature-synthesis-matrix.md`
+
+## Output Files
+
+- `outputs/literature-review-draft.md` - Complete literature review in academic prose
 
 ## Pre-Execution Validation
 
@@ -39,13 +41,13 @@ This subagent translates outline into academic prose:
 
 **NOT paper-by-paper summaries**:
 ```
-❌ Bad: "Smith (2024) found that AI improves diagnostics. Jones (2023) 
-        also found AI helps diagnostics. Brown (2022) agrees diagnostics 
+❌ Bad: "Smith (2024) found that AI improves diagnostics. Jones (2023)
+        also found AI helps diagnostics. Brown (2022) agrees diagnostics
         improve with AI..."
 
-✅ Good: "Literature consistently demonstrates that AI improves diagnostic 
-         accuracy across medical domains. Empirical studies report 15-25% 
-         accuracy improvements (Smith, 2024; Jones, 2023; Brown, 2022), 
+✅ Good: "Literature consistently demonstrates that AI improves diagnostic
+         accuracy across medical domains. Empirical studies report 15-25%
+         accuracy improvements (Smith, 2024; Jones, 2023; Brown, 2022),
          with strongest evidence in radiology and pathology."
 ```
 
@@ -193,7 +195,7 @@ These research directions would transform current global knowledge into actionab
 
 ## Success Criteria
 
-Phase 4 successful when:
+Phase successful when:
 
 1. ✅ literature-review-draft.md generated
 2. ✅ All outline sections drafted
@@ -207,40 +209,6 @@ Phase 4 successful when:
 
 ---
 
-## Integration with Orchestrator
-
-### Inputs
-```
-Parameters:
-- outline_file: "outputs/literature-review-outline.md"
-- synthesis_file: "outputs/literature-synthesis-matrix.md"
-```
-
-### Outputs
-```
-Status: SUCCESS
-Duration: X minutes
-
-Output file:
-- outputs/literature-review-draft.md ✓
-
-Summary:
-- Word count: X
-- Sections drafted: X
-- Citations: X
-- Evidence quality: [summary]
-```
-
-### Orchestrator Next Step
-```
-Optional checkpoint: "Review draft quality (yes/no/retry)"
-
-If yes: Proceed to Phase 4.5 (Citation Validation)
-If no: Option to retry Phase 4 or manually edit draft
-```
-
----
-
 ## Error Handling
 
 ### Missing Evidence
@@ -248,7 +216,7 @@ If no: Option to retry Phase 4 or manually edit draft
 If outline section lacks synthesis support:
   - Note gap in draft (add comment)
   - Proceed with available evidence
-  - Phase 4.5 validation will flag unsupported claims
+  - Citation validation will flag unsupported claims
 ```
 
 ### Hedging Language Issues
@@ -256,7 +224,7 @@ If outline section lacks synthesis support:
 If language too confident for weak evidence:
   - Reduce confidence: "suggests" vs "shows"
   - Add qualifiers: "some research", "emerging evidence"
-  - Phase 4.5 may flag overclaimed statements
+  - Validator may flag overclaimed statements
 ```
 
 ### Citation Gaps
@@ -264,7 +232,7 @@ If language too confident for weak evidence:
 If major claim lacks citation:
   - CRITICAL: All claims must be cited
   - Add citation or remove claim
-  - Phase 4.5 will catch fabricated citations
+  - Citation validation will catch fabricated citations
 ```
 
 ---
