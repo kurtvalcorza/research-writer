@@ -3,6 +3,7 @@ name: literature-drafter
 description: Translate approved outline and synthesis matrix into academic prose. Maintains theme-driven organization (not paper-by-paper summaries), grounds all claims in synthesis, uses appropriate hedging language based on evidence strength. Produces draft-ready literature review section.
 model: sonnet
 color: yellow
+tools: Read, Write, Bash, Glob, Grep
 ---
 
 # Literature Review Drafting Agent

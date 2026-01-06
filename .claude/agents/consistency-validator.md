@@ -3,6 +3,7 @@ name: consistency-validator
 description: "Final quality gate: Validate consistency and traceability across all phase outputs. Ensures synthesis themes appear in outline, outline sections in draft, claims trace back to evidence. Calculates consistency score. MUST PASS (≥75 score) before workflow completion."
 model: sonnet
 color: magenta
+tools: Read, Write, Bash, Glob, Grep
 ---
 
 # Cross-Phase Consistency Validation Agent

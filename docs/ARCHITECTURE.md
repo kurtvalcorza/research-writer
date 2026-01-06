@@ -82,15 +82,59 @@ New (Subagent-based):
 
 ```
 .claude/agents/
-├── research-workflow-orchestrator.md   # Main coordinator
-├── literature-screener.md              # Phase 1: Screening
-├── extraction-synthesizer.md           # Phase 2: Extraction & Synthesis
-├── argument-structurer.md              # Phase 3: Outline Generation
-├── literature-drafter.md               # Phase 4: Academic Prose
-├── citation-validator.md               # Phase 5: Citation Quality Gate
-├── contribution-framer.md              # Phase 6: Contributions
-└── consistency-validator.md            # Phase 7: Final Quality Gate
+├── research-workflow-orchestrator.md   # Main coordinator (HAS Task tool)
+├── literature-screener.md              # Phase 1: Screening (NO Task tool)
+├── extraction-synthesizer.md           # Phase 2: Extraction & Synthesis (NO Task tool)
+├── argument-structurer.md              # Phase 3: Outline Generation (NO Task tool)
+├── literature-drafter.md               # Phase 4: Academic Prose (NO Task tool)
+├── citation-validator.md               # Phase 5: Citation Quality Gate (NO Task tool)
+├── contribution-framer.md              # Phase 6: Contributions (NO Task tool)
+└── consistency-validator.md            # Phase 7: Final Quality Gate (NO Task tool)
 ```
+
+### Critical Configuration Requirements
+
+**For multi-agent delegation to work, explicit `tools:` configuration is REQUIRED in YAML frontmatter.**
+
+#### Orchestrator Agent Configuration
+
+```yaml
+---
+name: research-workflow-orchestrator
+description: Use this agent when the user requests any literature review...
+model: sonnet
+color: green
+tools: Read, Write, Bash, Glob, Grep, Task, AskUserQuestion
+---
+```
+
+**Key tools:**
+- `Task` - **CRITICAL**: Enables spawning sub-agents
+- `AskUserQuestion` - For human checkpoints
+- Standard file tools for coordination
+
+#### Specialist Agent Configuration
+
+All 7 specialist agents use this pattern:
+
+```yaml
+---
+name: literature-screener  # or extraction-synthesizer, etc.
+description: Screen and triage research PDFs...
+model: sonnet
+color: blue
+tools: Read, Write, Bash, Glob, Grep
+---
+```
+
+**Intentionally excluded:**
+- `Task` - Prevents nested sub-agent spawning (only orchestrator spawns)
+- `AskUserQuestion` - Specialists work autonomously
+
+**Why this matters:**
+- ✅ Without `Task` in orchestrator → orchestrator cannot spawn sub-agents
+- ✅ Without excluding `Task` from specialists → unwanted nested spawning
+- ✅ Proper configuration → clean multi-agent delegation pattern
 
 ### Agent Execution Pattern
 
@@ -402,8 +446,10 @@ Each phase:
 Each subagent declares:
 - **Requires**: What input files needed
 - **Produces**: What output files created
-- **Tools**: What abilities it has
+- **Tools**: What abilities it has (MUST be explicit in YAML frontmatter)
 - **Constraints**: Time/size limits
+
+**Critical**: The `tools:` field in YAML frontmatter is not optional—it's required for proper multi-agent delegation. Without it, the orchestrator cannot spawn sub-agents.
 
 ### 3. Checkpoints (Human in Loop)
 
@@ -552,6 +598,29 @@ Future:
 ---
 
 ## Troubleshooting Guide
+
+### Configuration Issues
+
+**Q: Orchestrator does all the work instead of delegating to specialists**
+A: **Root Cause**: Missing `tools:` configuration in agent frontmatter.
+
+**Fix:**
+1. Verify orchestrator has `Task` tool:
+   ```bash
+   grep "^tools:" .claude/agents/research-workflow-orchestrator.md
+   # Should output: tools: Read, Write, Bash, Glob, Grep, Task, AskUserQuestion
+   ```
+
+2. Verify specialists do NOT have `Task` tool:
+   ```bash
+   grep "^tools:" .claude/agents/literature-screener.md
+   # Should output: tools: Read, Write, Bash, Glob, Grep
+   ```
+
+3. If missing, add to YAML frontmatter as shown in "Critical Configuration Requirements" section above.
+
+**Q: Specialist agents try to spawn their own sub-agents**
+A: Remove `Task` from specialist agent `tools:` configuration.
 
 ### Execution Issues
 

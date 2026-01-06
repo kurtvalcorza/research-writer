@@ -3,6 +3,7 @@ name: argument-structurer
 description: Convert synthesis matrix into a defensible argument structure and literature review outline. Organizes themes into logical sections, assigns evidence strength labels, and creates actionable outline for drafting phase.
 model: sonnet
 color: cyan
+tools: Read, Write, Bash, Glob, Grep
 ---
 
 # Argument Structure & Outline Agent

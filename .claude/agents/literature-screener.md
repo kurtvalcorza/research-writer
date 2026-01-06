@@ -3,6 +3,7 @@ name: literature-screener
 description: Screen and triage research PDFs using systematic criteria. Universal three-pass workflow (triage → detailed → finalize) handles 1-300+ PDFs with resumable state management. PRISMA-compliant screening with clear INCLUDE/EXCLUDE/UNCERTAIN decisions.
 model: sonnet
 color: blue
+tools: Read, Write, Bash, Glob, Grep
 ---
 
 # Literature Screening Agent
