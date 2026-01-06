@@ -3,6 +3,7 @@ name: citation-validator
 description: "Quality control gate: Validate all citations in draft against extraction matrix. Detect fabricated citations (CRITICAL - blocks workflow), misattributions (WARNINGS), and format inconsistencies (INFO). Produces detailed citation integrity report. MUST PASS before proceeding."
 model: sonnet
 color: red
+tools: Read, Write, Bash, Glob, Grep
 ---
 
 # Citation Integrity Validation Agent

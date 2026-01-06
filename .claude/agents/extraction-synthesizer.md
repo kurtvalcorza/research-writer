@@ -3,6 +3,7 @@ name: extraction-synthesizer
 description: Extract standardized information from screened research papers and synthesize cross-paper themes. Produces extraction matrix (metadata + findings per paper) and synthesis matrix (themes across papers with evidence strength labels). Quality metrics included.
 model: sonnet
 color: purple
+tools: Read, Write, Bash, Glob, Grep
 ---
 
 # Extraction & Synthesis Agent

@@ -238,11 +238,34 @@ This ensures:
 ### What's a Phase Agent?
 
 Each agent in `.claude/agents/` contains:
-- **YAML frontmatter**: Name, description, model, color
+- **YAML frontmatter**: Name, description, model, color, **tools**
 - **Complete implementation**: All logic for that phase
 - **Input/output specifications**: What files it reads/writes
 - **Error handling**: How to handle edge cases
 - **Quality checks**: Validation before completion
+
+#### Critical Configuration: Tools
+
+**Orchestrator agent** must include `Task` tool:
+```yaml
+---
+name: research-workflow-orchestrator
+tools: Read, Write, Bash, Glob, Grep, Task, AskUserQuestion
+---
+```
+
+**Specialist agents** must NOT include `Task` tool:
+```yaml
+---
+name: literature-screener
+tools: Read, Write, Bash, Glob, Grep
+---
+```
+
+This configuration enables:
+- ✅ Orchestrator can spawn sub-agents via Task tool
+- ✅ Specialists run in isolated contexts (no nested spawning)
+- ✅ Proper multi-agent delegation pattern
 
 **Example**: `extraction-synthesizer.md` agent:
 - Runs in fresh context for Phase 2
@@ -425,10 +448,23 @@ Final consistency check across all phases
 
 ## 🚨 Troubleshooting
 
+### "Orchestrator does all work instead of delegating"
+```
+Cause: Missing tools: configuration in agent files
+Fix:
+1. Verify orchestrator has Task tool:
+   grep "^tools:" .claude/agents/research-workflow-orchestrator.md
+
+2. Should show: tools: Read, Write, Bash, Glob, Grep, Task, AskUserQuestion
+
+3. If missing, agents need tools: field in YAML frontmatter
+   (See "Critical Configuration: Tools" section above)
+```
+
 ### "Phase 1 fails to read PDFs"
 ```
 Cause: Corrupted PDFs or non-PDF files
-Fix: 
+Fix:
 1. Check file types: file corpus/* | grep -i pdf
 2. Remove corrupted files
 3. Retry Phase 1

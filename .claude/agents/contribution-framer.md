@@ -3,6 +3,7 @@ name: contribution-framer
 description: Articulate research contributions proportionate to evidence. Frames implications, identifies limitations, and defines future research directions grounded in documented gaps. Prevents overclaiming by anchoring all contributions to synthesis matrix and draft evidence.
 model: sonnet
 color: green
+tools: Read, Write, Bash, Glob, Grep
 ---
 
 # Contribution & Implications Framing Agent
