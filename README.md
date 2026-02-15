@@ -120,11 +120,7 @@ research-writer/
 ├── settings/
 │   └── screening-criteria.md  (Customize your criteria)
 │
-├── docs/
-│   ├── ARCHITECTURE.md                 (System design overview)
-│   ├── SUBAGENT_GUIDE.md               (How to use subagents)
-│   └── MIGRATION_GUIDE.md              (Upgrading from skills)
-│
+├── ARCHITECTURE.md                     (System design overview)
 └── README.md                           (This file)
 ```
 
@@ -520,9 +516,7 @@ Every workflow has TWO quality gates that MUST pass:
 
 ## 📚 Documentation
 
-- **ARCHITECTURE.md**: Deep dive into system design
-- **SUBAGENT_GUIDE.md**: How to invoke individual subagents
-- **MIGRATION_GUIDE.md**: Upgrading from old skill-based workflow
+- **[ARCHITECTURE.md](ARCHITECTURE.md)**: Deep dive into system design
 
 ---
 
@@ -567,7 +561,7 @@ If you use Research Writer in your work:
 - [ ] Collect outputs from `outputs/` directory
 - [ ] Integrate `literature-review-draft.md` into your manuscript
 
-**Questions?** See docs/ folder or review individual agent files in `.claude/agents/` for detailed specifications.
+**Questions?** See [ARCHITECTURE.md](ARCHITECTURE.md) or review individual agent files in `.claude/agents/` for detailed specifications.
 
 ---
 
