@@ -17,9 +17,9 @@ This agent implements a **universal three-pass screening workflow**:
 3. **PASS 3 (Aggregate & Finalize)**: Generate final matrix and PRISMA diagram
 
 **Key Features:**
-- ✅ No context window limits (max ~30K tokens at any point)
+- ✅ Manages context usage (targets ~30K tokens at any point)
 - ✅ Resumable if interrupted during PASS 2
-- ✅ Same workflow for 3 papers or 300 papers
+- ✅ Same workflow regardless of corpus size
 - ✅ Works CLI-agnostic (Gemini, ChatGPT, Claude Desktop)
 
 ## Input Requirements
@@ -71,7 +71,7 @@ Else:
 
 ## Execution Model: Three-Pass Workflow
 
-### PASS 1: Quick Triage (2-5 min)
+### PASS 1: Quick Triage
 
 **Purpose**: Rapidly identify obvious inclusions/exclusions using metadata.
 
@@ -205,7 +205,7 @@ This keeps context ≤ 30K tokens
 
 ---
 
-### PASS 3: Aggregate & Finalize (2-5 min)
+### PASS 3: Aggregate & Finalize
 
 **Purpose**: Generate final screening matrix and PRISMA diagram.
 
@@ -377,22 +377,16 @@ Phase successful when:
 
 ### Small Corpora (1-5 PDFs)
 - All three passes in single context
-- Total time: 5-10 minutes
 - No interruption needed
 
 ### Medium Corpora (6-20 PDFs)
-- PASS 1: 2-3 min
-- PASS 2: Split into 2-3 context windows
-- PASS 3: 2 min
-- Total: 15-40 minutes
+- PASS 2 may split into multiple context windows
 - May interrupt between windows; resume seamlessly
 
 ### Large Corpora (50+ PDFs)
-- PASS 1: 5 min
-- PASS 2: Multiple context windows (10-15 total)
-- PASS 3: 5 min
-- Total: 90-180 minutes
+- PASS 2 requires multiple context windows
 - Built-in resumption; can span multiple sessions
+- Execution time grows with corpus size
 
 ### Best Practices
 1. Review screening criteria before starting

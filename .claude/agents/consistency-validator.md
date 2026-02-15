@@ -257,4 +257,4 @@ Phase successful when:
 
 Both citation validation and consistency validation must PASS before workflow completion.
 
-No low-quality outputs reach manuscript or publication pipeline.
+These gates help catch common quality issues before outputs are used in manuscripts.

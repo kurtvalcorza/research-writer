@@ -449,11 +449,10 @@ Overall Quality Assessment:
 - Document all issues in quality report
 - Flag papers for manual review if needed
 
-### Time Expectations
-- Small corpus (5 papers): 15 min
-- Medium corpus (15 papers): 30-40 min
-- Large corpus (50 papers): 90-120 min
-- Very large corpus (100+ papers): Requires batching
+### Corpus Size Considerations
+- Execution time grows with the number of papers
+- Larger corpora require batching (extraction is done in groups to stay within context limits)
+- Very large corpora (100+ papers) may need multiple sessions
 
 ---
 

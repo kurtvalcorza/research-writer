@@ -11,15 +11,13 @@ Instead of running all phases in a single conversation (which causes context ove
 ```
 Old (Skills-based):
 - All phases in one conversation
-- Context accumulates
-- Breaks at ~5 papers
-- Maximum corpus: 5-10 papers
+- Context accumulates across phases
+- Context window fills up quickly with larger corpora
 
 New (Subagent-based):
-- Each phase isolated context
+- Each phase gets isolated context
 - Fresh start for each phase
-- Scales to 100+ papers
-- Maximum corpus: 100+ papers
+- Can handle larger corpora without cross-phase context buildup
 ```
 
 ---
@@ -159,8 +157,8 @@ Task(subagent_type: "extraction-synthesizer", prompt: "Extract from approved pap
 
 ### Key Architectural Benefits
 
-1. **Context Isolation**: Each agent gets fresh ~200K token context window
-2. **Scalability**: Handle 100+ papers without context overflow
+1. **Context Isolation**: Each agent gets a fresh context window
+2. **Scalability**: Handles larger corpora than single-conversation approaches
 3. **Maintainability**: Update individual agents without touching orchestrator
 4. **Discoverability**: All agents visible in Claude Code's `/agents` menu
 5. **Semantic Names**: Agent names describe function, not execution order
@@ -295,7 +293,7 @@ Each subagent gets fresh context:
 Phase 1: 90K tokens available → uses 15K → done
 Phase 2: 90K tokens available → uses 20K → done  
 Phase 3: 90K tokens available → uses 5K → done
-... unlimited phases possible
+... additional phases follow the same pattern
 ```
 
 ### Practical Implementation
@@ -308,10 +306,10 @@ Phase 3: 90K tokens available → uses 5K → done
 5. Clear context
 
 **Critical**: Phase 2 (synthesis) batches large corpora:
-- Max 5 papers per context window
-- Save progress after each batch
-- Continue with next batch
-- Result: Process unlimited papers
+- Batches papers to stay within context limits
+- Saves progress after each batch
+- Continues with next batch
+- Result: Can process larger corpora than a single-context approach
 
 ---
 
@@ -500,30 +498,24 @@ If interrupted:
 ## Scalability
 
 ### Small Corpora (1-20 papers)
-- All phases single context
-- Phase 1-7 in sequence
-- Total time: 30 min - 1.5 hours
+- All phases run sequentially in single contexts
 - No special handling needed
 
 ### Medium Corpora (20-50 papers)
-- Phase 2 may split into 2-3 context windows
+- Phase 2 may split into multiple context windows
 - Otherwise standard execution
-- Total time: 1.5 - 2 hours
 - Resumption helpful if interrupted
 
 ### Large Corpora (50-100+ papers)
-- Phase 2 batches into 10-20 context windows
-- Each batch processed independently
-- Results aggregated
-- Total time: 2-3 hours
-- Resumption essential for reliability
+- Phase 2 batches extraction across multiple context windows
+- Each batch processed independently, results aggregated
+- Resumption important for reliability
+- Not yet extensively tested at the upper end of this range
 
-### Very Large Corpora (300+ papers)
-- Phase 1 screens in batches of 50
-- Phase 2 extracts in batches of 5
-- All other phases on consolidated results
-- Requires planning execution across multiple sessions
-- Total time: 4-6 hours across multiple days
+### Very Large Corpora (200+ papers)
+- Phase 1 and Phase 2 both require batching
+- May need multiple sessions
+- Architecturally supported but not yet validated at this scale
 
 ---
 
@@ -563,7 +555,7 @@ Future:
 | Aspect | Skills | Subagents |
 |--------|--------|-----------|
 | **Context** | Accumulated | Isolated |
-| **Max corpus** | 5-10 papers | 100+ papers |
+| **Max corpus** | Limited by context window | Larger (context isolation) |
 | **Invocation** | Auto (model-driven) | Explicit (user/orchestrator-driven) |
 | **Isolation** | None (all in one conversation) | Complete (separate contexts) |
 | **Resumption** | Fragile | Built-in |
@@ -653,25 +645,16 @@ A: Ask orchestrator: "Start fresh research workflow" (or rename old execution-lo
 
 ## Performance Characteristics
 
-### Execution Time by Phase
+Execution time varies based on corpus size, PDF length, model speed, and content complexity. No formal benchmarks have been conducted.
 
-| Phase | 5 papers | 20 papers | 50 papers | Notes |
-|-------|----------|-----------|-----------|-------|
-| 1 | 5 min | 15 min | 30 min | Scales linearly with PDFs |
-| 2 | 10 min | 25 min | 60 min | Batching prevents overflow |
-| 3 | 3 min | 5 min | 5 min | Independent of corpus size |
-| 4 | 10 min | 20 min | 30 min | Scales with complexity |
-| 5 | 2 min | 3 min | 5 min | Citation checking |
-| 6 | 5 min | 10 min | 10 min | Implication framing |
-| 7 | 3 min | 5 min | 5 min | Final validation |
-| **Total** | **~40 min** | **~1.5 hrs** | **~2 hrs** | Scales well |
+**General observations:**
+- Phases 1 and 2 (screening and extraction) are the most time-intensive, growing with corpus size
+- Phases 3-7 operate on consolidated outputs and are relatively quick regardless of corpus size
+- API costs depend on model choice, prompt length, and number of retries
 
-### Resource Usage
-
-- **Storage**: ~1 MB per 10 papers (PDFs excluded)
-- **Memory**: ~2 GB per phase execution
-- **Network**: None (local execution)
-- **Cost**: ~$0.05-0.15 per 10 papers (API usage for Claude)
+**Resource usage:**
+- **Storage**: Outputs are markdown files; storage needs are modest (PDFs excluded)
+- **Network**: Requires API access to Claude (all other processing is local)
 
 ---
 
@@ -699,11 +682,11 @@ Research Writer demonstrates a powerful design pattern:
 
 **Subagent orchestration** > Single-conversation workflow
 
-This architecture enables:
-✅ Unlimited corpus size (no context overflow)
-✅ Reliability (quality gates + error recovery)
-✅ Transparency (complete audit trail)
-✅ Extensibility (easy to add new phases)
-✅ Resumability (no lost work)
+This architecture aims to provide:
+- Context isolation (no cross-phase accumulation)
+- Reliability (quality gates + error recovery)
+- Transparency (complete audit trail)
+- Extensibility (easy to add new phases)
+- Resumability (pick up where you left off)
 
-**Result**: Robust, scalable literature review automation.
+**Result**: A more scalable approach to literature review automation than single-conversation workflows. Upper limits depend on model, API, and corpus characteristics.

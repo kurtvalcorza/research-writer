@@ -152,7 +152,7 @@ With this architecture, each agent:
 - ✅ Has complete focus on its specific task
 - ✅ Saves outputs that next agent reads (clean handoffs)
 - ✅ Returns summary to orchestrator (lightweight coordination)
-- ✅ Can process 100+ papers without context limits
+- ✅ Can handle larger corpora than single-conversation approaches
 
 You (orchestrator) maintain only:
 - Workflow state in `execution-log.json`
@@ -248,7 +248,7 @@ After complete workflow, these files will exist:
 
 This architecture ensures:
 1. True context isolation (each agent has fresh context)
-2. Scalability (handle 100+ papers easily)
+2. Scalability (handles larger corpora than single-context workflows)
 3. Maintainability (agents are self-contained)
 4. Quality (two independent validation gates)
 5. Transparency (clear audit trail)
