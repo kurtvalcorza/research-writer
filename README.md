@@ -19,7 +19,7 @@ The orchestrator subagent will:
 6. ✅ Frame contributions and implications
 7. ✅ Validate consistency across all phases
 
-**Result**: Publication-ready literature review draft, ready for your manuscript.
+**Result**: A structured literature review draft that you can refine for your manuscript.
 
 ---
 
@@ -29,17 +29,17 @@ Research Writer is a **7-phase literature review workflow** powered by **subagen
 
 ### Phases
 
-| Phase | Agent Name | Input | Output | Time |
-|-------|------------|-------|--------|------|
-| **1** | literature-screener | PDFs | Screening matrix (INCLUDE/EXCLUDE/UNCERTAIN) | 5-20 min |
-| **2** | extraction-synthesizer | Approved PDFs | Extraction + synthesis matrices, themes | 15-30 min |
-| **3** | argument-structurer | Synthesis matrix | Literature review outline | 5-10 min |
-| **4** | literature-drafter | Outline + synthesis | Academic prose draft | 15-30 min |
-| **5** | citation-validator | Draft | Citation integrity report (quality gate) | 3-5 min |
-| **6** | contribution-framer | Draft | Implications + future research | 10-15 min |
-| **7** | consistency-validator | All outputs | Consistency score report (quality gate) | 5-10 min |
+| Phase | Agent Name | Input | Output |
+|-------|------------|-------|--------|
+| **1** | literature-screener | PDFs | Screening matrix (INCLUDE/EXCLUDE/UNCERTAIN) |
+| **2** | extraction-synthesizer | Approved PDFs | Extraction + synthesis matrices, themes |
+| **3** | argument-structurer | Synthesis matrix | Literature review outline |
+| **4** | literature-drafter | Outline + synthesis | Academic prose draft |
+| **5** | citation-validator | Draft | Citation integrity report (quality gate) |
+| **6** | contribution-framer | Draft | Implications + future research |
+| **7** | consistency-validator | All outputs | Consistency score report (quality gate) |
 
-**Total time**: 1-2 hours for 20 papers, scales to 100+ papers
+Execution time varies depending on corpus size, PDF length, and model speed.
 
 ---
 
@@ -52,7 +52,7 @@ Old approach accumulated context with each phase:
 Phase 1 → context grows
 Phase 2 → context grows more
 Phase 3 → context grows more
-Phase 4 → OVERFLOW (breaks at ~5 papers)
+Phase 4 → OVERFLOW (context window fills up)
 ```
 
 ### The Solution: Task Tool-Based Agent Orchestration
@@ -79,11 +79,11 @@ Orchestrator (.claude/agents/research-workflow-orchestrator.md)
 
 **Key Innovation**: Each phase runs as an **independent agent** with its own context window using Claude Code's Task tool. This means:
 - ✅ True context isolation (each agent starts fresh)
-- ✅ Scalable to 100+ papers (no context accumulation)
+- ✅ Handles larger corpora (no context accumulation)
 - ✅ Modular design (each agent is self-contained)
 - ✅ Proper Claude Code pattern (agents discoverable in `.claude/agents/`)
 
-**Result**: Works with 3 papers OR 300 papers—no context overflow.
+**Result**: Context isolation removes the per-phase accumulation problem, allowing larger corpora than single-conversation approaches.
 
 ---
 
@@ -174,7 +174,7 @@ After completion, you have:
 
 ```
 ✅ literature-review-draft.md
-   → Publication-ready literature review section
+   → Literature review draft for further refinement
    → Integrate directly into your manuscript
 
 ✅ research-contributions-implications.md
@@ -230,8 +230,8 @@ Step 5: Orchestrator logs state and proceeds to next phase
 ```
 
 This ensures:
-- ✅ True context isolation (each agent has fresh ~200K token window)
-- ✅ No context overflow (unlimited scalability)
+- ✅ True context isolation (each agent starts with a fresh context window)
+- ✅ No cross-phase context accumulation
 - ✅ Independent agents (update one without touching others)
 - ✅ Proper Claude Code pattern (discoverable in /agents menu)
 
@@ -393,17 +393,14 @@ After Phase 1, the orchestrator creates `outputs/execution-context.json`:
 
 ---
 
-## 📈 Scaling: From 5 Papers to 500
+## 📈 Scaling Considerations
 
-| Corpus Size | Phase 1 | Phase 2 | Phase 3 | Phase 4 | Total Time |
-|-------------|---------|---------|---------|---------|-----------|
-| 5 papers | 5 min | 10 min | 3 min | 10 min | ~30 min |
-| 20 papers | 15 min | 25 min | 5 min | 20 min | ~1.5 hours |
-| 50 papers | 30 min | 60 min | 5 min | 30 min | ~2 hours |
-| 100 papers | 60 min | 90+ min | 5 min | 45 min | ~3 hours |
-| 300+ papers | Requires batching (Phase 2 splits into chunks) | | | | |
+Execution time depends on corpus size, PDF length, and model speed. In general:
 
-**For 300+ papers**: Phase 2 automatically batches extraction into 50-paper chunks
+- **Phases 1 and 2** (screening and extraction) take longer as corpus size grows, since they process each paper individually.
+- **Phases 3-7** operate on consolidated outputs and are less sensitive to corpus size.
+- **Large corpora (50+ papers)**: Phase 2 batches extraction to stay within context limits. Expect longer runs and plan for possible interruptions — the workflow is resumable.
+- **Very large corpora (200+ papers)**: May require multiple sessions. Batching and resumability help, but this hasn't been extensively tested at scale.
 
 ---
 
@@ -517,7 +514,7 @@ Every workflow has TWO quality gates that MUST pass:
    - Verifies evidence chains
    - Calculates consistency score (≥75 to pass)
 
-**Result**: No low-quality output reaches your manuscript.
+**Result**: These gates help catch common issues before output reaches your manuscript.
 
 ---
 
