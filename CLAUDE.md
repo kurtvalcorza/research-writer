@@ -166,15 +166,22 @@ Output files created:
 Parse the report header (STATUS / CRITICAL_COUNT / WARNING_COUNT /
 INFO_COUNT — first lines of citation-integrity-report.md).
 
-If STATUS: FAIL (any FABRICATED, OUT_OF_CORPUS, or
-fundamental-misattribution citation):
-  1. Re-spawn literature-drafter in Revision Mode, passing
-     outputs/citation-integrity-report.md
-  2. Re-run citation-validator on the revised draft
-  3. Repeat at most 2 automated cycles. Still failing → ❌ WORKFLOW PAUSED:
-     show the report to the user. OUT_OF_CORPUS items get a special prompt:
-     "Delete the citation, or add the paper to corpus/ and re-run
-     extraction for it?"
+If STATUS: FAIL:
+  A. If the report lists ANY OUT_OF_CORPUS citations → ⏸️ PAUSE FIRST,
+     BEFORE any auto-revision (Revision Mode deletes citations; a
+     rescuable one must never be deleted unseen). Present each
+     OUT_OF_CORPUS item: "Delete the citation, or add the paper to
+     corpus/ and re-run extraction for it?" For rescued papers: add the
+     PDF, run extraction for just those papers, and record the decision
+     as "rescued" — the citation is then in-corpus and stays.
+  B. Then (or immediately, when only FABRICATED / fundamental
+     misattributions are present):
+     1. Re-spawn literature-drafter in Revision Mode, passing
+        outputs/citation-integrity-report.md PLUS the per-item
+        delete/rescued decisions from step A
+     2. Re-run citation-validator on the revised draft
+     3. Repeat at most 2 automated cycles. Still failing → ❌ WORKFLOW
+        PAUSED: show the report to the user
 
 If STATUS: WARN (misattributions / missing citations, no CRITICALs):
   Present the warnings; ask the user: proceed to Phase 6, or run one

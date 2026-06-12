@@ -30,9 +30,27 @@ decides whether to accept or revise.
 - `outputs/literature-synthesis-matrix.md`
 - `outputs/literature-review-outline.md`
 - `outputs/literature-review-draft.md`
-- `outputs/research-contributions-implications.md` — required in the full
-  workflow (Phase 6 always precedes Phase 7); treated as optional only when
-  this agent is invoked standalone before Phase 6 has run
+- `outputs/research-contributions-implications.md` — required in FULL
+  WORKFLOW mode (see Mode Detection); optional only in STANDALONE mode
+
+## Mode Detection (determines whether a missing Phase 6 artifact fails)
+
+```
+DEFAULT MODE: FULL WORKFLOW.
+STANDALONE mode applies ONLY when the spawning prompt explicitly says
+"standalone" (the orchestrator never says this in normal sequencing —
+only a user invoking this agent directly before Phase 6 would).
+
+FULL WORKFLOW mode:
+  research-contributions-implications.md missing
+    → CRITICAL FLAG "MISSING_PHASE6_ARTIFACT" → FAIL
+  (a skipped or failed Phase 6 must never slip past this gate unnoticed)
+
+STANDALONE mode:
+  Contributions checks are skipped; the report header gains the line
+  "MODE: STANDALONE (contributions not audited)" so the limitation is
+  visible to anyone reading the verdict.
+```
 
 ## Output Files
 
@@ -44,7 +62,9 @@ decides whether to accept or revise.
 1. outputs/literature-synthesis-matrix.md exists
 2. outputs/literature-review-outline.md exists
 3. outputs/literature-review-draft.md exists
-4. Optional: outputs/research-contributions-implications.md
+4. outputs/research-contributions-implications.md exists — if missing:
+   FULL WORKFLOW mode → CRITICAL FLAG "MISSING_PHASE6_ARTIFACT" (FAIL);
+   STANDALONE mode → proceed, mark report "MODE: STANDALONE"
 5. outputs/ directory writable
 ```
 
@@ -134,9 +154,14 @@ extraction file says                                      → CRITICAL FLAG
    outputs/paper-pXXX-extraction.md for every sampled claim)
 ```
 
-### Step 4: Contributions Audit (unscored — flags only)
+### Step 4: Contributions Audit (unscored — flags only; mode-dependent)
 
 **Check**: Contributions proportionate to draft evidence
+
+Mode-dependent (see Mode Detection): in FULL WORKFLOW mode a missing
+contributions file is CRITICAL FLAG "MISSING_PHASE6_ARTIFACT" → FAIL —
+never a silent skip. In STANDALONE mode this step is skipped and the
+report header is stamped "MODE: STANDALONE (contributions not audited)".
 
 Unscored so the 100-point arithmetic is identical whether the workflow ran
 fully or this validator was invoked standalone before Phase 6.
