@@ -21,7 +21,6 @@ This agent takes the synthesis matrix (raw themes) and converts it into an **out
 
 **Required Files:**
 - `outputs/literature-synthesis-matrix.md`
-- `outputs/literature-screening-matrix.md`
 
 ## Output Files
 
@@ -31,9 +30,8 @@ This agent takes the synthesis matrix (raw themes) and converts it into an **out
 
 ```bash
 1. outputs/literature-synthesis-matrix.md exists
-2. outputs/literature-screening-matrix.md exists
-3. Synthesis matrix contains 3-7 themes
-4. outputs/ directory writable
+2. Synthesis matrix contains 3-7 themes
+3. outputs/ directory writable
 ```
 
 ## Execution Model
@@ -112,9 +110,11 @@ Add section for each outline entry:
 
 **Papers to cite**: P001, P003, P005, P008
 
-**Key quotes** (for drafting):
-- "[Quote from paper 1 about finding]"
-- "[Quote from paper 2 showing agreement]"
+**Key quotes** (for drafting — SELECTED from the synthesis matrix's
+"Key Quotes" column, copied verbatim with paper IDs; never invent or
+paraphrase-as-quote):
+- P001: "[verbatim quote from synthesis matrix]"
+- P005: "[verbatim quote from synthesis matrix]"
 
 **Transition to next section**: "While [Theme 1] is well-established, [Theme 2] shows more varied findings..."
 ```
@@ -268,10 +268,14 @@ Phase successful when:
 
 ### Missing Synthesis Data
 ```
-If synthesis matrix incomplete:
-  - Identify missing themes
-  - Ask: Re-run extraction or continue with available themes?
-  - Document limitation in outline
+If synthesis matrix incomplete (fewer than 3 themes, or themes missing
+synthesis summaries):
+  - Proceed with the themes that ARE available — never stop, never prompt
+    the user (AskUserQuestion is unavailable to subagents)
+  - Add "STATUS: INCOMPLETE_SYNTHESIS" plus a list of what is missing to
+    the top of literature-review-outline.md
+  - The orchestrator surfaces this at the Phase 3 checkpoint, where the
+    user decides: approve the partial outline or re-run Phase 2
 ```
 
 ### Theme Organization Issues

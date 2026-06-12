@@ -22,6 +22,22 @@ This agent performs two key tasks:
 - ✅ Cross-paper thematic synthesis
 - ✅ Evidence strength labeling
 - ✅ Resumable from last processed paper
+- ✅ Fully autonomous: never pauses for user input — issues are recorded in the quality report for the orchestrator's checkpoint
+
+## PDF Reading Protocol (MANDATORY)
+
+The Read tool has hard limits on PDFs: a `pages` parameter is **required** for PDFs over 10 pages, and at most **20 pages** can be read per call. Extraction needs more text than screening, but never the whole paper at once:
+
+```
+1. Read pages "1-2" first: title, authors, year, abstract.
+2. Read the body in 20-page chunks (pages "3-20", then "21-40", ...) ONLY
+   as far as needed to fill the extraction template. Prioritize, in order:
+   abstract → methods → findings/results → discussion/limitations.
+3. Skip references, appendices, and supplementary material entirely.
+4. Stop reading a paper as soon as every template field is filled.
+```
+
+A 40-page paper therefore costs at most 3 Read calls, usually 2. Budget accordingly: a context window may only fit 1-3 long papers — which is why state is saved after every paper, not in batches.
 
 ## Input Requirements
 
@@ -77,7 +93,8 @@ Else:
 
 **Step 1: For each INCLUDED paper**
 ```
-1. Read PDF (use Read tool)
+1. Read PDF per the PDF Reading Protocol above (pages "1-2" first, then
+   targeted 20-page chunks — never an unbounded full read)
 2. Extract metadata:
    - Title, Authors, Year, Journal/Source
    - Publication type (journal, conference, preprint)
@@ -139,6 +156,10 @@ This individual file serves as:
 - Audit trail (can verify extraction against PDF)
 - Quality check (easy to review extraction accuracy)
 - Resumption aid (if extraction interrupted)
+- Ground truth for Gate 1: the citation-validator verifies sampled draft
+  claims against these files, and the orchestrator asks the user to
+  spot-check a sample of them against the source PDFs at the Phase 2
+  checkpoint
 ```
 
 **Step 3: Record in consolidated extraction matrix**
@@ -150,12 +171,17 @@ Add row to literature-extraction-matrix.md:
 | P001 | [Title] | [Authors] | 2024 | [Methods] | [Key findings summary] | [Limitations] | Theme A, Theme B |
 ```
 
-**Step 4: Save progress**
+**Step 4: Save progress (after EVERY paper)**
 ```
-After every 5 papers:
-1. Save literature-extraction-matrix.md
-2. Update extraction-quality-report.md with progress
-3. Clear context, continue with next batch
+Immediately after extracting each paper:
+1. Write its outputs/paper-pXXX-extraction.md file
+2. Append its row to literature-extraction-matrix.md
+3. Update extraction-quality-report.md progress counts
+
+One paper = one checkpoint. Long PDFs mean a context window may hold only
+1-3 papers; the per-paper save discipline makes that safe. Paper IDs are
+assigned once, in screening-matrix order (P001, P002, ...), and recorded in
+the quality report so a resumed session continues the same numbering.
 ```
 
 **Step 5: Error handling**
@@ -203,7 +229,10 @@ Example: 20 papers on AI in healthcare might have:
 For each theme:
 
 A) Identify papers addressing this theme
-B) Read findings section of each paper
+B) Read the "Key Findings" sections of those papers' extraction files
+   (outputs/paper-pXXX-extraction.md). NEVER re-read source PDFs during
+   synthesis — extraction is complete; the extraction files are the
+   working corpus from here on.
 C) Synthesize:
    - What do papers agree on?
    - Where do they differ?
@@ -215,17 +244,22 @@ D) Assign evidence strength label:
    - "Mixed Views": 40-80% agreement, disagreement present
    - "Emerging": 2-4 papers, less established
    - "Limited": 1 paper only, needs corroboration
+
+E) Capture 1-3 representative quotes per theme — VERBATIM from the
+   extraction files, ≤25 words each, tagged with paper ID. These feed the
+   outline's "Key quotes" field; downstream agents select from them and
+   must never invent quotes.
 ```
 
 **Step 3: Create synthesis matrix**
 ```
 Create literature-synthesis-matrix.md:
 
-| Theme | Papers | Evidence Strength | Synthesis |
-|-------|--------|------------------|-----------|
-| Theme A: AI Diagnostics | P001, P003, P005, P008 | Strong Consensus | "Papers consistently show AI improves diagnostic accuracy by 15-25%. Agreement across diverse health conditions. Well-established finding." |
-| Theme B: Clinical Support | P002, P004, P007 | Mixed Views | "Some papers (2) show strong adoption; others (1) document barriers. Context-dependent effectiveness observed." |
-| Theme C: Implementation | P006, P009 | Emerging | "New theme. 2 papers suggest organizational readiness is critical factor. Needs more research." |
+| Theme | Papers | Evidence Strength | Synthesis | Key Quotes |
+|-------|--------|------------------|-----------|------------|
+| Theme A: AI Diagnostics | P001, P003, P005, P008 | Strong Consensus | "Papers consistently show AI improves diagnostic accuracy by 15-25%. Agreement across diverse health conditions. Well-established finding." | P001: "accuracy improved 22% over radiologist baseline"; P005: "consistent gains across all imaging modalities" |
+| Theme B: Clinical Support | P002, P004, P007 | Mixed Views | "Some papers (2) show strong adoption; others (1) document barriers. Context-dependent effectiveness observed." | P004: "clinicians overrode AI recommendations in 40% of cases" |
+| Theme C: Implementation | P006, P009 | Emerging | "New theme. 2 papers suggest organizational readiness is critical factor. Needs more research." | P006: "readiness assessment predicted adoption success" |
 ```
 
 **Step 4: Quality report**
@@ -451,8 +485,10 @@ Overall Quality Assessment:
 
 ### Corpus Size Considerations
 - Execution time grows with the number of papers
-- Larger corpora require batching (extraction is done in groups to stay within context limits)
-- Very large corpora (100+ papers) may need multiple sessions
+- Extraction is strictly one-paper-at-a-time with a checkpoint after each;
+  context resets between papers are expected and safe
+- Very large corpora (100+ papers) may need multiple sessions — resume from
+  the quality report's progress counts
 
 ---
 
@@ -461,13 +497,14 @@ Overall Quality Assessment:
 To prevent context overflow:
 
 ```
-1. Process max 5 papers per context window
-2. After every 5 papers:
-   - Save matrices
-   - Save individual extraction files
-   - Save progress
-   - Clear context
-   - Continue with next batch
-3. Use extraction template to minimize token usage
-4. Synthesis: Consolidate themes after all extraction complete
+1. Extract ONE paper at a time, end to end (read → extract → save), and
+   treat each paper as a checkpoint: per-paper file written, matrix row
+   appended, progress updated before touching the next PDF.
+2. There is no fixed papers-per-window cap. Short papers may allow 5+ per
+   window; 40-page papers may allow only 1-2. The per-paper save
+   discipline — not a batch size — is what makes interruption safe.
+3. Use the extraction template to minimize token usage; follow the PDF
+   Reading Protocol (no unbounded reads, skip references).
+4. Synthesis (Phase 2B) starts only after all extraction is complete, and
+   works exclusively from the extraction files — never from source PDFs.
 ```

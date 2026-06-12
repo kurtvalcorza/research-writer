@@ -27,9 +27,27 @@ This is the **FINAL QUALITY CONTROL GATE**. It validates:
 - `outputs/literature-synthesis-matrix.md`
 - `outputs/literature-review-outline.md`
 - `outputs/literature-review-draft.md`
+- `outputs/research-contributions-implications.md` — required in FULL
+  WORKFLOW mode (see Mode Detection); optional only in STANDALONE mode
 
-**Optional Files:**
-- `outputs/research-contributions-implications.md`
+## Mode Detection (determines whether a missing Phase 6 artifact fails)
+
+```
+DEFAULT MODE: FULL WORKFLOW.
+STANDALONE mode applies ONLY when the spawning prompt explicitly says
+"standalone" (the orchestrator never says this in normal sequencing —
+only a user invoking this agent directly before Phase 6 would).
+
+FULL WORKFLOW mode:
+  research-contributions-implications.md missing
+    → CRITICAL FLAG "MISSING_PHASE6_ARTIFACT" → FAIL
+  (a skipped or failed Phase 6 must never slip past this gate unnoticed)
+
+STANDALONE mode:
+  Contributions checks are skipped; the report header gains the line
+  "MODE: STANDALONE (contributions not audited)" so the limitation is
+  visible to anyone reading the verdict.
+```
 
 ## Output Files
 
@@ -41,7 +59,9 @@ This is the **FINAL QUALITY CONTROL GATE**. It validates:
 1. outputs/literature-synthesis-matrix.md exists
 2. outputs/literature-review-outline.md exists
 3. outputs/literature-review-draft.md exists
-4. Optional: outputs/research-contributions-implications.md
+4. outputs/research-contributions-implications.md exists — if missing:
+   FULL WORKFLOW mode → CRITICAL FLAG "MISSING_PHASE6_ARTIFACT" (FAIL);
+   STANDALONE mode → proceed, mark report "MODE: STANDALONE"
 5. outputs/ directory writable
 ```
 
@@ -142,7 +162,7 @@ Example:
 - Missing key citation: -10 points
 - Inconsistent evidence strength language: -5 points
 
-### Step 4: Draft→Contributions Validation (if exists)
+### Step 4: Draft→Contributions Validation (mode-dependent — see Mode Detection; in FULL WORKFLOW mode a missing contributions file is a CRITICAL FLAG, never a silent skip)
 
 **Check**: Contributions grounded in draft evidence
 
@@ -229,11 +249,19 @@ FAIL if:
 - High overclaiming risk
 
 If FAIL:
-- Workflow paused
-- Issues documented with locations
-- Recommendations for fixes provided
-- User must re-run affected phases
-- Re-validate
+- Write the report with every issue's location and a concrete fix
+  recommendation, then return — this agent never pauses, prompts, or
+  re-runs anything itself (subagents cannot spawn agents or ask the user)
+- The orchestrator decides the re-entry route based on the report:
+  * Draft-level issues (missing/underdeveloped sections, citation
+    inconsistencies) → re-spawn literature-drafter in Revision Mode with
+    this report, then re-run this validator
+  * Contribution-level issues (overclaiming) → re-spawn contribution-framer
+    with the flagged items, then re-run this validator
+  * Structural issues (themes missing from outline) → surface to the user;
+    these need a Phase 3 re-run and re-approval
+- Maximum 2 automated revision cycles; after that the orchestrator hands
+  the report to the user at a checkpoint
 ```
 
 ---

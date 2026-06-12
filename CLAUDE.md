@@ -124,9 +124,26 @@ Output files created:
 **Phase 5: Citation Validation (MUST PASS)**
 ```
 If citation-validator returns FAIL:
-  ❌ WORKFLOW PAUSED - Critical citation issues detected
-  Display: Fabricated citations or misattributions found
-  Ask: "Review citation-integrity-report.md. Fix issues and retry? (yes/no)"
+  A. If the report lists ANY OUT_OF_CORPUS citations → ⏸️ PAUSE FIRST,
+     BEFORE any auto-revision (Revision Mode deletes citations; a
+     rescuable one must never be deleted unseen). Present each
+     OUT_OF_CORPUS item: "Delete the citation, or add the paper to
+     corpus/ and re-run extraction for it?" For rescued papers: add the
+     PDF, run extraction for just those papers, and record the decision
+     as "rescued" — the citation is then in-corpus and stays.
+  B. Then (or immediately, when only FABRICATED / fundamental
+     misattributions are present):
+     1. Re-spawn literature-drafter in Revision Mode, passing
+        outputs/citation-integrity-report.md PLUS the per-item
+        delete/rescued decisions from step A
+     2. Re-run citation-validator on the revised draft
+     3. Repeat at most 2 automated cycles. Still failing → ❌ WORKFLOW
+        PAUSED: show the report to the user
+
+If citation-validator returns WARN (misattributions / missing citations,
+no CRITICALs):
+  Present the warnings; ask the user: proceed to Phase 6, or run one
+  revision cycle first?
 
 If citation-validator returns PASS:
   ✅ Citation validation passed
@@ -136,14 +153,24 @@ If citation-validator returns PASS:
 **Phase 7: Consistency Validation (MUST PASS)**
 ```
 If consistency-validator returns score <75 or FAIL:
-  ❌ WORKFLOW PAUSED - Consistency issues detected
-  Display: Which phases have inconsistencies
-  Ask: "Review cross-phase-validation-report.md. Fix and re-validate? (yes/no)"
+  1. Route by issue type from cross-phase-validation-report.md:
+     - Draft-level issues → literature-drafter in Revision Mode
+     - Contribution overclaims → contribution-framer with flagged items
+     - Structural issues (themes missing from outline) → surface to user;
+       requires Phase 3 re-run and re-approval
+  2. Re-run consistency-validator after fixes
+  3. At most 2 automated cycles, then ❌ WORKFLOW PAUSED for user review
 
 If consistency-validator returns score ≥75:
   ✅ WORKFLOW COMPLETE
   Display: Final summary and all output files
 ```
+
+**Specialists never interact with the user.** Subagents cannot use
+AskUserQuestion or spawn agents — every human decision is collected by YOU
+(the orchestrator, running in the main session) at checkpoints, from the
+`Decisions Required` sections and status flags the agents leave in their
+output files.
 
 ## Context Isolation Benefits
 

@@ -17,10 +17,20 @@ This agent implements a **universal three-pass screening workflow**:
 3. **PASS 3 (Aggregate & Finalize)**: Generate final matrix and PRISMA diagram
 
 **Key Features:**
-- ✅ Manages context usage (targets ~30K tokens at any point)
+- ✅ Context-safe: state is saved after every paper, so screening survives context resets
 - ✅ Resumable if interrupted during PASS 2
 - ✅ Same workflow regardless of corpus size
-- ✅ Works CLI-agnostic (Gemini, ChatGPT, Claude Desktop)
+- ✅ Fully autonomous: never pauses for user input — items needing a human decision are flagged for the orchestrator's Phase 1 checkpoint
+
+## Autonomy Contract
+
+This agent runs as a Claude Code subagent: it CANNOT ask the user questions mid-run (`AskUserQuestion` and the `Agent` tool are unavailable to subagents). Every situation that would need a human decision is handled by:
+
+1. Applying the documented fallback (e.g., mark UNCERTAIN or METADATA_INSUFFICIENT and continue)
+2. Recording the item under a `## Decisions Required` section in `literature-screening-matrix.md`, with suggested options
+3. Setting `status: NEEDS_DECISION` in `screening-progress.md` whenever any such item exists
+
+The orchestrator surfaces all `Decisions Required` items to the user at the Phase 1 human checkpoint. Never block, never prompt.
 
 ## Input Requirements
 
@@ -36,6 +46,23 @@ This agent implements a **universal three-pass screening workflow**:
 - `outputs/literature-screening-matrix.md` - Screening decisions with rationales
 - `outputs/prisma-flow-diagram.md` - PRISMA 2020 compliant flow diagram
 - `outputs/screening-progress.md` - State tracking for resumability
+
+## PDF Reading Protocol (MANDATORY)
+
+The Read tool has hard limits on PDFs: a `pages` parameter is **required** for PDFs over 10 pages, and at most **20 pages** can be read per call. Screening decisions almost never need full text:
+
+```
+PASS 1 (triage):    Read pages "1-2" only — title, authors, abstract live there.
+PASS 2 (detailed):  Read pages "1-2" first. Only if the abstract is missing or
+                    the decision genuinely depends on content deeper in the
+                    paper, read further in chunks (e.g., pages "3-10"), up to a
+                    maximum of the first 20 pages total per paper.
+Never:              Read references, appendices, or supplementary material.
+Never:              Attempt a full read of a long PDF without a pages range —
+                    the call will fail for >10-page PDFs.
+```
+
+If pages 1-2 cannot be parsed (scanned image, corrupt file), apply the METADATA_INSUFFICIENT fallback in Error Handling — do not retry with different page ranges more than once.
 
 ## Pre-Execution Validation
 
@@ -77,17 +104,22 @@ Else:
 
 **Workflow:**
 ```
-1. List all PDFs in corpus/
+1. List all PDFs in corpus/ (Glob), record file sizes (Bash ls -la)
 2. For each PDF, extract metadata only:
    - Filename
    - File size
-   - Title (from filename or PDF metadata)
+   - Title/authors/year (read pages "1-2" only, per PDF Reading Protocol;
+     fall back to filename if unreadable)
    - Likely relevance (based on title/keywords)
-3. Quick classification:
+3. Detect duplicates: same title (normalized) or same DOI across files →
+   keep the most complete copy, mark the rest DUPLICATE (recorded in the
+   PRISMA counts, not screened twice)
+4. Quick classification:
    - Clearly relevant → "Likely INCLUDE"
    - Clearly irrelevant → "Likely EXCLUDE"
    - Unclear → "UNCERTAIN"
-4. Generate temporary pass-1-triage.md with confidence levels
+5. Generate pass-1-triage.md with confidence levels (a transient working
+   file in outputs/ — consumed by PASS 2, not a workflow deliverable)
 ```
 
 **Output Sample:**
@@ -135,9 +167,11 @@ Else:
 For each PDF (UNCERTAIN first, then all others):
 
 A) EXTRACT CONTENT
-   - Read PDF (use Read tool)
+   - Read PDF pages "1-2" (per PDF Reading Protocol; extend up to the first
+     20 pages ONLY if the decision requires it)
    - Extract title, authors, year, abstract
-   - Note: Flag if PDF fails to parse
+   - If PDF fails to parse: apply METADATA_INSUFFICIENT fallback (see Error
+     Handling) and continue to the next paper
 
 B) APPLY SCREENING CRITERIA
    For each INCLUSION criterion:
@@ -154,7 +188,7 @@ C) DECISION LOGIC
      → UNCERTAIN
 
 D) DOCUMENT
-   Record in screening-matrix.md:
+   Record in literature-screening-matrix.md:
    - PDF filename, Title, Authors, Year
    - INCLUDE / EXCLUDE / UNCERTAIN
    - Rationale (which criteria triggered decision)
@@ -193,14 +227,15 @@ F) DISPLAY PROGRESS
 
 **Context Management:**
 ```
-IMPORTANT: Process max 5 papers per context window
+IMPORTANT: Save state after EVERY paper:
+  1. Append decision to literature-screening-matrix.md
+  2. Update screening-progress.md (last processed, counts)
 
-After every 5 papers:
-  1. Save screening-matrix.md
-  2. Save screening-progress.md
-  3. Continue with next batch
-
-This keeps context ≤ 30K tokens
+Treat each paper as a checkpoint — an interruption then costs at most one
+paper of re-work. With 1-2 page reads per paper, batches of roughly 10-20
+papers per context window are realistic; papers that needed deeper reads
+reduce that. There is no fixed papers-per-window cap: the per-paper save
+discipline is what makes the pass safe, not a batch size.
 ```
 
 ---
@@ -223,7 +258,10 @@ This keeps context ≤ 30K tokens
    - After PASS 2: Final decisions
    - UNCERTAIN pending human review
 5. Save both files to outputs/
-6. Mark screening-progress.md as "COMPLETE"
+6. Mark screening-progress.md status:
+   - "COMPLETE" if no human decisions are pending
+   - "NEEDS_DECISION" if any items sit in "## Decisions Required"
+     (unreadable PDFs, UNCERTAIN papers, suspected duplicates)
 ```
 
 **Output: literature-screening-matrix.md**
@@ -264,6 +302,12 @@ This keeps context ≤ 30K tokens
 
 ### UNCERTAIN (2 papers)
 [Table flagging papers needing human review]
+
+## Decisions Required
+
+[Every item the orchestrator must surface at the Phase 1 checkpoint:
+UNCERTAIN papers, METADATA_INSUFFICIENT files with suggested options
+(redownload / OCR / exclude), suspected duplicates. Empty section if none.]
 
 ## PRISMA Compliance
 - ✓ Systematic criteria application
@@ -307,11 +351,14 @@ PASS 1: Quick Triage
 ```
 If PDF cannot be read:
   - Mark as METADATA_INSUFFICIENT
-  - Ask user: "Redownload? / OCR? / Exclude?"
+  - Continue with the next paper — never stop, never prompt the user
+  - Record the file under "## Decisions Required" in the screening matrix
+    with suggested options (redownload / OCR / exclude); the orchestrator
+    presents these at the Phase 1 checkpoint
 
 If PDF is very short (<2KB):
   - Flag as potentially corrupted
-  - Note in screening matrix
+  - Note in screening matrix and under "## Decisions Required"
 ```
 
 ### Unclear Criteria Application

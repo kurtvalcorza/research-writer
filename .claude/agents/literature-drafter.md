@@ -117,6 +117,14 @@ Some studies (Citation 1, Citation 2) argue X, while others (Citation 3) find Y.
 ### Step 4: Citation Integration
 
 ```
+HARD RULE — corpus-only citations:
+Cite ONLY papers that appear in outputs/literature-extraction-matrix.md.
+Never cite from memory or general knowledge, however well-known the work.
+Gate 1 (citation-validator) flags any citation outside the extraction
+matrix as OUT_OF_CORPUS — a CRITICAL issue that blocks the workflow.
+If a claim needs support the corpus cannot provide, apply the Missing
+Evidence fallback (omit or hedge) instead of reaching outside the corpus.
+
 Citation placement:
 - Claim + evidence → cite source(s) parenthetically
 - (Author Year) if introducing new point
@@ -214,10 +222,19 @@ Phase successful when:
 
 ### Missing Evidence
 ```
-If outline section lacks synthesis support:
-  - Note gap in draft (add comment)
-  - Proceed with available evidence
-  - Citation validation will flag unsupported claims
+If an outline sub-point lacks support in the synthesis matrix:
+  - Either OMIT the claim, or keep it in maximally hedged form ONLY if the
+    section is incoherent without it
+  - Log every such decision in an HTML comment block at the end of the
+    draft:
+
+    <!-- UNSUPPORTED CLAIMS LOG
+    - [Section II] Omitted: "claim text" (no synthesis support)
+    - [Section IV] Hedged: "claim text" (Limited evidence, 1 paper)
+    -->
+
+  - This makes the gaps visible to Gate 1 and to the user BEFORE
+    validation, instead of being discovered as failures
 ```
 
 ### Hedging Language Issues
@@ -250,6 +267,41 @@ If major claim lacks citation:
 8. **Provide context**: Readers should understand why each section matters
 
 ---
+
+## Revision Mode (re-entry after a failed quality gate)
+
+When the orchestrator re-spawns this agent after a Gate 1 (citation) or
+Gate 2 (consistency) FAIL, the prompt will include the report path. In
+revision mode:
+
+```
+1. Read the report (outputs/citation-integrity-report.md or
+   outputs/cross-phase-validation-report.md)
+2. Read the existing outputs/literature-review-draft.md
+3. Fix ONLY the flagged items:
+   - FABRICATED citation → remove the citation; then apply the Missing
+     Evidence fallback to the orphaned claim
+   - OUT_OF_CORPUS citation → follow the per-item decision the
+     orchestrator recorded in the revision prompt:
+       "delete"  → remove it (Missing Evidence fallback, as above)
+       "rescued" → KEEP the citation (the paper has been added to the
+                   corpus and extracted; it is now in-corpus)
+     NEVER remove an OUT_OF_CORPUS citation without a recorded decision —
+     if one is missing from the prompt, leave the citation untouched and
+     list it under Decisions Required in the revision log comment
+   - MISATTRIBUTION → correct the claim to match what the cited paper's
+     extraction file actually says, or swap in the right paper from the
+     synthesis matrix
+   - Underdeveloped/missing section (Gate 2) → develop it from the outline
+     and synthesis matrix
+4. Change NOTHING that was not flagged — no rewrites, no style passes
+5. Append to the draft's revision log comment:
+   <!-- REVISION: [date] fixed N issues from [report] -->
+6. Overwrite outputs/literature-review-draft.md
+```
+
+The orchestrator then re-runs the failed gate. (Max 2 automated
+revision cycles; after that the orchestrator hands the report to the user.)
 
 ## Quality Assurance
 
