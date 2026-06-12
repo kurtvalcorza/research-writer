@@ -1,0 +1,123 @@
+{
+  "workflow_id": "rw-20260612-153000",
+  "research_topic": "AI Adoption in Philippine Healthcare",
+  "started_at": "2026-06-12T10:30:00Z",
+  "status": "complete",
+  "current_phase": 7,
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Literature Screening",
+      "agent": "literature-screener",
+      "status": "success",
+      "started_at": "2026-06-12T10:32:00Z",
+      "completed_at": "2026-06-12T11:05:00Z",
+      "human_approval": "approved",
+      "output_files": [
+        "outputs/literature-screening-matrix.md",
+        "outputs/prisma-flow-diagram.md",
+        "outputs/screening-progress.md"
+      ],
+      "warnings": ["2 papers UNCERTAIN - resolved at checkpoint"]
+    },
+    {
+      "phase": 2,
+      "name": "Extraction & Synthesis",
+      "agent": "extraction-synthesizer",
+      "status": "success",
+      "started_at": "2026-06-12T11:10:00Z",
+      "completed_at": "2026-06-12T13:40:00Z",
+      "output_files": [
+        "outputs/literature-extraction-matrix.md",
+        "outputs/literature-synthesis-matrix.md",
+        "outputs/extraction-quality-report.md"
+      ],
+      "warnings": ["1 paper EXTRACTION_FAILED (corrupted PDF)"]
+    },
+    {
+      "phase": 3,
+      "name": "Argument Structure",
+      "agent": "argument-structurer",
+      "status": "success",
+      "started_at": "2026-06-12T13:45:00Z",
+      "completed_at": "2026-06-12T14:00:00Z",
+      "human_approval": "approved",
+      "output_files": ["outputs/literature-review-outline.md"],
+      "warnings": []
+    },
+    {
+      "phase": 4,
+      "name": "Drafting",
+      "agent": "literature-drafter",
+      "status": "success",
+      "started_at": "2026-06-12T14:05:00Z",
+      "completed_at": "2026-06-12T14:35:00Z",
+      "output_files": ["outputs/literature-review-draft.md"],
+      "warnings": []
+    },
+    {
+      "phase": 5,
+      "name": "Citation Validation (Gate 1)",
+      "agent": "citation-validator",
+      "status": "success",
+      "started_at": "2026-06-12T14:40:00Z",
+      "completed_at": "2026-06-12T14:55:00Z",
+      "output_files": ["outputs/citation-integrity-report.md"],
+      "warnings": ["1 revision cycle: 2 OUT_OF_CORPUS citations removed"]
+    },
+    {
+      "phase": 6,
+      "name": "Contribution Framing",
+      "agent": "contribution-framer",
+      "status": "success",
+      "started_at": "2026-06-12T15:00:00Z",
+      "completed_at": "2026-06-12T15:20:00Z",
+      "output_files": ["outputs/research-contributions-implications.md"],
+      "warnings": []
+    },
+    {
+      "phase": 7,
+      "name": "Consistency Validation (Gate 2)",
+      "agent": "consistency-validator",
+      "status": "success",
+      "started_at": "2026-06-12T15:25:00Z",
+      "completed_at": "2026-06-12T15:45:00Z",
+      "human_approval": "approved",
+      "output_files": ["outputs/cross-phase-validation-report.md"],
+      "warnings": []
+    }
+  ],
+  "checkpoints": [
+    {
+      "phase": 1,
+      "type": "approval",
+      "user_choice": "approved",
+      "decisions": ["davis-2022-unclear.pdf: INCLUDE (user override)"]
+    },
+    {
+      "phase": 2,
+      "type": "progress",
+      "user_choice": "spot-check passed (3 of 19 extractions verified)"
+    },
+    {
+      "phase": 3,
+      "type": "approval",
+      "user_choice": "approved"
+    }
+  ],
+  "gate_results": [
+    {
+      "phase": 5,
+      "status": "PASS",
+      "critical_count": 0,
+      "retry_count": 1
+    },
+    {
+      "phase": 7,
+      "status": "PASS",
+      "score": 88,
+      "critical_count": 0,
+      "retry_count": 0
+    }
+  ]
+}
