@@ -10,16 +10,19 @@ tools: Read, Write, Bash, Glob, Grep
 
 ## Overview
 
-This is the **FINAL QUALITY CONTROL GATE**. It validates:
-1. **Synthesis→Outline**: All synthesis themes appear in outline
-2. **Outline→Draft**: All outline sections appear in draft
-3. **Synthesis→Draft**: Themes properly carried through both phases
-4. **Draft→Contributions**: Contributions grounded in draft evidence (if exists)
-5. **End-to-end**: Sample claims traceable from corpus to final output
+This is the **FINAL QUALITY CONTROL GATE**. It computes three counted
+subscores and a set of named flags:
+1. **Theme traceability** (40 pts): every synthesis theme reaches the outline
+2. **Section coverage** (30 pts): every outline section is drafted (≥100 words)
+3. **Claim support** (30 pts): a deterministic sample of draft claims traces
+   to synthesis/extraction evidence with proportionate language
+4. **Contributions audit** (unscored): overclaim/ungrounded flags
 
-**Success metric**: Consistency score ≥75/100
+**Success metric**: SCORE ≥75/100 with zero CRITICAL FLAGS
 
-**Blocks workflow if**: Critical issues found OR consistency <75
+**Blocks workflow if**: any CRITICAL FLAG, or SCORE <65. Scores of 65-74
+(no flags) return WARN — the orchestrator presents the report and the user
+decides whether to accept or revise.
 
 ## Input Requirements
 
@@ -47,186 +50,149 @@ This is the **FINAL QUALITY CONTROL GATE**. It validates:
 
 ## Execution Model
 
-### Step 1: Synthesis→Outline Validation
+### Scoring Model: Three Counted Subscores (no judgment calls)
 
-**Check**: All synthesis themes appear in outline
+The 0-100 score is the sum of three computed subscores. Every term is
+defined; the report MUST show the counts and arithmetic for each. Issues
+that are serious but not countable (overclaims, misrepresented evidence)
+are CRITICAL FLAGS — they force FAIL regardless of score, rather than
+nudging points.
 
-```
-1. Extract themes from synthesis matrix
-   - Theme A (7 papers)
-   - Theme B (5 papers)
-   - Theme C (3 papers)
-   - [etc.]
+### Step 1: Theme Traceability (40 points)
 
-2. Extract sections from outline
-   - Section 1: [Title]
-   - Section 2: [Title]
-   - [etc.]
-
-3. Verify each theme has corresponding section
-   - Theme A → Section 2 ✓
-   - Theme B → Section 3 ✓
-   - Theme C → Section 4 ✓
-
-4. Flag any orphaned themes
-   - Themes in synthesis but NOT in outline
-   - Sections in outline but NOT in synthesis
-```
-
-**Scoring**:
-- Each theme present in outline: +10 points
-- Each section well-aligned with theme: +5 points
-- Missing theme: -10 points (CRITICAL)
-- Orphaned section: -5 points
-
-### Step 2: Outline→Draft Validation
-
-**Check**: All outline sections have corresponding draft sections
+**Check**: Every synthesis theme is represented in the outline
 
 ```
-1. Extract sections from outline
-   - Section 1: AI Applications
-   - Section 2: Implementation Barriers
-   - [etc.]
+1. List all themes from the synthesis matrix "Theme" column → T_total
+2. List all outline section headings
+3. A theme is TRACED when either:
+   a) An outline section heading contains the theme's title
+      (case-insensitive, ignoring numbering like "II." and punctuation), OR
+   b) The outline contains an explicit "Theme → Section" mapping line
+      for it
+4. T_traced = count of traced themes
 
-2. Extract sections from draft
-   - ## AI Applications in Healthcare
-   - ## Implementation Barriers
-   - [etc.]
+Subscore_1 = round(40 × T_traced / T_total)
 
-3. Verify each outline section drafted
-   - Outline Section 1 → Draft Section ✓
-   - Outline Section 2 → Draft Section ✓
-
-4. Check depth
-   - Is each section adequately developed?
-   - Minimal: <100 words per section (ISSUE)
-   - Standard: 200-500 words per section ✓
-   - Comprehensive: 500+ words per section ✓
+Untraced theme           → CRITICAL FLAG (named in report)
+Body section mapped to
+no theme                 → WARNING (named in report; no score effect —
+                           intro/conclusion/gaps/future-research sections
+                           are exempt)
 ```
 
-**Scoring**:
-- Section drafted with adequate depth: +15 points
-- Section present but underdeveloped: -5 points (WARNING)
-- Section outlined but not drafted: -15 points (CRITICAL)
-- Extra draft sections not in outline: -5 points (suggests scope creep)
+### Step 2: Section Coverage (30 points)
 
-### Step 3: Synthesis→Draft Direct Validation
-
-**Check**: Themes and citations properly carried through
+**Check**: Every outline section is actually drafted
 
 ```
-For each theme:
-1. Find theme in synthesis matrix
-2. Find corresponding outline section
-3. Find corresponding draft section
-4. Verify citations match
-   - Does draft cite papers identified in synthesis for this theme?
-   - Are there unexpected citations?
-   - Are key papers cited or absent?
+1. List all outline sections (intro, each theme section, consolidated
+   findings, future research) → S_total
+2. A section is COVERED when the draft contains a matching heading
+   (same match rule as Step 1) AND the text under it is ≥100 words
+   (count with `wc -w` on the section body)
+3. S_covered = count of covered sections
 
-Example:
-- Synthesis: Theme A addressed by papers P1, P3, P5, P7
-- Outline: Section II covers Theme A
-- Draft: Section II cites (P1, P3, P5, P7) ✓ OR missing P7 ⚠️
+Subscore_2 = round(30 × S_covered / S_total)
 
-5. Verify evidence strength consistency
-   - Synthesis labels evidence as "Strong Consensus"
-   - Outline marks as strong consensus
-   - Draft uses confident language ✓
+Outlined but absent       → CRITICAL FLAG (named)
+Present but <100 words    → not covered; WARNING "underdeveloped" (named)
+Draft section not in
+outline                   → WARNING "scope creep" (named; no score effect)
 ```
 
-**Scoring**:
-- Theme consistent across phases: +20 points
-- Minor citation discrepancies: -3 points
-- Missing key citation: -10 points
-- Inconsistent evidence strength language: -5 points
+### Step 3: Claim Support Sampling (30 points)
 
-### Step 4: Draft→Contributions Validation (if exists)
-
-**Check**: Contributions grounded in draft evidence
+**Check**: Sampled draft claims trace back to synthesis/extraction evidence
 
 ```
-For each contribution in contributions output:
-1. Identify evidence claim in contribution
-2. Search draft for supporting evidence
-3. Verify contribution is proportionate to evidence
-   - Evidence: "Some research suggests X"
-   - Contribution: Claims "X is established practice" ✗ (OVERCLAIM)
-   - Contribution: Claims "X is emerging approach" ✓
+DETERMINISTIC SAMPLE (so two runs score the same draft identically):
+- Every cited claim in the Introduction section
+- Every cited claim in the final consolidated-findings/conclusion section
+- Every cited claim in the 2 body sections with the MOST citations
+  (ties broken by document order, earlier first)
+- If this yields <5 claims, widen to all body sections
+→ C_sampled = number of sampled claims
 
-4. Check limitations section
-   - Are important limitations acknowledged?
-   - Do implications match evidence strength?
+A sampled claim is SUPPORTED when BOTH:
+a) Every paper it cites appears in the synthesis matrix row(s) for that
+   section's theme (or in the extraction matrix, for paper-specific
+   claims), AND
+b) Its language does not exceed the theme's evidence strength label:
+   - "demonstrates/establishes/shows clearly" requires Strong Consensus
+   - "indicates/suggests/much research finds" fits Mixed Views
+   - "emerging/preliminary" fits Emerging
+   - "one study/initial evidence" fits Limited
+→ C_supported = number of supported claims
+
+Subscore_3 = round(30 × C_supported / C_sampled)
+
+Claim citing papers absent from the theme's synthesis row → WARNING
+Claim whose meaning contradicts or materially overstates what the
+extraction file says                                      → CRITICAL FLAG
+  ("misrepresented evidence" — verify against
+   outputs/paper-pXXX-extraction.md for every sampled claim)
 ```
 
-**Scoring**:
-- Contribution grounded in draft: +20 points
-- Contribution overclaimed: -15 points (CRITICAL WARNING)
-- Important limitation missing: -5 points
-- Implications proportionate: +10 points
+### Step 4: Contributions Audit (unscored — flags only)
 
-### Step 5: End-to-End Traceability Audit
+**Check**: Contributions proportionate to draft evidence
 
-**Check**: Sample claims traceable from corpus to final output
+Unscored so the 100-point arithmetic is identical whether the workflow ran
+fully or this validator was invoked standalone before Phase 6.
 
 ```
-Select 3-5 major claims from draft. For each:
+For each contribution in research-contributions-implications.md:
+1. Locate its supporting evidence in the draft
+2. Compare strength language against the theme's evidence label
+   (same mapping as Step 3b)
 
-1. Find claim in draft
-2. Find evidence in synthesis matrix
-3. Find papers in extraction matrix
-4. Verify papers actually say what synthesis claims
-
-Example trace:
-- Draft claim: "AI diagnostics improve accuracy by 15-25%"
-- Synthesis says: "Papers report 15-25% improvements"
-- Extraction matrix shows: Smith P1 says 15-25%, Jones P2 says 12-18%
-- Result: Claim partially supported; slight overgeneralization detected
-
-Traceability score:
-- Complete chain (corpus→synthesis→outline→draft): +20 points
-- Missing link: -15 points (CRITICAL)
-- Evidence misrepresented at some stage: -10 points
+Contribution exceeds evidence label  → CRITICAL FLAG "OVERCLAIM" (named)
+Contribution with no locatable draft
+support                              → CRITICAL FLAG "UNGROUNDED" (named)
+Relevant limitation unacknowledged   → WARNING (named)
 ```
 
-### Step 6: Calculate Consistency Score
+### Step 5: Calculate Score and Verdict
 
 ```
-Total possible points: 100
+SCORE = Subscore_1 + Subscore_2 + Subscore_3        (maximum 100)
 
-Allocation:
-- Synthesis→Outline alignment: 20 points
-- Outline→Draft alignment: 25 points
-- Synthesis→Draft consistency: 20 points
-- Draft→Contributions consistency: 15 points (if present)
-- End-to-end traceability: 20 points
+Verdict:
+- PASS:  SCORE ≥75 AND zero CRITICAL FLAGS
+- WARN:  SCORE 65-74 AND zero CRITICAL FLAGS
+- FAIL:  SCORE <65 OR any CRITICAL FLAG
 
-Final score = sum of achieved points
-
-Interpretation:
-- ≥85: EXCELLENT consistency
-- 75-84: GOOD consistency ✓ PASS
-- 65-74: ACCEPTABLE consistency (caution)
-- <65: POOR consistency ✗ FAIL (major issues)
+The report MUST show its work, e.g.:
+  Theme traceability: 5/6 themes traced → 40 × 5/6 = 33
+  Section coverage:   7/8 sections covered → 30 × 7/8 = 26
+  Claim support:      11/13 sampled claims supported → 30 × 11/13 = 25
+  SCORE: 84 — but CRITICAL FLAG (OVERCLAIM in contribution 2) → FAIL
 ```
+
+### Report Header (machine-readable — MUST be the first lines of the report)
+
+```
+STATUS: PASS|WARN|FAIL
+SCORE: NN
+CRITICAL_COUNT: N
+WARNING_COUNT: N
+```
+
+The orchestrator parses these four lines; everything after them is for
+humans.
 
 ---
 
 ## Pass/Fail Logic
 
 ```
-PASS if:
-- Consistency score ≥75
-- No critical issues found
-- Evidence chains complete
-- Overclaiming risk low
-
-FAIL if:
-- Consistency score <75
-- Critical issues present (broken chains, unsupported claims)
-- Cannot trace evidence
-- High overclaiming risk
+PASS if: SCORE ≥75 AND zero CRITICAL FLAGS
+WARN if: SCORE 65-74 AND zero CRITICAL FLAGS
+         (the orchestrator presents the report; user decides proceed/revise)
+FAIL if: SCORE <65 OR any CRITICAL FLAG
+         (untraced theme, undrafted section, misrepresented evidence,
+          OVERCLAIM, UNGROUNDED contribution)
 
 If FAIL:
 - Write the report with every issue's location and a concrete fix

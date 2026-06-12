@@ -30,6 +30,8 @@ This agent runs as a subagent: it CANNOT ask the user anything (`AskUserQuestion
 - `outputs/literature-review-draft.md`
 - `outputs/literature-extraction-matrix.md`
 - `outputs/literature-synthesis-matrix.md`
+- `outputs/paper-pXXX-extraction.md` files (ground truth for the sampled
+  claim-alignment checks in Step 2B)
 
 ## Output Files
 
@@ -76,13 +78,25 @@ A) Check existence
      * When unsure which, label OUT_OF_CORPUS and note the uncertainty —
        never silently upgrade or downgrade
 
-B) Check claim alignment
-   Does the draft claim match what the paper actually found?
+B) Check claim alignment — DETERMINISTIC SAMPLE, verified against ground
+   truth. Existence (step A) is checked for EVERY citation; claim
+   alignment is deep-verified for a 20% sample chosen reproducibly:
+   every 5th citation in document order (#1, #6, #11, ...), minimum 5
+   citations, or all citations if the draft has fewer than 5.
+
+   For each sampled citation, read the cited paper's
+   outputs/paper-pXXX-extraction.md (NOT just the one-line matrix row)
+   and compare the draft claim against the Key Findings there:
    - Perfect match → OK
    - Reasonable paraphrase → OK
    - Different finding than paper → MISATTRIBUTION (WARNING)
    - Overstated beyond paper's findings → MISATTRIBUTION (WARNING)
+   - Claim opposite to the paper's finding → fundamental misattribution
+     (CRITICAL)
    - Understated (paper found more) → OK (conservative)
+
+   The report lists which citations were in the sample, so a re-run
+   checks the same ones.
 
 C) Check citation context
    Is citation placed appropriately?
@@ -111,10 +125,23 @@ INFO (Recommendations only):
 
 ### Step 4: Generate Citation Integrity Report
 
-Create citation-integrity-report.md with:
-- Executive summary (Pass/Fail status)
-- Critical issues (if any)
-- Warnings (if any)
+Create citation-integrity-report.md. The FIRST LINES must be this
+machine-readable header (the orchestrator parses it; prose comes after):
+
+```
+STATUS: PASS|WARN|FAIL
+CRITICAL_COUNT: N
+WARNING_COUNT: N
+INFO_COUNT: N
+```
+
+Then:
+- Executive summary
+- Critical issues, each with: exact citation text, section/paragraph
+  location, category (FABRICATED / OUT_OF_CORPUS / fundamental
+  misattribution), and suggested fix
+- Warnings (each with location)
+- Sampled-citation list (which citations got deep claim verification)
 - Recommendations
 - Full citation audit table
 

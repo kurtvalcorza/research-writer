@@ -211,43 +211,62 @@ Each phase is a **self-contained independent agent**:
 
 ## Execution Flow
 
-### State Tracking: execution-log.json
+### State Tracking: execution-log.json (CANONICAL SCHEMA)
+
+This is the canonical schema. CLAUDE.md's logging instructions reference
+these exact field names, and `outputs/execution-log.example.json` (checked
+into the repo) shows a populated example.
 
 ```json
 {
-  "workflow_id": "rw-20250105-153000",
+  "workflow_id": "rw-20260612-153000",
   "research_topic": "AI Adoption in Philippine Healthcare",
-  "started_at": "2025-01-05T10:30:00Z",
+  "started_at": "2026-06-12T10:30:00Z",
   "status": "in_progress",
   "current_phase": 2,
   "phases": [
     {
       "phase": 1,
-      "name": "Literature Discovery & Screening",
-      "agent_id": "agent-abc123xyz",
+      "name": "Literature Screening",
+      "agent": "literature-screener",
       "status": "success",
+      "started_at": "2026-06-12T10:32:00Z",
+      "completed_at": "2026-06-12T11:05:00Z",
       "human_approval": "approved",
       "output_files": [
         "outputs/literature-screening-matrix.md",
-        "outputs/prisma-flow-diagram.md"
-      ]
+        "outputs/prisma-flow-diagram.md",
+        "outputs/screening-progress.md"
+      ],
+      "warnings": ["2 papers UNCERTAIN - resolved at checkpoint"]
     },
     {
       "phase": 2,
-      "name": "Literature Extraction & Synthesis",
-      "agent_id": "agent-def456uvw",
-      "status": "in_progress"
+      "name": "Extraction & Synthesis",
+      "agent": "extraction-synthesizer",
+      "status": "in_progress",
+      "started_at": "2026-06-12T11:10:00Z"
     }
   ],
   "checkpoints": [
     {
       "phase": 1,
-      "type": "approval_required",
-      "user_choice": "approved"
+      "type": "approval",
+      "user_choice": "approved",
+      "decisions": ["davis-2022-unclear.pdf: INCLUDE (user override)"]
     }
+  ],
+  "gate_results": [
   ]
 }
 ```
+
+Field reference: `phase` (number), `name`, `agent` (subagent name),
+`status` ("success" | "failure" | "partial" | "in_progress"),
+`started_at`/`completed_at` (ISO-8601), `output_files`, `warnings`,
+`human_approval` (approval checkpoints only). `gate_results` entries
+record `{phase, status, score, critical_count, retry_count}` parsed from
+the gate report headers.
 
 **Use cases:**
 - **Resume**: Load last completed phase, continue from next
@@ -395,24 +414,44 @@ Each phase agent is one file in `.claude/agents/`:
 5. Agent produces outputs
 6. Agent returns summary to orchestrator
 
-### Output Files (outputs/)
+### File Contract Table (AUTHORITATIVE)
 
-Generated during workflow:
+This table is the single source of truth for who writes and who reads every
+workflow file. CLAUDE.md and README.md summarize it; when they disagree,
+this table wins. Lifecycle: **deliverable** (end product), **report**
+(gate/quality output), **state** (resumability), **working** (transient,
+internal to one phase).
 
-```
-outputs/
-├── execution-log.json                    # Workflow state
-├── execution-context.json                # User inputs
-├── literature-screening-matrix.md        # Phase 1 output
-├── literature-extraction-matrix.md       # Phase 2 output
-├── literature-synthesis-matrix.md        # Phase 2 output
-├── literature-review-outline.md          # Phase 3 output
-├── literature-review-draft.md            # Phase 4 output ← MAIN
-├── citation-integrity-report.md          # Phase 5 output
-├── research-contributions-implications.md # Phase 6 output
-├── cross-phase-validation-report.md      # Phase 7 output
-└── workflow-execution-summary.md         # Final summary
-```
+| File (outputs/ unless noted) | Producer | Consumers | Lifecycle |
+|---|---|---|---|
+| `execution-log.json` | orchestrator (init; updated every phase) | orchestrator (resume/audit) | state |
+| `execution-context.json` | orchestrator (init, after topic confirmation) | orchestrator (resume) | state |
+| `pass-1-triage.md` | literature-screener (PASS 1) | literature-screener (PASS 2) | working |
+| `screening-progress.md` | literature-screener | literature-screener (resume); orchestrator (NEEDS_DECISION flag) | state |
+| `literature-screening-matrix.md` | literature-screener | extraction-synthesizer; orchestrator (Decisions Required → Phase 1 checkpoint) | deliverable |
+| `prisma-flow-diagram.md` | literature-screener | user | deliverable |
+| `paper-pXXX-extraction.md` (per paper) | extraction-synthesizer | extraction-synthesizer (Phase 2B); citation-validator (claim sampling); consistency-validator (claim sampling); user (Phase 2 spot-check) | deliverable (audit trail) |
+| `literature-extraction-matrix.md` | extraction-synthesizer | citation-validator; literature-drafter (corpus-only citation rule) | deliverable |
+| `literature-synthesis-matrix.md` | extraction-synthesizer | argument-structurer; literature-drafter; citation-validator; contribution-framer; consistency-validator | deliverable |
+| `extraction-quality-report.md` | extraction-synthesizer (also its progress/state) | orchestrator (Phase 2 checkpoint); extraction-synthesizer (resume) | report + state |
+| `literature-review-outline.md` | argument-structurer | literature-drafter; contribution-framer; consistency-validator | deliverable |
+| `literature-review-draft.md` | literature-drafter (initial + Revision Mode rewrites) | citation-validator; contribution-framer; consistency-validator; user | deliverable ← MAIN |
+| `citation-integrity-report.md` | citation-validator | orchestrator (gate verdict); literature-drafter (Revision Mode) | report (Gate 1) |
+| `research-contributions-implications.md` | contribution-framer | consistency-validator; user | deliverable |
+| `cross-phase-validation-report.md` | consistency-validator | orchestrator (gate verdict); literature-drafter / contribution-framer (Revision Mode) | report (Gate 2) |
+| `workflow-execution-summary.md` | orchestrator (at completion) | user | deliverable |
+| `settings/screening-criteria.md` | user (template provided) | literature-screener | input |
+| `corpus/*.pdf` | user | literature-screener; extraction-synthesizer | input |
+
+Rules the table encodes:
+- Every file has exactly ONE producer. Orchestrator-owned files
+  (`execution-log.json`, `execution-context.json`,
+  `workflow-execution-summary.md`) are never written by phase agents.
+- `paper-pXXX-extraction.md` files are the system's ground truth: both
+  gates sample against them, and the Phase 2 checkpoint asks the user to
+  spot-check them against source PDFs.
+- Working files may be deleted after their phase completes; everything
+  else persists for audit.
 
 ### Input Files (corpus/ + settings/)
 
@@ -454,7 +493,7 @@ Each subagent declares:
 Critical decisions have human approval:
 - Phase 1: Approve screening decisions
 - Phase 3: Approve outline structure
-- Phases 4.5, 7: Automatic quality gates
+- Phases 5, 7: Automatic quality gates
 
 ### 4. Auditability (Complete Logging)
 

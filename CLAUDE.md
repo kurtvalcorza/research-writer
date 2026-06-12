@@ -29,10 +29,15 @@ When invoked, you:
    - Check for `corpus/` directory with PDFs
    - Check for `settings/screening-criteria.md` (optional)
    - Create `outputs/` directory if it doesn't exist
-   - Initialize `outputs/execution-log.json`
+   - Initialize `outputs/execution-log.json` (canonical schema: see
+     ARCHITECTURE.md "State Tracking" and `outputs/execution-log.example.json`)
 2. Display clear status message showing what was found
 3. Ask user to confirm the research topic/question
-4. Begin Phase 1
+4. Write `outputs/execution-context.json` recording the confirmed inputs:
+   `{"research_topic": ..., "corpus_path": "corpus/", "criteria_path":
+   "settings/screening-criteria.md", "started_at": ISO-8601, "phases_to_run":
+   [...]}` — YOU own this file; no phase agent writes it
+5. Begin Phase 1
 
 ### Phase Execution (CRITICAL PATTERN)
 
@@ -55,19 +60,36 @@ Phase 7: Use Task tool with subagent_type="consistency-validator"
 The agent will execute completely in its own context and return a summary to you.
 
 **Step 3: Log Progress**
-Update `outputs/execution-log.json` with:
-- Phase completion timestamp
-- Agent used
-- Status (SUCCESS/FAILURE/PARTIAL)
-- Output files produced
-- Any warnings or issues
+Update `outputs/execution-log.json` using the canonical schema (defined in
+ARCHITECTURE.md "State Tracking"; example: `outputs/execution-log.example.json`).
+Append or update the phase entry with these exact fields: `phase`, `name`,
+`agent`, `status` ("success"/"failure"/"partial"), `started_at`,
+`completed_at`, `output_files`, `warnings`, and `human_approval` where a
+checkpoint applies. Update the top-level `current_phase` and `status`.
 
-**Step 4: Human Checkpoints**
-You MUST pause for human review at:
-1. **After Phase 1** (screening results) - confirm included papers are appropriate
-2. **After Phase 3** (outline approval) - confirm argument structure before drafting
-3. **After Phase 5** (citation validation) - review and approve citation fixes
-4. **After Phase 7** (final validation) - approve final literature review
+**Step 4: Checkpoints (three kinds)**
+
+*Approval checkpoints — required, blocking:*
+1. **After Phase 1** (screening results) - confirm included papers are
+   appropriate; present every item from the screening matrix's
+   `Decisions Required` section (unreadable PDFs, UNCERTAIN papers,
+   suspected duplicates)
+2. **After Phase 3** (outline approval) - confirm argument structure before
+   drafting; surface any `INCOMPLETE_SYNTHESIS` status flag
+
+*Quality gates — automatic, MUST PASS (see Quality Gates below):*
+3. **Phase 5** (citation validation) - parse report header; run revision
+   loop on FAIL; present warnings on WARN
+4. **Phase 7** (final validation) - parse report header; route fixes on
+   FAIL; approve final literature review on PASS
+
+*Progress checkpoints — lightweight, non-blocking:*
+5. **After Phase 2** - present the extraction quality report and ask the
+   user to spot-check a sample of `paper-pXXX-extraction.md` files against
+   their source PDFs (recommended: max(3, 10%) of papers) — this is the
+   only point where extraction accuracy is verified against ground truth
+6. **After Phases 4 and 6** - offer the draft/contributions for optional
+   early review
 
 At each checkpoint, clearly summarize:
 - What was completed
@@ -123,7 +145,10 @@ Output files created:
 
 **Phase 5: Citation Validation (MUST PASS)**
 ```
-If citation-validator returns FAIL (any FABRICATED, OUT_OF_CORPUS, or
+Parse the report header (STATUS / CRITICAL_COUNT / WARNING_COUNT /
+INFO_COUNT — first lines of citation-integrity-report.md).
+
+If STATUS: FAIL (any FABRICATED, OUT_OF_CORPUS, or
 fundamental-misattribution citation):
   1. Re-spawn literature-drafter in Revision Mode, passing
      outputs/citation-integrity-report.md
@@ -133,19 +158,24 @@ fundamental-misattribution citation):
      "Delete the citation, or add the paper to corpus/ and re-run
      extraction for it?"
 
-If citation-validator returns WARN (misattributions / missing citations,
-no CRITICALs):
+If STATUS: WARN (misattributions / missing citations, no CRITICALs):
   Present the warnings; ask the user: proceed to Phase 6, or run one
   revision cycle first?
 
-If citation-validator returns PASS:
+If STATUS: PASS:
   ✅ Citation validation passed
   Proceed to Phase 6
 ```
 
 **Phase 7: Consistency Validation (MUST PASS)**
 ```
-If consistency-validator returns score <75 or FAIL:
+Parse the report header (STATUS / SCORE / CRITICAL_COUNT / WARNING_COUNT —
+first lines of cross-phase-validation-report.md).
+
+If STATUS: WARN (score 65-74, no critical flags):
+  Present the report; ask the user: accept as-is, or run a revision cycle?
+
+If STATUS: FAIL:
   1. Route by issue type from cross-phase-validation-report.md:
      - Draft-level issues → literature-drafter in Revision Mode
      - Contribution overclaims → contribution-framer with flagged items
@@ -154,9 +184,10 @@ If consistency-validator returns score <75 or FAIL:
   2. Re-run consistency-validator after fixes
   3. At most 2 automated cycles, then ❌ WORKFLOW PAUSED for user review
 
-If consistency-validator returns score ≥75:
+If STATUS: PASS (score ≥75, no critical flags):
   ✅ WORKFLOW COMPLETE
-  Display: Final summary and all output files
+  Write outputs/workflow-execution-summary.md (phases run, decisions made,
+  gate verdicts, final file list), then display the final summary
 ```
 
 **Specialists never interact with the user.** Subagents cannot use
@@ -224,36 +255,40 @@ You have succeeded when:
 
 ## Output Files Summary
 
-After complete workflow, these files will exist:
+The authoritative producer/consumer contract for every file lives in
+ARCHITECTURE.md ("File Contract Table"). Summary:
 
 **Phase 1 (Screening):**
-- `outputs/literature-screening-matrix.md`
-- `outputs/prisma-flow-diagram.md`
-- `outputs/screening-progress.md`
+- `outputs/literature-screening-matrix.md` (deliverable; includes `Decisions Required` section)
+- `outputs/prisma-flow-diagram.md` (deliverable)
+- `outputs/screening-progress.md` (state file — resumability + NEEDS_DECISION flag)
+- `outputs/pass-1-triage.md` (working file — internal to Phase 1, may be deleted after)
 
 **Phase 2 (Extraction & Synthesis):**
-- `outputs/paper-pXXX-extraction.md` (one per paper - audit trail)
+- `outputs/paper-pXXX-extraction.md` (one per paper — audit trail and Gate 1 ground truth)
 - `outputs/literature-extraction-matrix.md`
 - `outputs/literature-synthesis-matrix.md`
-- `outputs/extraction-quality-report.md`
+- `outputs/extraction-quality-report.md` (doubles as Phase 2 progress/state)
 
 **Phase 3 (Argument Structure):**
 - `outputs/literature-review-outline.md`
 
 **Phase 4 (Drafting):**
-- `outputs/literature-review-draft.md`
+- `outputs/literature-review-draft.md` (rewritten in place by Revision Mode cycles)
 
 **Phase 5 (Citation Validation):**
-- `outputs/citation-integrity-report.md`
+- `outputs/citation-integrity-report.md` (machine-readable STATUS header)
 
 **Phase 6 (Contributions):**
 - `outputs/research-contributions-implications.md`
 
 **Phase 7 (Consistency Validation):**
-- `outputs/cross-phase-validation-report.md`
+- `outputs/cross-phase-validation-report.md` (machine-readable STATUS/SCORE header)
 
-**Orchestrator:**
-- `outputs/execution-log.json`
+**Orchestrator (YOU write these — no phase agent does):**
+- `outputs/execution-log.json` (at init; updated every phase)
+- `outputs/execution-context.json` (at init, after topic confirmation)
+- `outputs/workflow-execution-summary.md` (at workflow completion)
 
 ## Key Architectural Principle
 
