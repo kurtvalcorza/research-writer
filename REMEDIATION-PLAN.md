@@ -1,6 +1,6 @@
 # Research Writer — Remediation Plan
 
-**Status:** DRAFT — pending owner approval
+**Status:** APPROVED — owner decisions recorded 2026-06-12: (1) expanded methodology scope including a full Phase 0 search-strategist agent, (2) GitHub Actions CI check approved, (3) delivery as stacked PRs.
 **Date:** 2026-06-12
 **Scope:** Fixes identified by a four-layer audit: (1) Claude Code platform alignment, (2) agent-spec executability, (3) cross-file contract consistency, (4) methodology soundness, plus configuration/templates and repo hygiene.
 
@@ -16,7 +16,7 @@
 
 ## Non-goals (this round)
 
-- No new phases that require new agents beyond what's listed in Workstream E (full search/identification automation, reference-manager integration, export formats stay on the roadmap).
+- Reference-manager integration and export formats stay on the roadmap. (Owner decision 2026-06-12: the Phase 0 search-strategist agent IS now in scope — see E9.)
 - No behavior changes to the drafting style or synthesis approach — those are sound.
 
 ---
@@ -102,6 +102,7 @@ Recommended scope: **honest repositioning + cheap rigor additions** (full search
 | E6 | **Deduplication step.** Pass 1 addition: detect same-title/same-DOI duplicates, keep the most complete, record in PRISMA counts. | `literature-screener.md` Pass 1 |
 | E7 | **AI-use disclosure artifact.** Phase 6 or 7 additionally emits `outputs/methods-disclosure.md`: a ready-to-adapt paragraph disclosing LLM-assisted screening/extraction/drafting, human checkpoints performed, and verification steps — aligned with emerging journal/PRISMA-AI expectations. | `contribution-framer.md` (recommended owner) + contract table |
 | E8 | Fix the template's internal contradiction: temporal scope 2018–2025 vs "[x] Published before 2023" exclusion (line 163) — uncheck and set placeholder `[YEAR]` so the example is internally consistent. Also soften the Security section's "Claude doesn't retain your PDFs" to "subject to your Anthropic plan and data settings." | `settings/screening-criteria.md` 100–105 vs 161–165; `ARCHITECTURE.md` 661–676 |
+| E9 | **Phase 0 search-strategist agent (approved expansion).** New `.claude/agents/search-strategist.md`: takes the research question + screening criteria, generates database-specific Boolean query strings (Scopus, Web of Science, PubMed, IEEE Xplore, ACM DL, Google Scholar), date/language filters, and a results-recording template the user fills after running the searches (the agent has no network access — it documents, the human executes). Writes `settings/search-strategy.md`; the screener consumes it per E2. Orchestrator gains an optional-but-recommended Phase 0 before screening. | new `.claude/agents/search-strategist.md`; `CLAUDE.md` workflow + agent list; contract table |
 
 **Acceptance:** no doc claims unattended PRISMA compliance; a run without `search-strategy.md` produces a PRISMA diagram that says so; extraction matrix rows carry quality flags.
 
@@ -130,17 +131,17 @@ Recommended scope: **honest repositioning + cheap rigor additions** (full search
 
 Order: **B → C → D** (behavior first: specs must be executable and contracts true before docs describe them) → **E** (methodology, builds on B/C) → **A + F** (docs rewritten once against the final state) → **G** (lint last, validates everything).
 
-One PR per workstream pairing, on `claude/tender-brown-rdnfwf` (or stacked branches if preferred):
+Stacked PRs, each branch based on the previous:
 1. **PR 1 — "Make agent specs executable"**: B1–B9, C4, C5, C7
 2. **PR 2 — "Reconcile contracts & gates"**: C1–C3, C6, D1–D3
-3. **PR 3 — "Methodology honesty & rigor"**: E1–E8
-4. **PR 4 — "Docs & hygiene"**: A1–A8, F1–F3
-5. **PR 5 — "Contract lint"**: G1 (G2 if approved)
+3. **PR 3 — "Methodology honesty & rigor + Phase 0"**: E1–E9
+4. **PR 4 — "Docs & hygiene"**: A1–A8, F1–F3 (absorbs the README/ARCHITECTURE side of E1)
+5. **PR 5 — "Contract lint + CI"**: G1 + G2
 
 Each PR's acceptance criteria are the workstream acceptance lines above; PR 5's CI must pass on the final state of PRs 1–4.
 
-## Open decisions (owner input wanted)
+## Decisions (resolved 2026-06-12)
 
-1. **E-scope:** the plan recommends repositioning + cheap rigor (E1–E8). Alternative: also build a true Phase 0 search agent — bigger scope, deferred by default.
-2. **G2 CI:** add the GitHub Actions check, or keep the lint script manual-only?
-3. **PR granularity:** 5 stacked PRs as above, or one combined PR with 5 reviewable commits?
+1. **E-scope:** GO BIG — E1–E8 plus the Phase 0 search-strategist agent (E9).
+2. **G2 CI:** Yes — GitHub Actions check included.
+3. **PR granularity:** Stacked PRs (5, stacked on the plan branch).
