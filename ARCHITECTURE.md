@@ -2,7 +2,7 @@
 
 ## System Overview
 
-Research Writer is a **literature review orchestration system** — an optional Phase 0 (search strategy) plus 7 core phases — powered by **subagent-based workflow management**. It fully supports narrative and scoping reviews and assists PRISMA-style systematic reviews (see "Honest scope" in CLAUDE.md and the review-type notes in `settings/screening-criteria.md`).
+Research Writer is a **literature review orchestration system** — an optional Phase 0 (search strategy) plus 7 core phases — powered by **subagent-based workflow management**. It is designed for narrative and scoping reviews and assists PRISMA-style systematic reviews (see "Honest scope" in CLAUDE.md and the review-type notes in `settings/screening-criteria.md`).
 
 ### Key Innovation: Subagent Orchestration
 
@@ -42,11 +42,21 @@ New (Subagent-based):
 │  - Manages phase sequencing (optional Phase 0, then 1-7)        │
 │  - Handles human checkpoints                                    │
 │  - Tracks execution state (execution-log.json)                  │
-└─────────────────┬─────────────┬─────────────┬──────────────────┘
-                  │             │             │
-        ┌─────────▼──┐   ┌──────▼───┐   ┌────▼──────┐
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+            ┌─────────────────▼─────────────────┐
+            │ PHASE 0 (optional, Isolated)      │
+            │ Search Strategy                   │
+            │ → settings/search-strategy.md     │
+            │ (the USER executes the searches,  │
+            │  fills results, downloads PDFs)   │
+            └─────────────────┬─────────────────┘
+                              │
+            ┌─────────────────┼─────────────────┐
+            │                 │                 │
+        ┌───▼────────┐   ┌────▼─────┐   ┌──────▼────┐
         │  PHASE 1   │   │ PHASE 2  │   │ PHASE 3   │
-        │ Discovery  │   │ Synthesis│   │ Structurer│
+        │ Screening  │   │ Synthesis│   │ Structurer│
         │(Isolated)  │   │(Isolated)│   │(Isolated) │
         └─────┬──────┘   └──────┬───┘   └────┬──────┘
               │                 │            │
@@ -291,24 +301,19 @@ checked-in example shows).
 
 ## Context Management Strategy
 
-### Problem: Context Overflow with Skills
+### Problem: Context Accumulation in a Single Conversation
 
-With skills-based system:
-```
-Start: 10K tokens available
-Phase 1: Uses 8K, leaves 2K
-Phase 2: Uses 3K of 2K available → OVERFLOW
-```
+In a single-conversation workflow, every phase inherits all prior phases'
+content; by the drafting stage the window is mostly consumed by screening
+and extraction residue, and large corpora overflow it entirely. (No
+benchmark figures are claimed here — the failure mode is structural.)
 
 ### Solution: Isolated Contexts
 
-Each subagent gets fresh context:
-```
-Phase 1: 90K tokens available → uses 15K → done
-Phase 2: 90K tokens available → uses 20K → done  
-Phase 3: 90K tokens available → uses 5K → done
-... additional phases follow the same pattern
-```
+Each subagent starts with a fresh context window containing only its
+prompt and the specific input files it reads. Phase 4 drafting sees the
+outline and synthesis matrix — not the hundreds of pages of PDF text that
+produced them.
 
 ### Practical Implementation
 
@@ -319,11 +324,13 @@ Phase 3: 90K tokens available → uses 5K → done
 4. Return to orchestrator
 5. Clear context
 
-**Critical**: Phase 2 (synthesis) batches large corpora:
-- Batches papers to stay within context limits
-- Saves progress after each batch
-- Continues with next batch
-- Result: Can process larger corpora than a single-context approach
+**Critical**: the PDF-touching phases (1: screening, 2: extraction)
+checkpoint after EVERY paper:
+- Each paper is read per the PDF Reading Protocol (page-ranged, targeted)
+- Its decision/extraction is saved before the next PDF is touched
+- A context reset between papers is expected and safe; resumption
+  continues from the progress files
+- Result: corpus size is bounded by patience, not by a context window
 
 ---
 
@@ -333,41 +340,48 @@ Phase 3: 90K tokens available → uses 5K → done
 
 ```
 CHECKS:
-✓ All citations in draft exist in extraction matrix
-✓ No fabricated/hallucinated citations
-✓ Claims match what papers actually found
-✓ Citations appropriately placed
+✓ EVERY citation existence-checked against the extraction matrix
+✓ Misses classified: FABRICATED (no real-world referent) vs OUT_OF_CORPUS
+  (real-looking paper, just not in your corpus) — never conflated
+✓ A reproducible 20% sample of citations claim-verified against the
+  per-paper extraction files
+✓ Citation placement and balance checked
 
-OUTCOME:
-❌ CRITICAL issues → BLOCK workflow
-⚠️  WARNINGS → Allow with notification
-✅ PASS → Proceed to Phase 6
+OUTCOME (machine-readable STATUS header, parsed by the orchestrator):
+❌ FAIL  → any CRITICAL issue. OUT_OF_CORPUS items PAUSE the workflow
+           first — the user chooses delete-vs-rescue per item BEFORE any
+           auto-revision; FABRICATED-only failures go straight into the
+           drafter revision loop (max 2 automated cycles)
+⚠️  WARN → misattributions/missing citations only; the user decides:
+           proceed or revise
+✅ PASS  → proceed to Phase 6
 ```
 
-**Why this matters**: Prevents fabricated citations from reaching manuscript
+**Why this matters**: designed to catch citations that aren't in your
+corpus — fabricated or otherwise — before the draft moves on
 
 ### Gate 2: Phase 7 - Cross-Phase Validation
 
 ```
-CHECKS:
-✓ Themes from Phase 2 appear in Phase 3
-✓ Outline from Phase 3 drafted in Phase 4
-✓ Draft claims traceable to evidence
-✓ Evidence strength language consistent
-✓ No broken evidence chains
+THREE COUNTED SUBSCORES (arithmetic shown in the report):
+- Theme traceability (40 pts): synthesis themes reach the outline
+- Section coverage (30 pts): outline sections drafted (≥100 words)
+- Claim support (30 pts): a deterministic sample of draft claims traces
+  to synthesis/extraction evidence with proportionate language
 
-METRICS:
-- Consistency Score (0-100)
-- Theme traceability
-- Claim support
+PLUS NAMED CRITICAL FLAGS (uncountable but serious):
+- Misrepresented evidence, OVERCLAIM, UNGROUNDED contribution,
+  MISSING_PHASE6_ARTIFACT, untraced theme, undrafted section
 
-OUTCOME:
-❌ Score <75 or critical issues → BLOCK
-⚠️  Score 65-74 → WARN
-✅ Score ≥75 → PASS
+OUTCOME (machine-readable STATUS/SCORE header):
+✅ PASS  → SCORE ≥75 AND zero critical flags
+⚠️  WARN → SCORE 65-74, zero flags; the user decides: accept or revise
+❌ FAIL  → SCORE <65 OR any critical flag; orchestrator routes fixes by
+           issue type (drafter / framer / Phase 3 re-run)
 ```
 
-**Why this matters**: Ensures analytical integrity across entire workflow
+**Why this matters**: checks analytical integrity across the entire
+workflow with reproducible arithmetic, not vibes
 
 ---
 
@@ -395,12 +409,13 @@ Contains:
 Each phase agent is one file in `.claude/agents/`:
 
 **Example: literature-screener.md**
-- YAML frontmatter (name, description, model, color)
+- YAML frontmatter (name, description, model, color, tools)
 - Complete implementation for Phase 1
-- Three-pass screening workflow
-- Resumable state management
-- PRISMA compliance
-- 400+ lines of detailed logic
+- Three-pass screening workflow with a borderline second pass
+- Resumable state management (per-paper checkpointing)
+- PRISMA-compliant reporting (including an honest identification stage
+  when no documented search exists)
+- Autonomy Contract and PDF Reading Protocol
 
 **Implementation pattern:**
 1. Orchestrator spawns agent via the Agent tool
@@ -461,7 +476,8 @@ corpus/
 └── ... (as many as needed)
 
 settings/
-└── screening-criteria.md (customize criteria)
+├── screening-criteria.md (customize criteria)
+└── search-strategy.md    (Phase 0 output; user fills the results table)
 ```
 
 ---
@@ -496,10 +512,10 @@ Critical decisions have human approval:
 ### 4. Auditability (Complete Logging)
 
 Every execution tracked:
-- execution-log.json stores all phase runs
-- Agent IDs recorded for resumption
-- Timestamps for performance analysis
-- User approvals documented
+- execution-log.json stores all phase runs (canonical schema above)
+- Agent names, statuses, and timestamps recorded per phase
+- Gate verdicts and retry counts recorded in gate_results
+- User approvals and checkpoint decisions documented
 
 ### 5. Resumability (No Lost Work)
 
@@ -602,10 +618,10 @@ Future:
 | **Invocation** | Auto (model-driven) | Explicit (user/orchestrator-driven) |
 | **Isolation** | None (all in one conversation) | Complete (separate contexts) |
 | **Resumption** | Fragile | Built-in |
-| **Error recovery** | Limited | Comprehensive |
+| **Error recovery** | Limited | Structured (gate revision loops + per-paper resumability) |
 | **Parallelization** | Not possible | Supported by the platform (multiple Agent calls per message); unused here because phases are sequentially dependent |
 | **Audit trail** | None | Complete (execution-log.json) |
-| **Checkpoints** | Manual | Automatic (orchestrator-managed) |
+| **Checkpoints** | Manual | Orchestrator-managed, human-decided |
 | **Quality gates** | None | Two mandatory gates |
 
 ---
@@ -662,10 +678,16 @@ agent to do so, that's a spec bug: route the decision through a
 A: Check file format. Phase 1 requires valid PDF files. Use `file corpus/*` to verify.
 
 **Q: Context overflow during Phase 2**
-A: Automatic batching should prevent this. If it occurs, split corpus into smaller batches.
+A: Per-paper checkpointing plus the PDF Reading Protocol (page-ranged
+reads, references skipped) should prevent this. If a single enormous PDF
+still overflows, the paper is marked EXTRACTION_FAILED and listed for the
+Phase 2 checkpoint; extraction continues with the next paper.
 
-**Q: Phase 5 blocks due to fabricated citations**
-A: Expected! Fix the draft (edit claimed citations or remove unsupported claims), then re-run Phase 5 (citation-validator agent).
+**Q: Phase 5 blocks (FAIL status)**
+A: Expected behavior. The orchestrator handles it: OUT_OF_CORPUS items
+pause for your delete-vs-rescue decision first; then the drafter runs in
+Revision Mode and the validator re-runs (max 2 automated cycles before
+the report comes back to you). You don't hand-edit the draft mid-loop.
 
 ### Quality Issues
 
@@ -704,8 +726,9 @@ Execution time varies based on corpus size, PDF length, model speed, and content
 
 ### Data Handling
 
-- **Local execution**: All data stays on your machine
-- **No external APIs**: Except Claude API for LLM calls
+- **Local artifacts**: corpus PDFs and all outputs live on your machine
+- **No external APIs**: except the Claude API for LLM calls — which means
+  paper content and extracted text ARE sent to the API during processing
 - **Data retention**: PDF and output content sent to the Claude API is
   subject to your Anthropic plan's data-usage and retention settings —
   review them before processing sensitive or unpublished material
@@ -722,9 +745,9 @@ Execution time varies based on corpus size, PDF length, model speed, and content
 
 ## Conclusion
 
-Research Writer demonstrates a powerful design pattern:
+Research Writer is built on one design rule:
 
-**Subagent orchestration** > Single-conversation workflow
+**Subagent orchestration over single-conversation accumulation**
 
 This architecture aims to provide:
 - Context isolation (no cross-phase accumulation)

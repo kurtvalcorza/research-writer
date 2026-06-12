@@ -1,6 +1,6 @@
 # Research Writer: Subagent-Based Research Orchestration
 
-Transform your research PDFs into a complete, validated literature review in one automated workflow.
+Turn your research PDFs into a structured, citation-checked literature review draft — an orchestrated multi-agent workflow with human checkpoints and two quality gates.
 
 ## 🚀 Quick Start
 
@@ -16,7 +16,7 @@ The orchestrator will:
 2. ✅ Extract and synthesize findings (with indicative quality appraisal)
 3. ✅ Generate an outline structure
 4. ✅ Draft academic prose
-5. ✅ Validate citations (catch fabrications)
+5. ✅ Validate citations (flag anything not in your corpus — fabricated or otherwise)
 6. ✅ Frame contributions, implications, and an AI-use methods disclosure
 7. ✅ Validate consistency across all phases
 
@@ -24,7 +24,7 @@ The orchestrator will:
 
 ### What this pipeline is (and isn't)
 
-Research Writer fully supports **narrative and scoping reviews**, and **assists** PRISMA-style systematic reviews. For systematic-review claims you must execute the documented search yourself (Phase 0 output), and understand that dual independent human screening and formal risk-of-bias assessment are *approximated* (borderline second-pass screening, indicative quality flags), not replaced. The pipeline generates an honest `outputs/methods-disclosure.md` you can adapt for your manuscript.
+Research Writer is designed for **narrative and scoping reviews**, and **assists** PRISMA-style systematic reviews. For systematic-review claims you must execute the documented search yourself (Phase 0 output), and understand that dual independent human screening and formal risk-of-bias assessment are *approximated* (borderline second-pass screening, indicative quality flags), not replaced. The pipeline generates an honest `outputs/methods-disclosure.md` you can adapt for your manuscript.
 
 ---
 
@@ -191,7 +191,7 @@ Three kinds:
    → AI-use disclosure paragraph for your methods section
 
 ✅ citation-integrity-report.md
-   → Proof all citations verified against the corpus
+   → Record of citation validation against the corpus
 
 ✅ execution-log.json
    → Complete audit trail; enables resuming
@@ -209,7 +209,8 @@ Three kinds:
 
 The orchestrator loads `outputs/execution-log.json`, shows the last completed
 phase, and resumes — no re-processing. Phases 1 and 2 checkpoint after every
-paper, so even a mid-phase interruption costs at most one paper of work.
+paper, so a mid-phase interruption is designed to cost at most one paper of
+work.
 
 ---
 
@@ -233,7 +234,7 @@ paper, so even a mid-phase interruption costs at most one paper of work.
 1. **Phase 5 (Citation Validation)** — report begins with a machine-readable `STATUS:` header:
    - ❌ FAIL: any FABRICATED (hallucinated), OUT_OF_CORPUS (real-looking but not in your corpus), or fundamentally misattributed citation. OUT_OF_CORPUS items **pause the workflow first** — you choose delete-vs-rescue per item before any auto-revision can touch them; FABRICATED-only failures go straight to the automatic drafter revision cycle (max 2), then human review
    - ⚠️ WARN: misattributions / missing citations — you decide: proceed or revise
-   - ✅ PASS: every citation verified; a 20% sample deep-checked against per-paper extraction files
+   - ✅ PASS: every citation existence-checked against the corpus; a 20% sample claim-verified against the per-paper extraction files
 
 2. **Phase 7 (Consistency Validation)** — computed score, shown with its arithmetic:
    - Theme traceability (40) + section coverage (30) + sampled claim support (30)
