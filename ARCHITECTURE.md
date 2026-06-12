@@ -571,8 +571,6 @@ To add a Phase 8 (e.g., Methods Narrativizer):
 3. Update CLAUDE.md to spawn it at the right point
 4. Add a checkpoint if needed
 5. Update Phase 7 to validate the new phase's output
-6. Run `scripts/validate-contracts.sh` to confirm the contract graph
-   still closes
 
 ### Custom Phases
 
@@ -646,8 +644,7 @@ Documented as options — none are adopted yet:
 A: The orchestrator instructions in `CLAUDE.md` must be loaded — confirm
 you opened Claude Code at the repo root (CLAUDE.md is auto-loaded from
 there), and that the agent names it spawns match the `name:` fields in
-`.claude/agents/*.md`. Run `scripts/validate-contracts.sh` to check the
-wiring. (Note: a *missing* `tools:` line in an agent is NOT the cause —
+`.claude/agents/*.md`. (Note: a *missing* `tools:` line in an agent is NOT the cause —
 omitting it just inherits all tools.)
 
 **Q: A specialist tried to ask a question or spawn an agent mid-run**
