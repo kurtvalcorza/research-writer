@@ -231,7 +231,7 @@ paper, so even a mid-phase interruption costs at most one paper of work.
 ### Quality Gates
 
 1. **Phase 5 (Citation Validation)** — report begins with a machine-readable `STATUS:` header:
-   - ❌ FAIL: any FABRICATED (hallucinated), OUT_OF_CORPUS (real-looking but not in your corpus), or fundamentally misattributed citation → automatic drafter revision cycle (max 2), then human review
+   - ❌ FAIL: any FABRICATED (hallucinated), OUT_OF_CORPUS (real-looking but not in your corpus), or fundamentally misattributed citation. OUT_OF_CORPUS items **pause the workflow first** — you choose delete-vs-rescue per item before any auto-revision can touch them; FABRICATED-only failures go straight to the automatic drafter revision cycle (max 2), then human review
    - ⚠️ WARN: misattributions / missing citations — you decide: proceed or revise
    - ✅ PASS: every citation verified; a 20% sample deep-checked against per-paper extraction files
 
