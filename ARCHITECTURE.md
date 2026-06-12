@@ -265,8 +265,10 @@ Field reference: `phase` (number), `name`, `agent` (subagent name),
 `status` ("success" | "failure" | "partial" | "in_progress"),
 `started_at`/`completed_at` (ISO-8601), `output_files`, `warnings`,
 `human_approval` (approval checkpoints only). `gate_results` entries
-record `{phase, status, score, critical_count, retry_count}` parsed from
-the gate report headers.
+record `{phase, status, critical_count, retry_count}` parsed from the
+gate report headers, plus `score` for Phase 7 ONLY — the citation gate
+(Phase 5) emits no numeric score, so its entries omit the field (as the
+checked-in example shows).
 
 **Use cases:**
 - **Resume**: Load last completed phase, continue from next
