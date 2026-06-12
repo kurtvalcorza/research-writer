@@ -103,9 +103,21 @@ Else:
 3. Extract key sections:
    - Abstract (full)
    - Methods (summary: what was studied, how)
+   - Study design (empirical-quantitative / empirical-qualitative /
+     mixed-methods / case study / review / conceptual / policy analysis)
+   - Sample/scope (N, population, setting — "not stated" is a finding too)
    - Findings (key results, quantitative + qualitative)
    - Limitations (stated by authors)
    - Contributions (author's stated contributions)
+
+4. Assign an INDICATIVE quality flag (this is a lightweight appraisal,
+   NOT a substitute for GRADE/RoB — say so in the quality report):
+   - Strong: clear design, adequate sample/scope for its claims, peer-
+     reviewed venue, limitations acknowledged
+   - Moderate: minor gaps in any of the above
+   - Weak: opinion-adjacent, unclear methods, claims outrun the design,
+     or non-peer-reviewed without corroboration
+   Always with a one-line justification.
 
 4. Identify themes:
    - Read abstract + findings section
@@ -146,6 +158,12 @@ Format:
 **Author's Contributions**
 [what the paper claims to contribute]
 
+**Quality Appraisal (indicative — not GRADE/RoB)**
+- Study design: [design type]
+- Sample/scope: [N, population, setting, or "not stated"]
+- Quality flag: Strong | Moderate | Weak
+- Justification: [one line]
+
 **Themes Identified**
 1. [Theme 1]
 2. [Theme 2]
@@ -166,9 +184,9 @@ This individual file serves as:
 ```
 Add row to literature-extraction-matrix.md:
 
-| Paper ID | Title | Authors | Year | Methods Summary | Key Findings | Limitations | Themes |
-|----------|-------|---------|------|-----------------|--------------|-------------|--------|
-| P001 | [Title] | [Authors] | 2024 | [Methods] | [Key findings summary] | [Limitations] | Theme A, Theme B |
+| Paper ID | Title | Authors | Year | Methods Summary | Key Findings | Limitations | Quality | Themes |
+|----------|-------|---------|------|-----------------|--------------|-------------|---------|--------|
+| P001 | [Title] | [Authors] | 2024 | [Methods] | [Key findings summary] | [Limitations] | Strong | Theme A, Theme B |
 ```
 
 **Step 4: Save progress (after EVERY paper)**
@@ -239,11 +257,17 @@ C) Synthesize:
    - What's the overall consensus?
    - How strong is the evidence?
 
-D) Assign evidence strength label:
-   - "Strong Consensus": 80%+ of papers agree
+D) Assign evidence strength label — quality-weighted:
+   - "Strong Consensus": 80%+ of papers agree AND at least 2 of them are
+     flagged Strong or Moderate quality
    - "Mixed Views": 40-80% agreement, disagreement present
    - "Emerging": 2-4 papers, less established
    - "Limited": 1 paper only, needs corroboration
+
+   CAP RULE: a theme supported ONLY by Weak-flagged papers can never
+   exceed "Emerging" (2+ papers) or "Limited" (1 paper), regardless of
+   how unanimously they agree. Note the cap in the synthesis cell when
+   applied, e.g. "(capped: all supporting papers Weak)".
 
 E) Capture 1-3 representative quotes per theme — VERBATIM from the
    extraction files, ≤25 words each, tagged with paper ID. These feed the
@@ -288,6 +312,22 @@ Generate extraction-quality-report.md:
 - 1 failed paper: Consider manual extraction or OCR
 - Overall quality: EXCELLENT (>80% success)
 - Ready for next phase
+
+## Spot-Check Instructions (for the Phase 2 checkpoint)
+
+The orchestrator presents this section to the user verbatim:
+
+> Extraction accuracy has NOT been verified against the source PDFs by
+> any automated step — this checkpoint is the only ground-truth check in
+> the pipeline. Please open the following randomly selected extraction
+> files side-by-side with their PDFs and confirm the Key Findings and
+> Quality Appraisal are faithful:
+>
+> [list max(3, 10% of corpus) paper IDs, selected by taking every
+> ceil(N/sample_size)-th paper in ID order — deterministic]
+>
+> Record the result (verified / corrections needed) at the checkpoint.
+> Corrections → re-extract the affected papers before Phase 3.
 ```
 
 ---

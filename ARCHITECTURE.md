@@ -440,9 +440,11 @@ internal to one phase).
 | `literature-review-draft.md` | literature-drafter (initial + Revision Mode rewrites) | citation-validator; contribution-framer; consistency-validator; user | deliverable ← MAIN |
 | `citation-integrity-report.md` | citation-validator | orchestrator (gate verdict); literature-drafter (Revision Mode) | report (Gate 1) |
 | `research-contributions-implications.md` | contribution-framer | consistency-validator; user | deliverable |
+| `methods-disclosure.md` | contribution-framer | user (manuscript methods section) | deliverable |
 | `cross-phase-validation-report.md` | consistency-validator | orchestrator (gate verdict); literature-drafter / contribution-framer (Revision Mode) | report (Gate 2) |
 | `workflow-execution-summary.md` | orchestrator (at completion) | user | deliverable |
-| `settings/screening-criteria.md` | user (template provided) | literature-screener | input |
+| `settings/screening-criteria.md` | user (template provided) | literature-screener; search-strategist (filter derivation) | input |
+| `settings/search-strategy.md` | search-strategist (Phase 0, optional); results table filled by USER | literature-screener (PRISMA identification) | input + deliverable |
 | `corpus/*.pdf` | user | literature-screener; extraction-synthesizer | input |
 
 Rules the table encodes:
@@ -705,7 +707,9 @@ Execution time varies based on corpus size, PDF length, model speed, and content
 
 - **Local execution**: All data stays on your machine
 - **No external APIs**: Except Claude API for LLM calls
-- **No data retention**: Claude doesn't retain your PDFs or outputs
+- **Data retention**: PDF and output content sent to the Claude API is
+  subject to your Anthropic plan's data-usage and retention settings —
+  review them before processing sensitive or unpublished material
 - **Audit trail**: execution-log.json is your record
 
 ### Best Practices
