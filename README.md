@@ -385,7 +385,7 @@ Every workflow has TWO quality gates that MUST pass, plus a human ground-truth c
 
 1. **Report issues**: Found a bug? Create an issue
 2. **Suggest features**: Want new phases? Suggest it
-3. **Improve subagents**: Better execution logic? Submit a PR
+3. **Improve subagents**: Better execution logic? Submit a PR — run `scripts/validate-contracts.sh` before pushing
 
 ---
 

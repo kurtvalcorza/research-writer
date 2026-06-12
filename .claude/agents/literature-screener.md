@@ -45,9 +45,10 @@ The orchestrator surfaces all `Decisions Required` items to the user at the Phas
 
 ## Output Files
 
-- `outputs/literature-screening-matrix.md` - Screening decisions with rationales
+- `outputs/literature-screening-matrix.md` - Screening decisions with rationales (includes `Decisions Required` section)
 - `outputs/prisma-flow-diagram.md` - PRISMA 2020 compliant flow diagram
 - `outputs/screening-progress.md` - State tracking for resumability
+- `outputs/pass-1-triage.md` - Working file (PASS 1 → PASS 2 handoff; may be deleted after Phase 1)
 
 ## PDF Reading Protocol (MANDATORY)
 
