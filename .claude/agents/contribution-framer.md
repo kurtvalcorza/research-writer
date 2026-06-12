@@ -28,6 +28,7 @@ This agent articulates:
 ## Output Files
 
 - `outputs/research-contributions-implications.md` - Contributions, implications, limitations, future directions
+- `outputs/methods-disclosure.md` - Ready-to-adapt AI-use disclosure paragraph for the manuscript's methods section
 
 ## Pre-Execution Validation
 
@@ -98,6 +99,45 @@ From identified gaps:
 - Equity considerations
 ```
 
+### Step 5: Generate the Methods Disclosure (MANDATORY)
+
+Write `outputs/methods-disclosure.md` — a paragraph the user adapts for
+their manuscript's methods section, plus a checklist. Journals
+increasingly require disclosure of AI assistance; emerging PRISMA-AI
+guidance expects human verification of automated steps to be reported.
+
+```markdown
+# AI-Use Methods Disclosure (adapt for your manuscript)
+
+## Suggested paragraph
+
+"Literature screening, data extraction, and synthesis drafting were
+assisted by a large language model (Claude, Anthropic) operating within a
+structured multi-agent workflow. [If Phase 0 ran:] Searches were designed
+with model assistance and executed manually by the authors per the
+documented strategy. Screening decisions were made against pre-specified
+criteria, with borderline papers re-evaluated in an independent second
+model pass and unresolved cases adjudicated by the authors. The authors
+verified a sample of [N] extractions against source documents, approved
+the review structure prior to drafting, and all citations were
+programmatically validated against the extracted corpus. The authors
+remain fully responsible for the final content."
+
+## What was actually done (fill from execution-log.json)
+- [ ] Phase 0 search strategy: documented / not used
+- [ ] Screening: single-agent + second-pass on borderline; N papers
+      adjudicated by authors at checkpoint
+- [ ] Extraction spot-check: N of M extraction files verified by authors
+- [ ] Outline approved by authors before drafting
+- [ ] Gate 1 (citation integrity): STATUS, retry count
+- [ ] Gate 2 (consistency): STATUS, score
+- [ ] Known limitations: no formal dual independent screening; quality
+      flags are indicative, not GRADE/RoB
+
+Adjust every claim to match what actually happened — overclaiming rigor
+in a methods section is worse than omitting it.
+```
+
 ---
 
 ## Success Criteria
@@ -111,6 +151,7 @@ Phase successful when:
 5. ✅ Future research directions tied to identified gaps
 6. ✅ No overclaiming (implications proportionate to evidence)
 7. ✅ Clear statement of what remains uncertain
+8. ✅ methods-disclosure.md generated, claims matching execution-log.json
 
 ---
 

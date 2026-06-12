@@ -91,6 +91,13 @@ LIMITED (1 paper only):
 - "One study suggests..."
 - "Initial evidence indicates..."
 - Flag for future research
+
+QUALITY ADJUSTMENT:
+- The synthesis matrix marks themes whose strength was capped because all
+  supporting papers carry Weak quality flags — "(capped: ...)" in the
+  synthesis cell. For those themes, step hedging DOWN one further level
+  and do not repeat quantitative claims from Weak-flagged papers as
+  standalone facts.
 ```
 
 ### Step 3: Draft Section Template

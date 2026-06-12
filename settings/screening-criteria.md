@@ -30,11 +30,24 @@ Use this template to define systematic inclusion and exclusion criteria for Phas
 "AI adoption in the Philippines: barriers, facilitators, and implementation patterns"
 
 **Review Type:**
-[x] Systematic Review
-[ ] Scoping Review
+[ ] Systematic Review
+[x] Scoping Review
 [ ] Narrative Review
 [ ] Meta-Analysis
 [ ] Other: ___________
+
+> **What each type requires of you beyond this pipeline:**
+> - *Narrative/Scoping review*: this pipeline covers the workflow end to
+>   end. Run Phase 0 if you want a documented search; otherwise the PRISMA
+>   diagram will honestly state identification was not systematic.
+> - *Systematic Review*: you MUST run Phase 0 and execute the documented
+>   search yourself, and you should arrange dual independent human
+>   screening (the pipeline's borderline second pass approximates, but
+>   does not replace, it) and a formal risk-of-bias assessment (the
+>   pipeline's quality flags are indicative only). Disclose AI assistance
+>   using outputs/methods-disclosure.md.
+> - *Meta-Analysis*: out of scope — this pipeline produces no statistical
+>   pooling.
 
 **Geographic Scope:**
 "Philippines (primary focus); Southeast Asia (comparative context)"
@@ -160,7 +173,9 @@ Exclude papers solely on technical AI/ML algorithms, model development, or perfo
 
 ### 4. Temporal Exclusions
 **Excluded if:**
-[x] Published before 2023
+[x] Published before 2018 (MUST match the temporal scope above — a
+    mismatch here silently drops papers; the screener flags any
+    inconsistency it detects under Decisions Required)
 [ ] Published after 2025
 
 ---

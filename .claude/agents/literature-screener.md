@@ -40,6 +40,8 @@ The orchestrator surfaces all `Decisions Required` items to the user at the Phas
 
 **Optional Files:**
 - `outputs/screening-progress.md` (for resuming interrupted screening)
+- `settings/search-strategy.md` (from Phase 0 — feeds the PRISMA
+  identification stage; see PASS 3)
 
 ## Output Files
 
@@ -187,6 +189,22 @@ C) DECISION LOGIC
    Else:
      → UNCERTAIN
 
+C2) BORDERLINE SECOND PASS (approximates dual screening where it matters)
+   A paper is BORDERLINE when its decision hinged on judgment: any
+   criterion was scored UNCLEAR, or the decision would flip if a single
+   criterion's interpretation changed.
+
+   For each borderline paper:
+   - Re-read the criteria file fresh, then re-evaluate the paper from its
+     extracted content WITHOUT consulting the first-pass rationale
+   - Record both rationales side by side in the matrix entry
+   - Both passes agree → keep the decision, note "2-pass confirmed"
+   - Passes disagree → UNCERTAIN (human decides at checkpoint)
+
+   This is an in-model approximation of dual independent screening, not a
+   substitute for it — the limitation is stated in the PRISMA notes and
+   in outputs/methods-disclosure.md (Phase 6).
+
 D) DOCUMENT
    Record in literature-screening-matrix.md:
    - PDF filename, Title, Authors, Year
@@ -253,10 +271,21 @@ discipline is what makes the pass safe, not a batch size.
    - Summary statistics
    - Decision rationales
 4. Generate PRISMA 2020 flow diagram
-   - Start: Total PDFs
-   - After PASS 1: Obviously excluded
-   - After PASS 2: Final decisions
+   IDENTIFICATION STAGE — two honest variants:
+   a) settings/search-strategy.md exists with a filled Results Summary
+      table → populate identification from it: records per source, total
+      before dedup, duplicates removed (from PASS 1 dedup), records
+      screened
+   b) Otherwise → the diagram's identification box states verbatim:
+      "Identification was not systematic: corpus consists of N
+      user-supplied PDFs. Search strategy not documented." Never imply a
+      systematic search that did not happen.
+   SCREENING STAGE:
+   - After PASS 1: duplicates removed, obviously excluded
+   - After PASS 2: final decisions (note 2-pass confirmations)
    - UNCERTAIN pending human review
+   NOTES: state that screening was performed by a single LLM agent with a
+   second-pass check on borderline papers (see methods-disclosure.md)
 5. Save both files to outputs/
 6. Mark screening-progress.md status:
    - "COMPLETE" if no human decisions are pending
