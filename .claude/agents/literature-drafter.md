@@ -279,8 +279,16 @@ revision mode:
    outputs/cross-phase-validation-report.md)
 2. Read the existing outputs/literature-review-draft.md
 3. Fix ONLY the flagged items:
-   - FABRICATED / OUT_OF_CORPUS citation → remove the citation; then apply
-     the Missing Evidence fallback to the orphaned claim
+   - FABRICATED citation → remove the citation; then apply the Missing
+     Evidence fallback to the orphaned claim
+   - OUT_OF_CORPUS citation → follow the per-item decision the
+     orchestrator recorded in the revision prompt:
+       "delete"  → remove it (Missing Evidence fallback, as above)
+       "rescued" → KEEP the citation (the paper has been added to the
+                   corpus and extracted; it is now in-corpus)
+     NEVER remove an OUT_OF_CORPUS citation without a recorded decision —
+     if one is missing from the prompt, leave the citation untouched and
+     list it under Decisions Required in the revision log comment
    - MISATTRIBUTION → correct the claim to match what the cited paper's
      extraction file actually says, or swap in the right paper from the
      synthesis matrix

@@ -149,10 +149,14 @@ For each CRITICAL issue, the report lists:
 - The suggested fix (remove + hedge claim / swap to corpus paper PXXX /
   candidate for corpus addition)
 
-The orchestrator then re-spawns literature-drafter in Revision Mode with
-this report, and re-runs this validator on the revised draft.
-Maximum 2 automated revision cycles; if still failing, the orchestrator
-hands the report to the user at a checkpoint.
+If ANY OUT_OF_CORPUS items exist, the orchestrator pauses FIRST to
+collect per-item delete-vs-rescue decisions from the user — auto-revision
+must never delete a rescuable citation unseen. Only then (or immediately,
+for FABRICATED-only failures) does it re-spawn literature-drafter in
+Revision Mode with this report plus those decisions, and re-run this
+validator on the revised draft. Maximum 2 automated revision cycles; if
+still failing, the orchestrator hands the report to the user at a
+checkpoint.
 ```
 
 ---
