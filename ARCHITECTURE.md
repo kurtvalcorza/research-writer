@@ -2,7 +2,7 @@
 
 ## System Overview
 
-Research Writer is a **7-phase literature review orchestration system** powered by **subagent-based workflow management**.
+Research Writer is a **literature review orchestration system** — an optional Phase 0 (search strategy) plus 7 core phases — powered by **subagent-based workflow management**. It fully supports narrative and scoping reviews and assists PRISMA-style systematic reviews (see "Honest scope" in CLAUDE.md and the review-type notes in `settings/screening-criteria.md`).
 
 ### Key Innovation: Subagent Orchestration
 
@@ -28,16 +28,18 @@ New (Subagent-based):
 ┌─────────────────────────────────────────────────────────────────┐
 │                    User Request                                 │
 │  "Help me complete a literature review on [topic]"              │
-│                    OR                                           │
-│  /agents → research-workflow-orchestrator                       │
 └─────────────────────┬─────────────────────────────────────────┘
                       │
                       ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  ORCHESTRATOR (.claude/agents/research-workflow-orchestrator)   │
+│  ORCHESTRATOR = the MAIN Claude Code session, driven by         │
+│  CLAUDE.md at the repo root (NOT a subagent — subagents cannot  │
+│  spawn agents or ask the user, so orchestration must live here) │
 │  - Validates prerequisites                                      │
-│  - Spawns phase agents via Task tool                            │
-│  - Manages phase sequencing                                     │
+│  - Spawns phase agents via the Agent tool                       │
+│    (renamed from "Task" in Claude Code v2.1.63; old name still  │
+│    works as an alias)                                           │
+│  - Manages phase sequencing (optional Phase 0, then 1-7)        │
 │  - Handles human checkpoints                                    │
 │  - Tracks execution state (execution-log.json)                  │
 └─────────────────┬─────────────┬─────────────┬──────────────────┘
@@ -79,80 +81,73 @@ New (Subagent-based):
 ### Directory Structure
 
 ```
+CLAUDE.md                               # ORCHESTRATOR (main session instructions)
 .claude/agents/
-├── research-workflow-orchestrator.md   # Main coordinator (HAS Task tool)
-├── literature-screener.md              # Phase 1: Screening (NO Task tool)
-├── extraction-synthesizer.md           # Phase 2: Extraction & Synthesis (NO Task tool)
-├── argument-structurer.md              # Phase 3: Outline Generation (NO Task tool)
-├── literature-drafter.md               # Phase 4: Academic Prose (NO Task tool)
-├── citation-validator.md               # Phase 5: Citation Quality Gate (NO Task tool)
-├── contribution-framer.md              # Phase 6: Contributions (NO Task tool)
-└── consistency-validator.md            # Phase 7: Final Quality Gate (NO Task tool)
+├── search-strategist.md                # Phase 0: Search strategy (optional)
+├── literature-screener.md              # Phase 1: Screening
+├── extraction-synthesizer.md           # Phase 2: Extraction & Synthesis
+├── argument-structurer.md              # Phase 3: Outline Generation
+├── literature-drafter.md               # Phase 4: Academic Prose
+├── citation-validator.md               # Phase 5: Citation Quality Gate
+├── contribution-framer.md              # Phase 6: Contributions + Disclosure
+└── consistency-validator.md            # Phase 7: Final Quality Gate
 ```
 
-### Critical Configuration Requirements
+### Tools Configuration (current Claude Code semantics)
 
-**For multi-agent delegation to work, explicit `tools:` configuration is REQUIRED in YAML frontmatter.**
+Two facts about current Claude Code drive this design — both are
+platform-enforced, not configuration choices:
 
-#### Orchestrator Agent Configuration
+1. **Subagents cannot spawn other subagents** — the Agent tool is
+   unavailable inside a subagent even if listed in `tools:`.
+2. **Subagents cannot use `AskUserQuestion`** — human interaction belongs
+   exclusively to the main session.
+
+This is precisely why the orchestrator is the *main session* (driven by
+`CLAUDE.md`) rather than an agent file: only the main session can both
+spawn agents and talk to the user.
+
+Frontmatter semantics for the specialists:
+
+- **Omitting `tools:` means the agent inherits EVERY tool** available to
+  the parent. Explicit `tools:` is an allowlist — a scoping choice, not a
+  delegation requirement.
+- The 8 specialists here declare `tools: Read, Write, Bash, Glob, Grep`
+  deliberately: least privilege per phase. Listing or omitting `Agent` /
+  `AskUserQuestion` would change nothing (see the two facts above), so
+  they are simply left out.
 
 ```yaml
 ---
-name: research-workflow-orchestrator
-description: Use this agent when the user requests any literature review...
-model: sonnet
-color: green
-tools: Read, Write, Bash, Glob, Grep, Task, AskUserQuestion
----
-```
-
-**Key tools:**
-- `Task` - **CRITICAL**: Enables spawning sub-agents
-- `AskUserQuestion` - For human checkpoints
-- Standard file tools for coordination
-
-#### Specialist Agent Configuration
-
-All 7 specialist agents use this pattern:
-
-```yaml
----
-name: literature-screener  # or extraction-synthesizer, etc.
+name: literature-screener  # or any other specialist
 description: Screen and triage research PDFs...
 model: sonnet
 color: blue
-tools: Read, Write, Bash, Glob, Grep
+tools: Read, Write, Bash, Glob, Grep   # deliberate scoping, not magic
 ---
 ```
 
-**Intentionally excluded:**
-- `Task` - Prevents nested sub-agent spawning (only orchestrator spawns)
-- `AskUserQuestion` - Specialists work autonomously
-
-**Why this matters:**
-- ✅ Without `Task` in orchestrator → orchestrator cannot spawn sub-agents
-- ✅ Without excluding `Task` from specialists → unwanted nested spawning
-- ✅ Proper configuration → clean multi-agent delegation pattern
-
 ### Agent Execution Pattern
 
-The orchestrator uses Claude Code's **Task tool** to spawn each agent in isolation:
+The orchestrator uses Claude Code's **Agent tool** (renamed from "Task" in
+v2.1.63; `Task(...)` references still work as aliases) to spawn each agent
+in isolation:
 
 ```javascript
-// Orchestrator spawns Phase 1
-Task(subagent_type: "literature-screener", prompt: "Screen papers in corpus/")
+// Orchestrator (main session) spawns Phase 1
+Agent(agent_type: "literature-screener", prompt: "Screen papers in corpus/")
   → literature-screener agent runs in fresh context
   → Produces outputs/literature-screening-matrix.md
   → Returns summary to orchestrator
 
 // Orchestrator spawns Phase 2
-Task(subagent_type: "extraction-synthesizer", prompt: "Extract from approved papers")
+Agent(agent_type: "extraction-synthesizer", prompt: "Extract from approved papers")
   → extraction-synthesizer agent runs in fresh context
-  → Reads screening-matrix.md
+  → Reads literature-screening-matrix.md
   → Produces synthesis outputs
   → Returns summary to orchestrator
 
-// Pattern continues for all 7 phases...
+// Pattern continues through Phase 7...
 ```
 
 ### Key Architectural Benefits
@@ -165,47 +160,45 @@ Task(subagent_type: "extraction-synthesizer", prompt: "Extract from approved pap
 
 ## Two-Tier Design: Orchestrator + Phase Agents
 
-### Tier 1: Research Workflow Orchestrator (Project Agent)
+### Tier 1: The Orchestrator (Main Session via CLAUDE.md)
 
 **What it does:**
-- Orchestrates the complete 7-phase workflow
-- Manages human approval checkpoints
-- Tracks execution state
+- Orchestrates the complete workflow (optional Phase 0 + Phases 1-7)
+- Manages human approval checkpoints (the ONLY tier that can ask the user)
+- Tracks execution state (`execution-log.json`, `execution-context.json`)
 - Enables workflow resumption
-- Handles phase sequencing
+- Handles phase sequencing and gate revision loops
 
-**Lives in**: `.claude/agents/research-workflow-orchestrator.md`
-
-**How it works:**
-- Registered as a Claude Code project agent
-- Appears in `/agents` list for easy invocation
-- Spawns phase agents via Task tool
-- Each agent runs in fresh context window
-- Coordinates workflow through file-based communication
+**Lives in**: `CLAUDE.md` at the repo root — Claude Code loads it as
+project instructions for the main session. It is NOT an agent file:
+subagents can neither spawn agents nor prompt the user, so an
+orchestrator-as-subagent cannot work on this platform.
 
 **Not responsible for:**
 - Phase logic (that's each phase agent)
 - Domain knowledge (agents are self-contained)
 - Implementation details (each phase agent handles its own)
 
-### Tier 2: Phase Agents (7 total)
+### Tier 2: Phase Agents (8 total)
 
 Each phase is a **self-contained independent agent**:
-- Spawned via Task tool by orchestrator
+- Spawned via the Agent tool by the orchestrator
 - Runs in fresh context window
-- Reads required inputs from outputs/
+- Reads required inputs from outputs/ (per the File Contract Table)
 - Produces specific outputs to outputs/
 - Can be invoked directly from `/agents` menu
 - Returns summary to orchestrator
+- Never interacts with the user — decisions are flagged for checkpoints
 
 **Agents**:
+0. **search-strategist** - Document reproducible search strategy (optional)
 1. **literature-screener** - Screen PDFs by criteria
-2. **extraction-synthesizer** - Extract info, identify themes
+2. **extraction-synthesizer** - Extract info, appraise quality, identify themes
 3. **argument-structurer** - Organize themes into outline
 4. **literature-drafter** - Write academic prose
 5. **citation-validator** - Quality gate #1 (verify citations)
-6. **contribution-framer** - Frame implications
-7. **consistency-validator** - Quality gate #2 (consistency check)
+6. **contribution-framer** - Frame implications + methods disclosure
+7. **consistency-validator** - Quality gate #2 (computed consistency score)
 
 ---
 
@@ -279,20 +272,20 @@ checked-in example shows).
 
 **Three types of checkpoints:**
 
-1. **Approval Checkpoints** (Phases 1, 3)
-   - User reviews outputs
-   - Approves or requests changes
+1. **Approval Checkpoints** (Phase 0 if run; Phases 1, 3)
+   - User reviews outputs (search strategy / screening decisions / outline)
+   - Approves or requests changes; all `Decisions Required` items surfaced
    - Can re-run phase if needed
 
 2. **Auto Quality Gates** (Phases 5, 7)
-   - Run automatically
-   - BLOCK if critical issues found
-   - WARN if minor issues found
+   - Run automatically; verdict parsed from machine-readable report header
+   - FAIL → automatic revision cycle (max 2), then human review
+   - WARN → user decides: proceed or revise
 
 3. **Progress Checkpoints** (Phases 2, 4, 6)
-   - Optional review points
-   - User can approve or retry
-   - Non-blocking
+   - Phase 2: extraction spot-check against source PDFs (the pipeline's
+     only ground-truth verification — don't skip it)
+   - Phases 4, 6: optional early review, non-blocking
 
 ---
 
@@ -380,21 +373,22 @@ OUTCOME:
 
 ## File Organization
 
-### Orchestrator (.claude/agents/)
+### Orchestrator (CLAUDE.md)
 
-**Entry point**: `research-workflow-orchestrator.md`
+**Entry point**: `CLAUDE.md` at the repo root — loaded automatically by
+Claude Code as project instructions for the main session.
 
 Contains:
-- YAML frontmatter (name, description, model, color)
-- Trigger examples for Claude Code
-- Task tool invocation patterns for each phase
-- Human checkpoint management logic
-- Quality assurance standards
+- Workflow initialization (setup checks, execution-context.json)
+- Agent tool invocation patterns for each phase
+- Checkpoint taxonomy and management logic (approval / gate / progress)
+- Quality-gate handling: header parsing, revision loops, retry limits
+- Resumability logic (execution-log.json)
 
 **User experience:**
-- Visible in `/agents` command
-- Auto-invoked by Claude Code when user requests literature review
-- Clean, single orchestrator interface
+- Active in every Claude Code session opened in this repo
+- "Help me complete a literature review on [topic]" starts the workflow
+- Single orchestrator interface; specialists never talk to the user
 
 ### Phase Agents (.claude/agents/)
 
@@ -409,7 +403,7 @@ Each phase agent is one file in `.claude/agents/`:
 - 400+ lines of detailed logic
 
 **Implementation pattern:**
-1. Orchestrator spawns agent via Task tool
+1. Orchestrator spawns agent via the Agent tool
 2. Agent runs in fresh context window
 3. Agent reads required inputs
 4. Agent executes phase logic independently
@@ -486,11 +480,11 @@ Each phase:
 
 Each subagent declares:
 - **Requires**: What input files needed
-- **Produces**: What output files created
-- **Tools**: What abilities it has (MUST be explicit in YAML frontmatter)
-- **Constraints**: Time/size limits
-
-**Critical**: The `tools:` field in YAML frontmatter is not optional—it's required for proper multi-agent delegation. Without it, the orchestrator cannot spawn sub-agents.
+- **Produces**: What output files created (one producer per file — see the
+  File Contract Table)
+- **Tools**: An explicit allowlist, chosen for least privilege. (Omitting
+  `tools:` would inherit every parent tool — legal, but sloppier.)
+- **Constraints**: PDF reading protocol, checkpointing discipline
 
 ### 3. Checkpoints (Human in Loop)
 
@@ -520,8 +514,10 @@ If interrupted:
 ## Technology Stack
 
 ### Models
-- **Claude Sonnet 4**: Default model for all phases
-- Rationale: Best balance of speed and quality
+- All agents declare `model: sonnet`, which resolves to the latest Claude
+  Sonnet (currently Sonnet 4.6)
+- Rationale: best balance of speed and quality for per-phase work; set
+  `model: inherit` (or edit per agent) to match the main session instead
 
 ### Tools Available to Subagents
 - **Read**: Read files (PDFs, markdown, etc.)
@@ -566,13 +562,15 @@ If interrupted:
 
 ### Adding New Phases
 
-To add a Phase 8 (Methods Narrativizer):
+To add a Phase 8 (e.g., Methods Narrativizer):
 
-1. Create `subagents/08_methods-narrativizer/SUBAGENT.md`
-2. Define inputs/outputs
-3. Update orchestrator to invoke at right point
-4. Add checkpoint if needed
-5. Update Phase 7 to validate new phase
+1. Create `.claude/agents/methods-narrativizer.md` (frontmatter: name,
+   description, model, color, tools — follow an existing specialist as
+   the template, including its Autonomy Contract section)
+2. Define inputs/outputs and add them to the File Contract Table
+3. Update CLAUDE.md to spawn it at the right point
+4. Add a checkpoint if needed
+5. Update Phase 7 to validate the new phase's output
 
 ### Custom Phases
 
@@ -603,32 +601,38 @@ Future:
 | **Isolation** | None (all in one conversation) | Complete (separate contexts) |
 | **Resumption** | Fragile | Built-in |
 | **Error recovery** | Limited | Comprehensive |
-| **Parallelization** | Not possible | Future-ready |
+| **Parallelization** | Not possible | Supported by the platform (multiple Agent calls per message); unused here because phases are sequentially dependent |
 | **Audit trail** | None | Complete (execution-log.json) |
 | **Checkpoints** | Manual | Automatic (orchestrator-managed) |
 | **Quality gates** | None | Two mandatory gates |
 
 ---
 
-## Future Roadmap
+## Possible Extensions (no committed timeline)
 
-### V2 (Q1 2025)
-- [ ] Parallel phase execution (Phases 1+2 concurrently)
 - [ ] Custom extraction fields (user-defined data to extract)
 - [ ] Theme relationship mapping (how themes connect)
-- [ ] Geographic/temporal analysis
-
-### V3 (Q2 2025)
 - [ ] Export to DOCX/LaTeX/HTML
-- [ ] Team collaboration (multi-user workflows)
 - [ ] Reference manager integration (Zotero, Mendeley)
-- [ ] Web UI enhancement
-
-### V4 (Q3+ 2025)
-- [ ] Custom subagents (user-defined phases)
-- [ ] Batch processing (hundreds of reviews)
+- [ ] Batch processing (multiple reviews)
 - [ ] Knowledge graph generation
-- [ ] Integration with manuscript tools
+
+## Platform Features Worth Considering (current Claude Code)
+
+Documented as options — none are adopted yet:
+
+- **Subagent memory** (`memory: project` in frontmatter): lets an agent
+  accumulate knowledge across sessions in a MEMORY.md — could let the
+  screener remember criteria interpretations between resumed sessions
+- **Worktree isolation** (`isolation: worktree`): gives a subagent its own
+  git worktree — useful if phases ever write conflicting files
+- **Subagent hooks** (`SubagentStop` etc.): could auto-trigger a gate
+  whenever its upstream phase finishes
+- **Per-agent effort** (`effort:`): raise effort for the two validators,
+  lower it for triage
+- **Agent teams** (experimental): parallel screening with genuinely
+  independent screeners would be a real dual-screening upgrade to E5's
+  second-pass approximation
 
 ---
 
@@ -636,26 +640,18 @@ Future:
 
 ### Configuration Issues
 
-**Q: Orchestrator does all the work instead of delegating to specialists**
-A: **Root Cause**: Missing `tools:` configuration in agent frontmatter.
+**Q: The main session does all the work instead of delegating to specialists**
+A: The orchestrator instructions in `CLAUDE.md` must be loaded — confirm
+you opened Claude Code at the repo root (CLAUDE.md is auto-loaded from
+there), and that the agent names it spawns match the `name:` fields in
+`.claude/agents/*.md`. (Note: a *missing* `tools:` line in an agent is NOT the cause —
+omitting it just inherits all tools.)
 
-**Fix:**
-1. Verify orchestrator has `Task` tool:
-   ```bash
-   grep "^tools:" .claude/agents/research-workflow-orchestrator.md
-   # Should output: tools: Read, Write, Bash, Glob, Grep, Task, AskUserQuestion
-   ```
-
-2. Verify specialists do NOT have `Task` tool:
-   ```bash
-   grep "^tools:" .claude/agents/literature-screener.md
-   # Should output: tools: Read, Write, Bash, Glob, Grep
-   ```
-
-3. If missing, add to YAML frontmatter as shown in "Critical Configuration Requirements" section above.
-
-**Q: Specialist agents try to spawn their own sub-agents**
-A: Remove `Task` from specialist agent `tools:` configuration.
+**Q: A specialist tried to ask a question or spawn an agent mid-run**
+A: It can't — the platform blocks `AskUserQuestion` and the Agent tool
+inside subagents; such a call simply fails. If a spec *instructs* the
+agent to do so, that's a spec bug: route the decision through a
+`Decisions Required` section instead (see any agent's Autonomy Contract).
 
 ### Execution Issues
 

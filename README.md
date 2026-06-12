@@ -4,39 +4,45 @@ Transform your research PDFs into a complete, validated literature review in one
 
 ## 🚀 Quick Start
 
-**Tell Claude Code (or your AI assistant):**
+**Tell Claude Code:**
 
 ```
 "Help me complete a literature review on [your research topic]"
 ```
 
-The orchestrator subagent will:
+The orchestrator will:
+0. ✅ *(Optional but recommended)* Design a documented search strategy you execute
 1. ✅ Screen your research PDFs systematically
-2. ✅ Extract and synthesize findings
+2. ✅ Extract and synthesize findings (with indicative quality appraisal)
 3. ✅ Generate an outline structure
 4. ✅ Draft academic prose
 5. ✅ Validate citations (catch fabrications)
-6. ✅ Frame contributions and implications
+6. ✅ Frame contributions, implications, and an AI-use methods disclosure
 7. ✅ Validate consistency across all phases
 
 **Result**: A structured literature review draft that you can refine for your manuscript.
+
+### What this pipeline is (and isn't)
+
+Research Writer fully supports **narrative and scoping reviews**, and **assists** PRISMA-style systematic reviews. For systematic-review claims you must execute the documented search yourself (Phase 0 output), and understand that dual independent human screening and formal risk-of-bias assessment are *approximated* (borderline second-pass screening, indicative quality flags), not replaced. The pipeline generates an honest `outputs/methods-disclosure.md` you can adapt for your manuscript.
 
 ---
 
 ## 📋 What is This?
 
-Research Writer is a **7-phase literature review workflow** powered by **subagent orchestration**. Each phase runs in isolated context with built-in quality gates.
+Research Writer is a **literature review workflow** powered by **subagent orchestration**: an optional Phase 0 plus 7 core phases, each running in isolated context with built-in quality gates.
 
 ### Phases
 
 | Phase | Agent Name | Input | Output |
 |-------|------------|-------|--------|
-| **1** | literature-screener | PDFs | Screening matrix (INCLUDE/EXCLUDE/UNCERTAIN) |
-| **2** | extraction-synthesizer | Approved PDFs | Extraction + synthesis matrices, themes |
+| **0** *(optional)* | search-strategist | Research question + criteria | Documented search strategy (you execute it) |
+| **1** | literature-screener | PDFs | Screening matrix (INCLUDE/EXCLUDE/UNCERTAIN), PRISMA diagram |
+| **2** | extraction-synthesizer | Approved PDFs | Per-paper extractions, extraction + synthesis matrices, quality report |
 | **3** | argument-structurer | Synthesis matrix | Literature review outline |
 | **4** | literature-drafter | Outline + synthesis | Academic prose draft |
-| **5** | citation-validator | Draft | Citation integrity report (quality gate) |
-| **6** | contribution-framer | Draft | Implications + future research |
+| **5** | citation-validator | Draft + extractions | Citation integrity report (quality gate) |
+| **6** | contribution-framer | Draft | Implications + future research + methods disclosure |
 | **7** | consistency-validator | All outputs | Consistency score report (quality gate) |
 
 Execution time varies depending on corpus size, PDF length, and model speed.
@@ -45,9 +51,9 @@ Execution time varies depending on corpus size, PDF length, and model speed.
 
 ## 🎯 Why Multi-Agent Architecture?
 
-### The Problem with Single-Agent Workflows
+### The Problem with Single-Conversation Workflows
 
-Old approach accumulated context with each phase:
+A single conversation accumulates context with each phase:
 ```
 Phase 1 → context grows
 Phase 2 → context grows more
@@ -55,35 +61,34 @@ Phase 3 → context grows more
 Phase 4 → OVERFLOW (context window fills up)
 ```
 
-### The Solution: Task Tool-Based Agent Orchestration
+### The Solution: Orchestrator + Specialist Subagents
 
-New system uses **orchestrator + specialized agents** (Claude Code pattern):
+The **main Claude Code session is the orchestrator** — its behavior is defined by `CLAUDE.md` at the repo root. It spawns each phase as a specialist subagent via the **Agent tool** (renamed from "Task" in Claude Code v2.1.63; the old name still works as an alias):
+
 ```
-Orchestrator (.claude/agents/research-workflow-orchestrator.md)
-├─ Phase 1: Spawns literature-screener agent via Task tool
-│           → Agent runs in fresh context, produces screening matrix
-├─ Human checkpoint
-├─ Phase 2: Spawns extraction-synthesizer agent via Task tool
-│           → Fresh context, reads Phase 1 outputs, produces synthesis
-├─ Phase 3: Spawns argument-structurer agent via Task tool
-│           → Fresh context, produces outline
-├─ Phase 4: Spawns literature-drafter agent via Task tool
-│           → Fresh context, produces draft
-├─ Phase 5: Spawns citation-validator agent via Task tool (Quality Gate 1)
-│           → Fresh context, validates citations
-├─ Phase 6: Spawns contribution-framer agent via Task tool
-│           → Fresh context, frames implications
-└─ Phase 7: Spawns consistency-validator agent via Task tool (Quality Gate 2)
-            → Fresh context, validates consistency
+Orchestrator (main session, driven by CLAUDE.md)
+├─ Phase 0: spawns search-strategist (optional)
+│           → strategy documented; YOU run the searches
+├─ Human checkpoint (strategy approval, corpus assembly)
+├─ Phase 1: spawns literature-screener
+│           → fresh context, produces screening matrix + PRISMA diagram
+├─ Human checkpoint (screening approval + Decisions Required items)
+├─ Phase 2: spawns extraction-synthesizer
+│           → fresh context, produces per-paper extractions + matrices
+├─ Human checkpoint (extraction spot-check vs source PDFs)
+├─ Phase 3: spawns argument-structurer → outline
+├─ Human checkpoint (outline approval)
+├─ Phase 4: spawns literature-drafter → draft
+├─ Phase 5: spawns citation-validator (QUALITY GATE 1)
+│           → FAIL triggers automatic drafter revision cycle (max 2)
+├─ Phase 6: spawns contribution-framer → contributions + disclosure
+└─ Phase 7: spawns consistency-validator (QUALITY GATE 2)
+            → computed 0-100 score; FAIL routes fixes by issue type
 ```
 
-**Key Innovation**: Each phase runs as an **independent agent** with its own context window using Claude Code's Task tool. This means:
-- ✅ True context isolation (each agent starts fresh)
-- ✅ Handles larger corpora (no context accumulation)
-- ✅ Modular design (each agent is self-contained)
-- ✅ Proper Claude Code pattern (agents discoverable in `.claude/agents/`)
+**Why the orchestrator is NOT itself a subagent**: Claude Code subagents cannot spawn other subagents and cannot ask the user questions — both are platform restrictions. Orchestration therefore lives in the main session (via `CLAUDE.md`), which is the only place that can do both.
 
-**Result**: Context isolation removes the per-phase accumulation problem, allowing larger corpora than single-conversation approaches.
+**Key benefit**: each phase runs in a fresh context window, so context never accumulates across phases — larger corpora than single-conversation approaches.
 
 ---
 
@@ -91,42 +96,54 @@ Orchestrator (.claude/agents/research-workflow-orchestrator.md)
 
 ```
 research-writer/
-├── .claude/                            # Claude Code integration
-│   └── agents/
-│       ├── research-workflow-orchestrator.md  (Orchestrator - user entry point)
-│       ├── literature-screener.md             (Phase 1: Screening)
-│       ├── extraction-synthesizer.md          (Phase 2: Extraction + Synthesis)
-│       ├── argument-structurer.md             (Phase 3: Outline)
-│       ├── literature-drafter.md              (Phase 4: Drafting)
-│       ├── citation-validator.md              (Phase 5: Citation quality gate)
-│       ├── contribution-framer.md             (Phase 6: Contributions)
-│       └── consistency-validator.md           (Phase 7: Final quality gate)
+├── CLAUDE.md                          # ORCHESTRATOR — drives the main session
+├── .claude/
+│   └── agents/                        # 8 specialist subagents
+│       ├── search-strategist.md       (Phase 0: Search strategy — optional)
+│       ├── literature-screener.md     (Phase 1: Screening)
+│       ├── extraction-synthesizer.md  (Phase 2: Extraction + Synthesis)
+│       ├── argument-structurer.md     (Phase 3: Outline)
+│       ├── literature-drafter.md      (Phase 4: Drafting)
+│       ├── citation-validator.md      (Phase 5: Citation quality gate)
+│       ├── contribution-framer.md     (Phase 6: Contributions + disclosure)
+│       └── consistency-validator.md   (Phase 7: Final quality gate)
 │
 ├── corpus/                            # Your research PDFs (input)
-│   └── [place your PDFs here]
-│
-├── outputs/                           # Generated artifacts
-│   ├── literature-screening-matrix.md
-│   ├── literature-extraction-matrix.md
-│   ├── literature-synthesis-matrix.md
-│   ├── literature-review-outline.md
-│   ├── literature-review-draft.md
-│   ├── research-contributions-implications.md
-│   ├── citation-integrity-report.md
-│   ├── cross-phase-validation-report.md
-│   ├── execution-log.json              # Workflow state tracking
-│   └── workflow-execution-summary.md
 │
 ├── settings/
-│   └── screening-criteria.md  (Customize your criteria)
+│   ├── screening-criteria.md          # Customize your criteria (template)
+│   └── search-strategy.md             # Phase 0 output; you fill results table
 │
-├── ARCHITECTURE.md                     (System design overview)
-└── README.md                           (This file)
+├── outputs/                           # Generated artifacts — see the File
+│   │                                  # Contract Table in ARCHITECTURE.md for
+│   │                                  # the authoritative producer/consumer map
+│   ├── literature-screening-matrix.md
+│   ├── prisma-flow-diagram.md
+│   ├── paper-pXXX-extraction.md       (one per paper — audit trail)
+│   ├── literature-extraction-matrix.md
+│   ├── literature-synthesis-matrix.md
+│   ├── extraction-quality-report.md
+│   ├── literature-review-outline.md
+│   ├── literature-review-draft.md     ← MAIN DELIVERABLE
+│   ├── citation-integrity-report.md
+│   ├── research-contributions-implications.md
+│   ├── methods-disclosure.md
+│   ├── cross-phase-validation-report.md
+│   ├── execution-log.json             (state; see execution-log.example.json)
+│   ├── execution-context.json         (state)
+│   └── workflow-execution-summary.md  (written at completion)
+│
+├── ARCHITECTURE.md                    (System design + File Contract Table)
+└── README.md                          (This file)
 ```
 
 ---
 
 ## 🚀 How to Use
+
+> **Requires Claude Code** (CLI, desktop app, or web). The workflow depends on
+> Claude Code's subagent system (`.claude/agents/`) and project instructions
+> (`CLAUDE.md`); it will not orchestrate itself in other clients.
 
 ### 1. Prepare Your Materials
 
@@ -134,57 +151,50 @@ research-writer/
 # Place your research PDFs in corpus/
 cp /path/to/your/pdfs/* corpus/
 
-# Customize screening criteria (optional, default template provided)
-nano settings/screening-criteria.md
+# Customize screening criteria (template provided)
+$EDITOR settings/screening-criteria.md
 ```
 
-### 2. Start the Workflow
+No corpus yet? Start anyway — the orchestrator will offer Phase 0, which produces
+ready-to-paste database queries and a results-recording template.
 
-**In Claude Desktop, or Claude Code:**
+### 2. Start the Workflow
 
 ```
 "Help me complete a literature review on [my research topic]"
 ```
 
-**Or invoke the agent directly in Claude Code:**
+The orchestrator (main session, per `CLAUDE.md`) guides you through every phase.
 
-```
-/agents
-→ Select: research-workflow-orchestrator
-```
+### 3. Checkpoints
 
-The agent will guide you through the complete workflow.
+Three kinds:
 
-### 3. Approve Checkpoints
-
-The orchestrator pauses at critical checkpoints:
-
-- **Phase 1**: Approve your final research corpus (or modify screening)
-- **Phase 3**: Approve outline structure (or request revisions)
-- **Phase 5**: Automatic validation (blocks if citations fabricated)
-- **Phase 7**: Automatic validation (blocks if consistency <75%)
+- **Approval (blocking)** — Phase 0 (strategy review; then you run the searches),
+  Phase 1 (screening decisions + every `Decisions Required` item), Phase 3 (outline)
+- **Quality gates (automatic)** — Phase 5 and Phase 7; on FAIL the orchestrator runs
+  up to 2 automatic revision cycles before asking you
+- **Progress (lightweight)** — Phase 2 (the **extraction spot-check**: you verify a
+  small sample of extraction files against the source PDFs — the pipeline's only
+  ground-truth check), Phases 4 and 6 (optional early review)
 
 ### 4. Use Your Outputs
-
-After completion, you have:
 
 ```
 ✅ literature-review-draft.md
    → Literature review draft for further refinement
-   → Integrate directly into your manuscript
 
 ✅ research-contributions-implications.md
-   → Contribution framing
-   → Policy/practice implications
-   → Future research directions
+   → Contribution framing, implications, future research
+
+✅ methods-disclosure.md
+   → AI-use disclosure paragraph for your methods section
 
 ✅ citation-integrity-report.md
-   → Proof all citations verified
-   → No fabricated claims
+   → Proof all citations verified against the corpus
 
 ✅ execution-log.json
-   → Complete audit trail
-   → Can resume from any phase
+   → Complete audit trail; enables resuming
 ```
 
 ---
@@ -197,103 +207,37 @@ After completion, you have:
 "Continue my research workflow"
 ```
 
-The orchestrator will:
-1. Load your execution log
-2. Show last completed phase
-3. Ask to resume from next phase
-4. Continue without re-processing earlier work
+The orchestrator loads `outputs/execution-log.json`, shows the last completed
+phase, and resumes — no re-processing. Phases 1 and 2 checkpoint after every
+paper, so even a mid-phase interruption costs at most one paper of work.
 
 ---
 
 ## 🎓 Key Concepts
 
-### How the Agent Works
+### How Orchestration Works
 
-The **research-workflow-orchestrator** is a Claude Code project agent that:
+1. **The main session is the orchestrator** — `CLAUDE.md` defines its workflow
+2. **Each phase is a specialist subagent** spawned via the Agent tool, running in its own fresh context window
+3. **Agents communicate through files** in `outputs/` (see the File Contract Table in ARCHITECTURE.md)
+4. **Specialists never interact with the user** — subagents cannot use AskUserQuestion; they leave `Decisions Required` sections and status flags that the orchestrator surfaces at checkpoints
 
-1. **Spawns specialized agents** for each phase via Task tool
-2. **Each agent runs independently** in its own fresh context window
-3. **Agents communicate through files** in the outputs/ directory
-4. **Orchestrator coordinates** the workflow and manages checkpoints
+### Tools Configuration (current Claude Code semantics)
 
-**Critical Execution Pattern** (for each phase):
-```
-Step 1: Orchestrator spawns phase agent via Task tool
-Step 2: Agent executes in fresh context, reads required inputs
-Step 3: Agent produces outputs as specified
-Step 4: Agent returns summary to orchestrator
-Step 5: Orchestrator logs state and proceeds to next phase
-```
-
-This ensures:
-- ✅ True context isolation (each agent starts with a fresh context window)
-- ✅ No cross-phase context accumulation
-- ✅ Independent agents (update one without touching others)
-- ✅ Proper Claude Code pattern (discoverable in /agents menu)
-
-### What's a Phase Agent?
-
-Each agent in `.claude/agents/` contains:
-- **YAML frontmatter**: Name, description, model, color, **tools**
-- **Complete implementation**: All logic for that phase
-- **Input/output specifications**: What files it reads/writes
-- **Error handling**: How to handle edge cases
-- **Quality checks**: Validation before completion
-
-#### Critical Configuration: Tools
-
-**Orchestrator agent** must include `Task` tool:
-```yaml
----
-name: research-workflow-orchestrator
-tools: Read, Write, Bash, Glob, Grep, Task, AskUserQuestion
----
-```
-
-**Specialist agents** must NOT include `Task` tool:
-```yaml
----
-name: literature-screener
-tools: Read, Write, Bash, Glob, Grep
----
-```
-
-This configuration enables:
-- ✅ Orchestrator can spawn sub-agents via Task tool
-- ✅ Specialists run in isolated contexts (no nested spawning)
-- ✅ Proper multi-agent delegation pattern
-
-**Example**: `extraction-synthesizer.md` agent:
-- Runs in fresh context for Phase 2
-- Reads screening-matrix.md from Phase 1
-- Extracts data from each approved paper
-- Identifies cross-paper themes
-- Produces synthesis-matrix.md for Phase 3
+- If an agent's frontmatter **omits** `tools:`, it inherits **every** tool available to the parent — explicit `tools:` is a *scoping choice*, not a delegation requirement.
+- Subagents **cannot** spawn other subagents and **cannot** use `AskUserQuestion`, regardless of what `tools:` lists — these are platform restrictions, which is exactly why the orchestrator lives in the main session.
+- The specialists here declare `tools: Read, Write, Bash, Glob, Grep` deliberately, to keep each phase least-privileged.
 
 ### Quality Gates
 
-Two mandatory quality gates ensure output integrity:
+1. **Phase 5 (Citation Validation)** — report begins with a machine-readable `STATUS:` header:
+   - ❌ FAIL: any FABRICATED (hallucinated), OUT_OF_CORPUS (real-looking but not in your corpus), or fundamentally misattributed citation. OUT_OF_CORPUS items **pause the workflow first** — you choose delete-vs-rescue per item before any auto-revision can touch them; FABRICATED-only failures go straight to the automatic drafter revision cycle (max 2), then human review
+   - ⚠️ WARN: misattributions / missing citations — you decide: proceed or revise
+   - ✅ PASS: every citation verified; a 20% sample deep-checked against per-paper extraction files
 
-1. **Phase 5 (Citation Validation)**:
-   - ❌ BLOCKS if fabricated citations found
-   - ⚠️ WARNS if misattributions found
-   - ✅ PASSES if all citations verified
-
-2. **Phase 7 (Consistency Validation)**:
-   - ✅ PASSES if consistency ≥75
-   - ⚠️ WARNS if consistency 65-74
-   - ❌ BLOCKS if consistency <65 or critical issues
-
-### Execution Log
-
-`outputs/execution-log.json` tracks:
-- Every phase executed
-- Agent ID for each phase
-- Human approvals at checkpoints
-- Timestamps
-- Output files generated
-
-**Use for**: Auditing workflow, resuming, understanding execution history
+2. **Phase 7 (Consistency Validation)** — computed score, shown with its arithmetic:
+   - Theme traceability (40) + section coverage (30) + sampled claim support (30)
+   - ✅ PASS ≥75 with zero critical flags / ⚠️ WARN 65–74 / ❌ FAIL <65 or any critical flag (overclaim, misrepresented evidence, undrafted section)
 
 ---
 
@@ -302,88 +246,68 @@ Two mandatory quality gates ensure output integrity:
 ```
 START
   ↓
-[Phase 1: Discovery & Screening]
+[Phase 0: Search Strategy] (optional) → CHECKPOINT: approve; YOU run searches
   ↓
-CHECKPOINT 1: "Approve corpus?"
+[Phase 1: Screening] → CHECKPOINT: approve corpus + Decisions Required
   ↓
-[Phase 2: Extraction & Synthesis]
+[Phase 2: Extraction & Synthesis] → CHECKPOINT: extraction spot-check
   ↓
-[Phase 3: Argument Structuring]
-  ↓
-CHECKPOINT 2: "Approve outline?"
+[Phase 3: Argument Structuring] → CHECKPOINT: approve outline
   ↓
 [Phase 4: Drafting]
   ↓
-[Phase 5: Citation Validation] ← QUALITY GATE (must pass)
+[Phase 5: Citation Validation] ← GATE 1 ──FAIL──→ drafter Revision Mode (≤2 cycles)
+  ↓ PASS
+[Phase 6: Contribution Framing + Methods Disclosure]
   ↓
-[Phase 6: Contribution Framing]
-  ↓
-[Phase 7: Cross-Phase Validation] ← FINAL QUALITY GATE (must pass)
-  ↓
-COMPLETE ✅
+[Phase 7: Cross-Phase Validation] ← GATE 2 ──FAIL──→ routed fixes (≤2 cycles)
+  ↓ PASS
+COMPLETE ✅ (workflow-execution-summary.md written)
 ```
 
 ---
 
 ## ⚡ Advanced: Individual Subagent Invocation
 
-You can also invoke individual phase agents directly:
+You can invoke individual phase agents directly:
 
 ```
 "Use the literature-screener agent to screen my PDFs"
 "Run the citation-validator agent on my draft"
 ```
 
-This is useful for:
-- Re-running specific phases
-- Testing individual components
-- Fine-grained control over workflow
-- Troubleshooting
-
-All phase agents are visible in `/agents` menu in Claude Code.
+Useful for re-running specific phases, testing, or troubleshooting. All agents are
+visible in Claude Code's `/agents` menu. Check phase dependencies first — each
+agent's spec lists its required input files.
 
 ---
 
 ## 🛠️ Configuration
 
-### Screening Criteria (settings/screening-criteria.md)
+### Screening Criteria (`settings/screening-criteria.md`)
 
-Customize what papers to include/exclude:
+The provided template covers inclusion/exclusion criteria, edge-case rules, and
+worked examples. **Customize it before running** — and keep the temporal scope and
+temporal exclusions consistent (the screener flags mismatches it detects).
 
-```markdown
-# Literature Review Screening Criteria
+### Search Strategy (`settings/search-strategy.md`)
 
-## Research Topic
-AI Adoption in Philippine Healthcare
+Produced by Phase 0. Contains concept blocks, per-database Boolean queries, and a
+results table **you** fill in after running the searches. Feeds the PRISMA
+identification stage; without it, the PRISMA diagram states that identification
+was not systematic.
 
-## Inclusion Criteria
-- [ ] Topic: AI/Machine Learning
-- [ ] Geographic scope: Any region
-- [ ] Language: English
-- [ ] Date: 2015-present
-- [ ] Study type: Empirical research
+### Execution Context (`outputs/execution-context.json`)
 
-## Exclusion Criteria
-- [ ] Opinion pieces or editorials
-- [ ] Not healthcare-related
-- [ ] Published before 2015
-- [ ] Non-English publications
-
-## Edge Cases
-[Document how to handle unclear papers]
-```
-
-### Execution Context
-
-After Phase 1, the orchestrator creates `outputs/execution-context.json`:
+Written by the orchestrator **at initialization** (after you confirm the topic):
 
 ```json
 {
   "research_topic": "AI Adoption in Philippine Healthcare",
   "corpus_path": "corpus/",
-  "screening_criteria_file": "settings/screening-criteria.md",
-  "phases_to_run": [1, 2, 3, 4, 5, 6, 7],
-  "started_at": "2025-01-05T10:30:00Z"
+  "criteria_path": "settings/screening-criteria.md",
+  "phases_to_run": [0, 1, 2, 3, 4, 5, 6, 7],
+  "started_at": "2026-06-12T10:30:00Z"
 }
 ```
 
@@ -393,136 +317,71 @@ After Phase 1, the orchestrator creates `outputs/execution-context.json`:
 
 Execution time depends on corpus size, PDF length, and model speed. In general:
 
-- **Phases 1 and 2** (screening and extraction) take longer as corpus size grows, since they process each paper individually.
-- **Phases 3-7** operate on consolidated outputs and are less sensitive to corpus size.
-- **Large corpora (50+ papers)**: Phase 2 batches extraction to stay within context limits. Expect longer runs and plan for possible interruptions — the workflow is resumable.
-- **Very large corpora (200+ papers)**: May require multiple sessions. Batching and resumability help, but this hasn't been extensively tested at scale.
-
----
-
-## 🔍 Understanding the Output Files
-
-### Phase 1: literature-screening-matrix.md
-Raw decisions: INCLUDE / EXCLUDE / UNCERTAIN for each PDF
-
-**Use case**: Verify you approved the right papers
-
-### Phase 2: literature-synthesis-matrix.md
-Cross-paper themes with evidence strength labels
-
-**Use case**: Understand the themes your papers address
-
-### Phase 3: literature-review-outline.md
-Structured outline ready for drafting
-
-**Use case**: Approve outline before drafting begins
-
-### Phase 4: literature-review-draft.md
-**THE MAIN DELIVERABLE** - Academic prose literature review
-
-**Use case**: Copy directly into your manuscript
-
-### Phase 5: citation-integrity-report.md
-Citation validation results with any warnings
-
-**Use case**: Proof that all citations verified, no fabrications
-
-### Phase 6: research-contributions-implications.md
-Your review's contributions, implications, future research
-
-**Use case**: Add to your manuscript's Discussion/Conclusion
-
-### Phase 7: cross-phase-validation-report.md
-Final consistency check across all phases
-
-**Use case**: Proof of workflow quality and integrity
+- **Phases 1 and 2** process each paper individually and grow with corpus size; both checkpoint after every paper.
+- **Phases 3–7** operate on consolidated outputs and are less sensitive to corpus size.
+- **Large corpora (50+ papers)**: expect longer runs and plan for interruptions — the workflow is resumable.
+- **Very large corpora (200+ papers)**: may require multiple sessions. Architecturally supported but not extensively tested at scale.
 
 ---
 
 ## 🚨 Troubleshooting
-
-### "Orchestrator does all work instead of delegating"
-```
-Cause: Missing tools: configuration in agent files
-Fix:
-1. Verify orchestrator has Task tool:
-   grep "^tools:" .claude/agents/research-workflow-orchestrator.md
-
-2. Should show: tools: Read, Write, Bash, Glob, Grep, Task, AskUserQuestion
-
-3. If missing, agents need tools: field in YAML frontmatter
-   (See "Critical Configuration: Tools" section above)
-```
 
 ### "Phase 1 fails to read PDFs"
 ```
 Cause: Corrupted PDFs or non-PDF files
 Fix:
 1. Check file types: file corpus/* | grep -i pdf
-2. Remove corrupted files
-3. Retry Phase 1
+2. Remove corrupted files (or OCR scanned ones)
+3. Retry Phase 1 — unreadable files are marked METADATA_INSUFFICIENT and
+   listed under Decisions Required, never silently dropped
 ```
 
-### "Phase 5 finds fabricated citations"
+### "Phase 5 reports OUT_OF_CORPUS citations"
 ```
-Cause: Citations don't match extraction matrix
-Fix:
-1. Review citation-integrity-report.md
-2. Edit literature-review-draft.md to fix citations
-3. Re-run Phase 5 (citation-validator agent)
-4. Proceed to Phase 6
+Cause: The draft cited a real paper that isn't in your corpus (the drafter
+       is corpus-only by rule, but this is the safety net)
+Fix — your choice at the checkpoint:
+1. Delete the citation (orchestrator runs a drafter revision cycle), OR
+2. Add the paper's PDF to corpus/ and re-run extraction for it, then
+   re-validate
 ```
 
 ### "Phase 7 consistency score too low"
 ```
 Cause: Themes don't trace through phases consistently
 Fix:
-1. Review cross-phase-validation-report.md
-2. Identify where trace breaks
-3. Re-run affected phases
-4. Retry Phase 7
+1. Read cross-phase-validation-report.md — the score arithmetic shows
+   exactly which themes/sections/claims failed
+2. The orchestrator routes fixes automatically (drafter or framer);
+   structural issues need a Phase 3 re-run
 ```
 
 ### "Want to resume mid-workflow"
 ```
 Ask: "Continue my research workflow"
-
-Orchestrator will:
-1. Load execution-log.json
-2. Show last completed phase
-3. Resume from next phase
-4. No re-processing earlier phases
+The orchestrator loads execution-log.json and resumes from the next phase.
 ```
 
 ---
 
 ## 🔐 Quality Assurance
 
-Every workflow has TWO quality gates that MUST pass:
+Every workflow has TWO quality gates that MUST pass, plus a human ground-truth check:
 
-1. **Phase 5**: Citation Validation
-   - Verifies all citations exist in corpus
-   - Detects fabricated claims
-   - Blocks workflow if critical issues
-
-2. **Phase 7**: Consistency Validation
-   - Checks consistency across all phases
-   - Verifies evidence chains
-   - Calculates consistency score (≥75 to pass)
-
-**Result**: These gates help catch common issues before output reaches your manuscript.
+1. **Phase 2 spot-check**: you verify a sample of extractions against source PDFs — automation validates *internal* consistency; this validates against *reality*
+2. **Phase 5**: citation integrity (fabrication/out-of-corpus detection, sampled claim verification)
+3. **Phase 7**: cross-phase consistency (computed 0–100 score with shown arithmetic)
 
 ---
 
 ## 📚 Documentation
 
-- **[ARCHITECTURE.md](ARCHITECTURE.md)**: Deep dive into system design
+- **[ARCHITECTURE.md](ARCHITECTURE.md)**: System design, File Contract Table, canonical state schema
+- **[REMEDIATION-PLAN.md](REMEDIATION-PLAN.md)**: The audit and fix plan that produced the current design
 
 ---
 
 ## 🤝 Contributing
-
-Want to improve research-writer?
 
 1. **Report issues**: Found a bug? Create an issue
 2. **Suggest features**: Want new phases? Suggest it
@@ -541,10 +400,10 @@ MIT License - See LICENSE file for details
 If you use Research Writer in your work:
 
 ```bibtex
-@software{research_writer_2025,
+@software{research_writer_2026,
   title={Research Writer: Subagent-Based Research Orchestration},
   author={Kurt Valcorza},
-  year={2025},
+  year={2026},
   url={https://github.com/kurtvalcorza/research-writer}
 }
 ```
@@ -554,11 +413,11 @@ If you use Research Writer in your work:
 ## 🎯 Getting Started Checklist
 
 - [ ] Clone or download research-writer
-- [ ] Place your PDFs in `corpus/`
-- [ ] Review `settings/screening-criteria.md` (optional customization)
+- [ ] (Recommended) Run Phase 0 and execute the documented search; or place existing PDFs in `corpus/`
+- [ ] Customize `settings/screening-criteria.md`
 - [ ] Tell Claude Code: "Help me complete a literature review on [topic]"
-- [ ] Approve checkpoints when asked
-- [ ] Collect outputs from `outputs/` directory
+- [ ] Approve checkpoints when asked (don't skip the Phase 2 spot-check)
+- [ ] Collect outputs from `outputs/` — draft, contributions, methods disclosure
 - [ ] Integrate `literature-review-draft.md` into your manuscript
 
 **Questions?** See [ARCHITECTURE.md](ARCHITECTURE.md) or review individual agent files in `.claude/agents/` for detailed specifications.
