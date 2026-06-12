@@ -44,7 +44,7 @@ while IFS=: read -r file line text; do
     continue
   fi
   err "$file:$line: specialist appears instructed to interact with the user: ${text#"${text%%[![:space:]]*}"}"
-done < <(grep -rnE 'Ask user|Ask the user|^\s*-?\s*Ask:|\(yes/no\)|[Pp]rompt the user' "$AGENTS_DIR" 2>/dev/null || true)
+done < <(grep -rniE 'Ask user|Ask the user|^\s*-?\s*Ask:|\(yes/no\)|[Pp]rompt the user' "$AGENTS_DIR" 2>/dev/null || true)
 
 # ---------------------------------------------------------------------------
 # 3. Stale platform terminology in docs and agents
