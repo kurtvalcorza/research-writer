@@ -258,8 +258,10 @@ Field reference: `phase` (number), `name`, `agent` (subagent name),
 `status` ("success" | "failure" | "partial" | "in_progress"),
 `started_at`/`completed_at` (ISO-8601), `output_files`, `warnings`,
 `human_approval` (approval checkpoints only). `gate_results` entries
-record `{phase, status, score, critical_count, retry_count}` parsed from
-the gate report headers.
+record `{phase, status, critical_count, retry_count}` parsed from the
+gate report headers, plus `score` for Phase 7 ONLY — the citation gate
+(Phase 5) emits no numeric score, so its entries omit the field (as the
+checked-in example shows).
 
 **Use cases:**
 - **Resume**: Load last completed phase, continue from next
@@ -569,8 +571,6 @@ To add a Phase 8 (e.g., Methods Narrativizer):
 3. Update CLAUDE.md to spawn it at the right point
 4. Add a checkpoint if needed
 5. Update Phase 7 to validate the new phase's output
-6. Run `scripts/validate-contracts.sh` to confirm the contract graph
-   still closes
 
 ### Custom Phases
 
@@ -644,8 +644,7 @@ Documented as options — none are adopted yet:
 A: The orchestrator instructions in `CLAUDE.md` must be loaded — confirm
 you opened Claude Code at the repo root (CLAUDE.md is auto-loaded from
 there), and that the agent names it spawns match the `name:` fields in
-`.claude/agents/*.md`. Run `scripts/validate-contracts.sh` to check the
-wiring. (Note: a *missing* `tools:` line in an agent is NOT the cause —
+`.claude/agents/*.md`. (Note: a *missing* `tools:` line in an agent is NOT the cause —
 omitting it just inherits all tools.)
 
 **Q: A specialist tried to ask a question or spawn an agent mid-run**

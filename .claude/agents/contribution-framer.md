@@ -24,6 +24,12 @@ This agent articulates:
 - `outputs/literature-review-draft.md`
 - `outputs/literature-synthesis-matrix.md`
 - `outputs/literature-review-outline.md`
+- `outputs/execution-log.json` — source of truth for the methods
+  disclosure (whether Phase 0 ran, checkpoint decisions, spot-check
+  results, gate verdicts and retry counts). If missing (standalone
+  invocation outside orchestration), every execution-dependent
+  disclosure item MUST be marked "NOT VERIFIED — fill manually";
+  never invent values.
 
 ## Output Files
 
@@ -36,7 +42,10 @@ This agent articulates:
 1. outputs/literature-review-draft.md exists
 2. outputs/literature-synthesis-matrix.md exists
 3. outputs/literature-review-outline.md exists
-4. outputs/ directory writable
+4. outputs/execution-log.json exists (if absent: proceed, but every
+   execution-dependent disclosure item is marked "NOT VERIFIED — fill
+   manually")
+5. outputs/ directory writable
 ```
 
 ## Execution Model
@@ -100,6 +109,14 @@ From identified gaps:
 ```
 
 ### Step 5: Generate the Methods Disclosure (MANDATORY)
+
+FIRST read `outputs/execution-log.json`. Every execution-dependent claim
+in the disclosure (Phase 0 run or declined, papers adjudicated at the
+screening checkpoint, spot-check sample verified, gate statuses and
+retry counts) comes from the log's `phases`, `checkpoints`, and
+`gate_results` entries — never from assumption. Where the log lacks an
+entry (or the log itself is missing), write "NOT VERIFIED — fill
+manually" for that item instead of a plausible-sounding value.
 
 Write `outputs/methods-disclosure.md` — a paragraph the user adapts for
 their manuscript's methods section, plus a checklist. Journals
