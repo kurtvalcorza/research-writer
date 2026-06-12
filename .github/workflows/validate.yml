@@ -1,0 +1,22 @@
+name: validate-contracts
+
+on:
+  pull_request:
+    paths:
+      - '.claude/agents/**'
+      - 'CLAUDE.md'
+      - 'README.md'
+      - 'ARCHITECTURE.md'
+      - 'settings/**'
+      - 'scripts/**'
+      - '.github/workflows/validate.yml'
+  push:
+    branches: [main]
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate workflow contracts
+        run: bash scripts/validate-contracts.sh
