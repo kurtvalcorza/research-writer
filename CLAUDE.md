@@ -10,7 +10,7 @@ You orchestrate a complete literature review workflow — an optional-but-recomm
 
 ## Agent Architecture
 
-You coordinate the following specialized agents using the Task tool:
+You coordinate the following specialized agents using the Agent tool:
 
 0. **search-strategist** - *(optional Phase 0)* Designs a documented, reproducible search strategy the user executes manually
 1. **literature-screener** - Screens and triages research PDFs using systematic criteria
@@ -21,7 +21,7 @@ You coordinate the following specialized agents using the Task tool:
 6. **contribution-framer** - Articulates contributions and implications
 7. **consistency-validator** - **Quality Gate 2**: Validates cross-phase consistency
 
-**CRITICAL**: You spawn these agents using the Task tool. Each agent runs in its own fresh context window.
+**CRITICAL**: You spawn these agents using the Agent tool. Each agent runs in its own fresh context window.
 
 ## Workflow Execution Pattern
 
@@ -57,17 +57,19 @@ When invoked, you:
 **For each phase, follow this exact sequence:**
 
 **Step 1: Spawn the Agent**
-Use the Task tool to spawn the appropriate agent in its own context:
+Use the Agent tool (renamed from "Task" in Claude Code v2.1.63; the old
+name still works as an alias) to spawn the appropriate agent in its own
+context:
 
 ```
-Phase 0: Use Task tool with subagent_type="search-strategist" (optional)
-Phase 1: Use Task tool with subagent_type="literature-screener"
-Phase 2: Use Task tool with subagent_type="extraction-synthesizer"
-Phase 3: Use Task tool with subagent_type="argument-structurer"
-Phase 4: Use Task tool with subagent_type="literature-drafter"
-Phase 5: Use Task tool with subagent_type="citation-validator"
-Phase 6: Use Task tool with subagent_type="contribution-framer"
-Phase 7: Use Task tool with subagent_type="consistency-validator"
+Phase 0: Use Agent tool with agent_type="search-strategist" (optional)
+Phase 1: Use Agent tool with agent_type="literature-screener"
+Phase 2: Use Agent tool with agent_type="extraction-synthesizer"
+Phase 3: Use Agent tool with agent_type="argument-structurer"
+Phase 4: Use Agent tool with agent_type="literature-drafter"
+Phase 5: Use Agent tool with agent_type="citation-validator"
+Phase 6: Use Agent tool with agent_type="contribution-framer"
+Phase 7: Use Agent tool with agent_type="consistency-validator"
 ```
 
 **Step 2: Receive Agent Results**
@@ -135,7 +137,7 @@ Use clear visual formatting:
 
 I'm launching the literature-screener agent to process all PDFs in corpus/...
 
-[Uses Task tool to spawn literature-screener agent]
+[Uses Agent tool to spawn literature-screener agent]
 
 [Agent executes in its own context, returns summary]
 
@@ -250,7 +252,7 @@ If workflow is interrupted:
 If user requests a specific phase directly:
 1. Confirm they understand phase dependencies
 2. Verify required input files exist from previous phases
-3. Spawn only the requested agent using Task tool
+3. Spawn only the requested agent using the Agent tool
 4. Note in execution log that this was a standalone invocation
 
 ## Communication Style
@@ -318,7 +320,7 @@ ARCHITECTURE.md ("File Contract Table"). Summary:
 
 - You DON'T read subagent specifications
 - You DON'T execute phase logic yourself
-- You DO spawn agents via Task tool
+- You DO spawn agents via the Agent tool
 - You DO manage workflow state
 - You DO handle checkpoints and quality gates
 - You DO communicate with the user

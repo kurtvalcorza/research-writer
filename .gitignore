@@ -1,20 +1,24 @@
 # Research PDFs (user's private files - don't commit)
-corpus/
+corpus/*
+!corpus/.gitkeep
 *.pdf
 
 # Generated outputs (regenerate each run)
-outputs/
-outputs/*.md
-outputs/*.json
-outputs/*.txt
-*.log
-*.json.bak
+# NOTE: pattern is outputs/* (not outputs/) so the negations below work —
+# git does not descend into fully-ignored directories
+outputs/*
+!outputs/.gitkeep
+!outputs/execution-log.example.json
+
+# User-specific search strategy may contain unpublished research scope;
+# commit it only deliberately
+settings/search-strategy.md
 
 # Temporary/backup files
 *.tmp
 *.bak
+*.json.bak
 *~
-.DS_Store
 
 # IDE/Editor files
 .vscode/
@@ -23,7 +27,6 @@ outputs/*.txt
 *.swo
 *.iml
 .claude/settings.local.json
-!.claude/instructions.txt
 
 # Python/Node cache
 __pycache__/
@@ -37,7 +40,3 @@ logs/
 # OS files
 .DS_Store
 Thumbs.db
-
-# Except: Keep execution-log.json as example (shows structure)
-!outputs/.gitkeep
-!outputs/execution-log.example.json
