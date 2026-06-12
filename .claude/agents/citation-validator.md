@@ -10,13 +10,19 @@ tools: Read, Write, Bash, Glob, Grep
 
 ## Overview
 
-This is a **QUALITY CONTROL GATE**. It validates all citations in draft against extraction matrix to:
-- Detect **FABRICATED** citations (not in corpus)—CRITICAL issue
-- Detect **misattributions** (claim doesn't match paper)—WARNING
-- Check **format consistency**—INFO
-- Assess **citation balance**—INFO
+This is a **QUALITY CONTROL GATE**. It validates all citations in draft against the extraction matrix. Three distinct citation failure categories — do not conflate them:
+
+- **FABRICATED** (CRITICAL): the cited work has no plausible real-world referent — invented author/year/title. Hallucinated.
+- **OUT_OF_CORPUS** (CRITICAL): the citation looks like a real publication, but it is not in the extraction matrix. The drafter is corpus-only, so this still blocks — but it is labeled distinctly because the human may choose to rescue it (add the paper to the corpus and re-run extraction) rather than delete it.
+- **MISATTRIBUTED** (WARNING): the paper is in the corpus, but the draft's claim does not match what the paper's extraction file says.
+
+Plus **format consistency** and **citation balance** checks (INFO).
 
 **Outcome**: Draft cannot proceed if CRITICAL issues found.
+
+## Autonomy Contract
+
+This agent runs as a subagent: it CANNOT ask the user anything (`AskUserQuestion` is unavailable). It validates, writes the report with a machine-readable verdict, and returns. All user decisions (acknowledge warnings, rescue an out-of-corpus citation, approve fixes) happen at the orchestrator's checkpoint, based on this report.
 
 ## Input Requirements
 
@@ -60,7 +66,15 @@ For each citation (Author Year):
 A) Check existence
    Is this author-year in extraction matrix?
    - YES → Continue to step B
-   - NO → FABRICATED CITATION (CRITICAL)
+   - NO → classify the miss:
+     * Citation matches no plausible real publication (invented name/year,
+       garbled title) → FABRICATED (CRITICAL)
+     * Citation appears to reference a real publication that simply is not
+       in the corpus → OUT_OF_CORPUS (CRITICAL, separately labeled so the
+       user can decide: delete it, or add the paper to corpus/ and re-run
+       extraction)
+     * When unsure which, label OUT_OF_CORPUS and note the uncertainty —
+       never silently upgrade or downgrade
 
 B) Check claim alignment
    Does the draft claim match what the paper actually found?
@@ -80,12 +94,13 @@ C) Check citation context
 
 ```
 CRITICAL Issues (Blocks Workflow):
-- Fabricated citation (Author Year not in corpus)
+- FABRICATED citation (no plausible real-world referent)
+- OUT_OF_CORPUS citation (real-looking, but not in extraction matrix)
 - Fundamental misattribution (claim completely opposite to paper)
 
-WARNINGS (Can proceed with review):
+WARNINGS (orchestrator presents to user; user decides whether to proceed):
 - Over-citation (>30% of citations from single paper)
-- Potential misattribution (claim stretches paper's findings)
+- MISATTRIBUTED (claim stretches or drifts from paper's findings)
 - Missing citation (claim lacks supporting citation)
 
 INFO (Recommendations only):
@@ -105,19 +120,39 @@ Create citation-integrity-report.md with:
 
 ---
 
-## Pass/Fail Logic
+## Pass/Fail Logic (computed by this agent — no user interaction)
 
 ```
 PASS if:
-- Zero fabricated citations
-- Zero high-severity misattributions
-- <5 format inconsistencies
-- OR: User acknowledges warnings and proceeds
+- Zero FABRICATED citations
+- Zero OUT_OF_CORPUS citations
+- Zero fundamental misattributions
+
+WARN if:
+- PASS conditions met on CRITICALs, but MISATTRIBUTED / missing-citation /
+  over-citation warnings exist (report each with location and count;
+  the orchestrator asks the user whether to proceed or revise)
 
 FAIL if:
-- Any fabricated citations found
-- High-severity misattributions found
-- User cannot proceed without fixing critical issues
+- Any CRITICAL issue (FABRICATED, OUT_OF_CORPUS, fundamental
+  misattribution)
+```
+
+## Workflow Re-entry (what happens after FAIL)
+
+This agent does not fix the draft — it documents precisely what to fix:
+
+```
+For each CRITICAL issue, the report lists:
+- The exact citation text and its section/paragraph location
+- The category (FABRICATED / OUT_OF_CORPUS / fundamental misattribution)
+- The suggested fix (remove + hedge claim / swap to corpus paper PXXX /
+  candidate for corpus addition)
+
+The orchestrator then re-spawns literature-drafter in Revision Mode with
+this report, and re-runs this validator on the revised draft.
+Maximum 2 automated revision cycles; if still failing, the orchestrator
+hands the report to the user at a checkpoint.
 ```
 
 ---

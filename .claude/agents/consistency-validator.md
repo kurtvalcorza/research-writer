@@ -27,9 +27,9 @@ This is the **FINAL QUALITY CONTROL GATE**. It validates:
 - `outputs/literature-synthesis-matrix.md`
 - `outputs/literature-review-outline.md`
 - `outputs/literature-review-draft.md`
-
-**Optional Files:**
-- `outputs/research-contributions-implications.md`
+- `outputs/research-contributions-implications.md` — required in the full
+  workflow (Phase 6 always precedes Phase 7); treated as optional only when
+  this agent is invoked standalone before Phase 6 has run
 
 ## Output Files
 
@@ -229,11 +229,19 @@ FAIL if:
 - High overclaiming risk
 
 If FAIL:
-- Workflow paused
-- Issues documented with locations
-- Recommendations for fixes provided
-- User must re-run affected phases
-- Re-validate
+- Write the report with every issue's location and a concrete fix
+  recommendation, then return — this agent never pauses, prompts, or
+  re-runs anything itself (subagents cannot spawn agents or ask the user)
+- The orchestrator decides the re-entry route based on the report:
+  * Draft-level issues (missing/underdeveloped sections, citation
+    inconsistencies) → re-spawn literature-drafter in Revision Mode with
+    this report, then re-run this validator
+  * Contribution-level issues (overclaiming) → re-spawn contribution-framer
+    with the flagged items, then re-run this validator
+  * Structural issues (themes missing from outline) → surface to the user;
+    these need a Phase 3 re-run and re-approval
+- Maximum 2 automated revision cycles; after that the orchestrator hands
+  the report to the user at a checkpoint
 ```
 
 ---
