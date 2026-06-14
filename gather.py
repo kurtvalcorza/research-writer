@@ -22,9 +22,12 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
+from itertools import zip_longest
 
 USER_AGENT = "Mozilla/5.0 (research-writer gather.py)"
 REQUEST_TIMEOUT = 30  # seconds
+OVERFETCH = 3  # request this many × max_papers candidates to survive validation drops
+S2_MAX_LIMIT = 100  # Semantic Scholar caps the search 'limit' parameter at 100
 MANIFEST_NAME = "gather-manifest.csv"
 MANIFEST_FIELDS = ["gathered_at", "source", "title", "year", "doi", "url", "filename", "status"]
 
@@ -32,6 +35,22 @@ MANIFEST_FIELDS = ["gathered_at", "source", "title", "year", "doi", "url", "file
 def clean_filename(title, year=""):
     clean_title = re.sub(r"[^\w\s-]", "", title)[:60].strip().replace(" ", "_")
     return f"{year}_{clean_title}.pdf" if year else f"{clean_title}.pdf"
+
+
+def unique_path(output_dir, filename):
+    """Return (filepath, filename) that does not collide with an existing file.
+
+    Re-runs, 60-char title truncation, and user-supplied corpus files can all
+    produce the same sanitized name; appending a counter prevents silently
+    overwriting a PDF that another manifest row still claims exists.
+    """
+    base, ext = os.path.splitext(filename)
+    candidate = filename
+    counter = 1
+    while os.path.exists(os.path.join(output_dir, candidate)):
+        candidate = f"{base}_{counter}{ext}"
+        counter += 1
+    return os.path.join(output_dir, candidate), candidate
 
 
 def download_pdf(pdf_url, filepath):
@@ -62,11 +81,11 @@ def download_pdf(pdf_url, filepath):
     return "downloaded"
 
 
-def fetch_arxiv(topic, max_papers):
+def fetch_arxiv(query, limit):
     print("\n--- Querying ArXiv ---")
     base_url = "http://export.arxiv.org/api/query?"
-    search_query = f"all:{urllib.parse.quote(topic)}"
-    url = f"{base_url}search_query={search_query}&start=0&max_results={max_papers}&sortBy=relevance"
+    search_query = f"all:{urllib.parse.quote(query)}"
+    url = f"{base_url}search_query={search_query}&start=0&max_results={limit}&sortBy=relevance"
 
     try:
         response = urllib.request.urlopen(url, timeout=REQUEST_TIMEOUT)
@@ -104,13 +123,14 @@ def fetch_arxiv(topic, max_papers):
     return papers
 
 
-def fetch_semantic_scholar(topic, max_papers):
+def fetch_semantic_scholar(query, limit):
     print("\n--- Querying Semantic Scholar ---")
     base_url = "https://api.semanticscholar.org/graph/v1/paper/search?"
-    # Query more than max_papers because many results lack an openAccessPdf.
-    query = urllib.parse.quote(topic)
+    # Over-query because many results lack an openAccessPdf, but respect the cap.
+    query_limit = min(S2_MAX_LIMIT, limit * 2)
+    encoded = urllib.parse.quote(query)
     url = (
-        f"{base_url}query={query}&limit={max_papers * 3}"
+        f"{base_url}query={encoded}&limit={query_limit}"
         "&fields=title,year,openAccessPdf,externalIds"
     )
 
@@ -130,7 +150,7 @@ def fetch_semantic_scholar(topic, max_papers):
 
     papers = []
     for item in data.get("data", []):
-        if len(papers) >= max_papers:
+        if len(papers) >= limit:
             break
 
         # Accept any open-access PDF URL — not only those ending in '.pdf'.
@@ -152,11 +172,11 @@ def fetch_semantic_scholar(topic, max_papers):
     return papers
 
 
-def fetch_pubmed(topic, max_papers):
+def fetch_pubmed(query, limit):
     print("\n--- Querying Europe PMC (PubMed Open Access) ---")
     base_url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search?"
-    query = urllib.parse.quote(f"({topic}) AND OPEN_ACCESS:Y")
-    url = f"{base_url}query={query}&resultType=core&format=json&pageSize={max_papers * 2}"
+    encoded = urllib.parse.quote(f"({query}) AND OPEN_ACCESS:Y")
+    url = f"{base_url}query={encoded}&resultType=core&format=json&pageSize={limit * 2}"
 
     try:
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -168,7 +188,7 @@ def fetch_pubmed(topic, max_papers):
 
     papers = []
     for result in data.get("resultList", {}).get("result", []):
-        if len(papers) >= max_papers:
+        if len(papers) >= limit:
             break
 
         pdf_url = None
@@ -195,7 +215,9 @@ def parse_strategy(path):
     """Best-effort: derive a query from a Phase 0 settings/search-strategy.md.
 
     Reuses the source-agnostic Concept Blocks (quoted term lists) to build a
-    Boolean query: terms OR'd within a block, blocks AND'd together. Falls back
+    Boolean query: terms OR'd within a block, blocks AND'd together. Lines that
+    document *excluded* terms are skipped — otherwise an excluded term would
+    become a required AND clause and narrow the OA slice incorrectly. Falls back
     to the Research Question line. Returns None if nothing usable is found.
 
     Note: Europe PMC honors the Boolean query fully; Semantic Scholar and arXiv
@@ -214,6 +236,10 @@ def parse_strategy(path):
             in_blocks = stripped.lower().startswith("## concept blocks")
             continue
         if in_blocks:
+            # Skip documented exclusions ("Excluded:", "excluded terms", ...);
+            # their quoted terms must NOT become required AND clauses.
+            if "exclud" in stripped.lower():
+                continue
             quoted = re.findall(r'"([^"]+)"', line)
             if quoted:
                 blocks.append("(" + " OR ".join(f'"{t}"' for t in quoted) + ")")
@@ -226,6 +252,21 @@ def parse_strategy(path):
         return match.group(1).strip()
 
     return None
+
+
+def interleave(lists):
+    """Round-robin merge of per-source candidate lists.
+
+    Interleaving (rather than concatenating) keeps any single source from
+    dominating the candidate order, so one source's landing-page links can't
+    crowd out another source's valid PDFs once the success cap is applied.
+    """
+    merged = []
+    for group in zip_longest(*lists):
+        for item in group:
+            if item is not None:
+                merged.append(item)
+    return merged
 
 
 def write_manifest(output_dir, rows):
@@ -244,43 +285,48 @@ def gather_pdfs(query, max_papers, source, output_dir="corpus"):
 
     os.makedirs(output_dir, exist_ok=True)
 
-    papers = []
+    # Over-fetch candidates per source so download-time PDF validation has
+    # alternatives to fall back on.
+    fetch_n = max_papers * OVERFETCH
+    source_lists = []
     if source in ["all", "semanticscholar"]:
-        papers.extend(fetch_semantic_scholar(query, max_papers))
+        source_lists.append(fetch_semantic_scholar(query, fetch_n))
     if source in ["all", "pubmed"]:
-        papers.extend(fetch_pubmed(query, max_papers))
+        source_lists.append(fetch_pubmed(query, fetch_n))
     if source in ["all", "arxiv"]:
-        papers.extend(fetch_arxiv(query, max_papers))
+        source_lists.append(fetch_arxiv(query, fetch_n))
+
+    candidates = interleave(source_lists)
 
     # Deduplicate by DOI when available (reliable), else by normalized title.
     seen = set()
-    final_papers = []
-    for p in papers:
+    deduped = []
+    for p in candidates:
         key = p["doi"].lower().strip() if p.get("doi") else re.sub(r"[^\w]", "", p["title"].lower())
         if key and key not in seen:
             seen.add(key)
-            final_papers.append(p)
-            if len(final_papers) >= max_papers and source != "all":
-                break
+            deduped.append(p)
 
-    if source == "all" and len(final_papers) > max_papers:
-        final_papers = final_papers[:max_papers]
-
-    if not final_papers:
+    if not deduped:
         print("\nNo open-access papers with retrievable PDFs found for this query.")
         return
 
-    print(f"\nFound {len(final_papers)} unique open-access papers. Beginning download...\n")
+    print(f"\nFound {len(deduped)} unique open-access candidates. Downloading up to {max_papers}...\n")
 
     gathered_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     manifest_rows = []
     downloaded = 0
 
-    for idx, p in enumerate(final_papers, 1):
-        filename = clean_filename(p["title"], p["year"])
-        filepath = os.path.join(output_dir, filename)
+    # Cap on *successful* downloads, not on candidates: keep trying alternatives
+    # until max_papers PDFs actually land (or candidates run out).
+    for p in deduped:
+        if downloaded >= max_papers:
+            break
 
-        print(f"[{idx}/{len(final_papers)}] Downloading ({p['source']}): {p['title']}")
+        base_name = clean_filename(p["title"], p["year"])
+        filepath, filename = unique_path(output_dir, base_name)
+
+        print(f"[{downloaded + 1}/{max_papers}] Downloading ({p['source']}): {p['title']}")
         print(f"      -> {filename}")
 
         status = download_pdf(p["url"], filepath)
@@ -302,7 +348,8 @@ def gather_pdfs(query, max_papers, source, output_dir="corpus"):
 
     write_manifest(output_dir, manifest_rows)
 
-    print(f"\n[DONE] Downloaded {downloaded}/{len(final_papers)} PDFs to '{output_dir}/'.")
+    print(f"\n[DONE] Downloaded {downloaded}/{max_papers} PDFs to '{output_dir}/' "
+          f"({len(manifest_rows)} attempted).")
     print(f"Provenance (incl. DOIs) recorded in '{os.path.join(output_dir, MANIFEST_NAME)}'.")
 
 
