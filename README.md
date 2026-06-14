@@ -158,6 +158,31 @@ $EDITOR settings/screening-criteria.md
 No corpus yet? Start anyway — the orchestrator will offer Phase 0, which produces
 ready-to-paste database queries and a results-recording template.
 
+#### Optional: auto-gather open-access PDFs (`gather.py`)
+
+For a quick corpus bootstrap, `gather.py` downloads open-access PDFs straight
+into `corpus/` from Semantic Scholar, Europe PMC, and arXiv:
+
+```bash
+python gather.py "your research topic" --max-papers 10 --source all
+```
+
+It can also execute the **open-access slice** of a documented Phase 0 strategy,
+turning the concept blocks in `settings/search-strategy.md` into queries:
+
+```bash
+python gather.py --strategy settings/search-strategy.md --max-papers 15
+```
+
+> ⚠️ **Convenience bootstrap, not the rigorous Phase 0.** `gather.py` only
+> reaches open-access full text and runs a single naive query per source, so it
+> is well suited to **narrative/scoping reviews** or seeding an initial corpus —
+> not to systematic/PRISMA-grade identification. For that, run the
+> `search-strategist` Phase 0 and execute those searches yourself; `gather.py`
+> *complements* it (it can fetch the OA portion), it does not replace it. Each
+> run appends provenance — title, year, DOI, source, URL, status — to
+> `corpus/gather-manifest.csv` so even this shortcut leaves an audit trail.
+
 ### 2. Start the Workflow
 
 ```
