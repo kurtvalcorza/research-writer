@@ -17,6 +17,7 @@ import csv
 import json
 import os
 import re
+import sys
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -411,7 +412,7 @@ def gather_pdfs(query, max_papers, source, output_dir="corpus"):
         base_name = clean_filename(p["title"], p["year"])
         filepath, filename = unique_path(output_dir, base_name)
 
-        print(f"[attempt {attempt}/{len(deduped)} · {downloaded}/{max_papers} kept] ({p['source']}): {p['title']}")
+        print(f"[attempt {attempt}/{len(deduped)} | kept {downloaded}/{max_papers}] ({p['source']}): {p['title']}")
         print(f"      -> {filename}")
 
         status = download_pdf(p["url"], filepath)
@@ -465,6 +466,13 @@ def resolve_query(args, parser):
 
 
 if __name__ == "__main__":
+    # Harden stdout so non-ASCII paper titles can't raise UnicodeEncodeError
+    # when output is redirected (Windows defaults to a strict locale codec).
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
     parser = argparse.ArgumentParser(
         description="Multi-source open-access PDF gatherer (corpus bootstrap, not the rigorous Phase 0)."
     )
