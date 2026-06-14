@@ -28,6 +28,8 @@ USER_AGENT = "Mozilla/5.0 (research-writer gather.py)"
 REQUEST_TIMEOUT = 30  # seconds
 OVERFETCH = 3  # request this many × max_papers candidates to survive validation drops
 S2_MAX_LIMIT = 100  # Semantic Scholar caps the search 'limit' parameter at 100
+EPMC_MAX_PAGE_SIZE = 1000  # Europe PMC caps pageSize at 1000
+MAX_DOWNLOAD_BYTES = 60 * 1024 * 1024  # 60 MB safety cap for a single PDF
 MANIFEST_NAME = "gather-manifest.csv"
 MANIFEST_FIELDS = ["gathered_at", "source", "title", "year", "doi", "url", "filename", "status"]
 
@@ -56,19 +58,32 @@ def unique_path(output_dir, filename):
 def download_pdf(pdf_url, filepath):
     """Download pdf_url to filepath.
 
-    Returns 'downloaded', 'not-pdf', or 'failed'. The payload is validated by
-    its magic bytes so loosened open-access links that resolve to an HTML
-    landing page are reported and skipped rather than saved as a bogus .pdf.
+    Returns 'downloaded', 'not-pdf', 'too-large', or 'failed'. The payload is
+    validated by its magic bytes so loosened open-access links that resolve to
+    an HTML landing page are reported and skipped rather than saved as a bogus
+    .pdf. A size cap guards against pathologically large responses.
     """
+    cap_mb = MAX_DOWNLOAD_BYTES // (1024 * 1024)
     try:
         req = urllib.request.Request(pdf_url, headers={"User-Agent": USER_AGENT})
         with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as response:
-            data = response.read()
+            length = response.headers.get("Content-Length")
+            if length and length.isdigit() and int(length) > MAX_DOWNLOAD_BYTES:
+                print(f"      -> Skipped: reported size exceeds {cap_mb} MB cap.")
+                return "too-large"
+            # Read one byte past the cap so an over-cap stream is detectable.
+            data = response.read(MAX_DOWNLOAD_BYTES + 1)
     except Exception as e:
         print(f"      -> Error downloading: {e}")
         return "failed"
 
-    if data[:4] != b"%PDF":
+    if len(data) > MAX_DOWNLOAD_BYTES:
+        print(f"      -> Skipped: file exceeds {cap_mb} MB cap.")
+        return "too-large"
+
+    # Tolerate a few stray leading bytes before the %PDF header, but still
+    # reject HTML landing pages (which won't contain %PDF near the start).
+    if b"%PDF" not in data[:1024]:
         print("      -> Skipped: open-access link resolved to a non-PDF (likely a landing page).")
         return "not-pdf"
 
@@ -83,12 +98,13 @@ def download_pdf(pdf_url, filepath):
 
 def fetch_arxiv(query, limit):
     print("\n--- Querying ArXiv ---")
-    base_url = "http://export.arxiv.org/api/query?"
+    base_url = "https://export.arxiv.org/api/query?"
     search_query = f"all:{urllib.parse.quote(query)}"
     url = f"{base_url}search_query={search_query}&start=0&max_results={limit}&sortBy=relevance"
 
     try:
-        response = urllib.request.urlopen(url, timeout=REQUEST_TIMEOUT)
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        response = urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT)
         xml_data = response.read()
     except Exception as e:
         print(f"Error querying ArXiv: {e}")
@@ -176,7 +192,8 @@ def fetch_pubmed(query, limit):
     print("\n--- Querying Europe PMC (PubMed Open Access) ---")
     base_url = "https://www.ebi.ac.uk/europepmc/webservices/rest/search?"
     encoded = urllib.parse.quote(f"({query}) AND OPEN_ACCESS:Y")
-    url = f"{base_url}query={encoded}&resultType=core&format=json&pageSize={limit * 2}"
+    page_size = min(EPMC_MAX_PAGE_SIZE, limit * 2)
+    url = f"{base_url}query={encoded}&resultType=core&format=json&pageSize={page_size}"
 
     try:
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -214,11 +231,13 @@ def fetch_pubmed(query, limit):
 def parse_strategy(path):
     """Best-effort: derive a query from a Phase 0 settings/search-strategy.md.
 
-    Reuses the source-agnostic Concept Blocks (quoted term lists) to build a
-    Boolean query: terms OR'd within a block, blocks AND'd together. Lines that
-    document *excluded* terms are skipped — otherwise an excluded term would
-    become a required AND clause and narrow the OA slice incorrectly. Falls back
-    to the Research Question line. Returns None if nothing usable is found.
+    Reuses the source-agnostic Concept Blocks to build a Boolean query: terms
+    OR'd within a block, blocks AND'd together. A new block starts at each
+    bullet / sub-header / numbered item; continuation lines (e.g. a term list
+    that wraps) fold into the current block so OR-alternatives are not promoted
+    to AND-requirements. Lines documenting *excluded* terms are skipped so they
+    never become required clauses. Falls back to the Research Question line.
+    Returns None if nothing usable is found.
 
     Note: Europe PMC honors the Boolean query fully; Semantic Scholar and arXiv
     treat it more loosely as a relevance query. This intentionally executes only
@@ -228,24 +247,59 @@ def parse_strategy(path):
     with open(path, "r", encoding="utf-8") as f:
         text = f.read()
 
-    blocks = []
+    blocks = []      # list of term-lists, one per concept block
+    current = None   # term-list currently being accumulated
     in_blocks = False
+
+    def flush():
+        nonlocal current
+        if current:
+            blocks.append(current)
+        current = None
+
     for line in text.splitlines():
         stripped = line.strip()
         if stripped.startswith("## "):
+            flush()
             in_blocks = stripped.lower().startswith("## concept blocks")
             continue
-        if in_blocks:
-            # Skip documented exclusions ("Excluded:", "excluded terms", ...);
-            # their quoted terms must NOT become required AND clauses.
-            if "exclud" in stripped.lower():
-                continue
-            quoted = re.findall(r'"([^"]+)"', line)
-            if quoted:
-                blocks.append("(" + " OR ".join(f'"{t}"' for t in quoted) + ")")
+        if not in_blocks or not stripped:
+            continue
 
-    if blocks:
-        return " AND ".join(blocks)
+        # A bullet, sub-header, or numbered item starts a new concept block;
+        # anything else is a continuation that folds into the current block.
+        is_new_block = stripped.startswith(("-", "*", "+", "###")) or bool(
+            re.match(r"^\d+[.)]\s", stripped)
+        )
+        if is_new_block:
+            flush()
+            current = []
+
+        # Documented exclusions must never become required terms.
+        if "exclud" in stripped.lower():
+            if is_new_block:
+                current = None
+            continue
+
+        terms = re.findall(r'"([^"]+)"', line)
+        if terms:
+            if current is None:
+                current = []
+            current.extend(terms)
+
+    flush()
+
+    clauses = []
+    for terms in blocks:
+        seen, uniq = set(), []
+        for t in terms:
+            if t.lower() not in seen:
+                seen.add(t.lower())
+                uniq.append(t)
+        clauses.append("(" + " OR ".join(f'"{t}"' for t in uniq) + ")")
+
+    if clauses:
+        return " AND ".join(clauses)
 
     match = re.search(r"##\s*Research Question\s*\n+(.+)", text)
     if match:
@@ -269,14 +323,52 @@ def interleave(lists):
     return merged
 
 
+def dedupe(candidates):
+    """Drop duplicate papers, keying on DOI *and* normalized title.
+
+    Registering both keys for every kept paper catches the same paper arriving
+    from two sources when only one copy carries a DOI. (Trade-off: two
+    genuinely different papers with byte-identical normalized titles would
+    collapse — rare for real, specific titles.)
+    """
+    seen = set()
+    deduped = []
+    for p in candidates:
+        keys = []
+        if p.get("doi"):
+            keys.append("doi:" + p["doi"].lower().strip())
+        title_key = re.sub(r"[^\w]", "", p["title"].lower())
+        if title_key:
+            keys.append("title:" + title_key)
+        if not keys or any(k in seen for k in keys):
+            continue
+        seen.update(keys)
+        deduped.append(p)
+    return deduped
+
+
 def write_manifest(output_dir, rows):
+    """Append rows to the manifest, returning the path actually written.
+
+    If a manifest with an incompatible header already exists (schema drift
+    across versions), write a fresh sibling file instead of corrupting the old
+    one.
+    """
     path = os.path.join(output_dir, MANIFEST_NAME)
+    if os.path.exists(path):
+        with open(path, "r", newline="", encoding="utf-8") as f:
+            existing_header = f.readline().rstrip("\r\n")
+        if existing_header and existing_header != ",".join(MANIFEST_FIELDS):
+            path, name = unique_path(output_dir, MANIFEST_NAME)
+            print(f"      -> Manifest schema changed; writing '{name}' to avoid corrupting the existing log.")
+
     file_exists = os.path.exists(path)
     with open(path, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=MANIFEST_FIELDS)
         if not file_exists:
             writer.writeheader()
         writer.writerows(rows)
+    return path
 
 
 def gather_pdfs(query, max_papers, source, output_dir="corpus"):
@@ -296,16 +388,7 @@ def gather_pdfs(query, max_papers, source, output_dir="corpus"):
     if source in ["all", "arxiv"]:
         source_lists.append(fetch_arxiv(query, fetch_n))
 
-    candidates = interleave(source_lists)
-
-    # Deduplicate by DOI when available (reliable), else by normalized title.
-    seen = set()
-    deduped = []
-    for p in candidates:
-        key = p["doi"].lower().strip() if p.get("doi") else re.sub(r"[^\w]", "", p["title"].lower())
-        if key and key not in seen:
-            seen.add(key)
-            deduped.append(p)
+    deduped = dedupe(interleave(source_lists))
 
     if not deduped:
         print("\nNo open-access papers with retrievable PDFs found for this query.")
@@ -316,17 +399,19 @@ def gather_pdfs(query, max_papers, source, output_dir="corpus"):
     gathered_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     manifest_rows = []
     downloaded = 0
+    attempt = 0
 
     # Cap on *successful* downloads, not on candidates: keep trying alternatives
     # until max_papers PDFs actually land (or candidates run out).
     for p in deduped:
         if downloaded >= max_papers:
             break
+        attempt += 1
 
         base_name = clean_filename(p["title"], p["year"])
         filepath, filename = unique_path(output_dir, base_name)
 
-        print(f"[{downloaded + 1}/{max_papers}] Downloading ({p['source']}): {p['title']}")
+        print(f"[attempt {attempt}/{len(deduped)} · {downloaded}/{max_papers} kept] ({p['source']}): {p['title']}")
         print(f"      -> {filename}")
 
         status = download_pdf(p["url"], filepath)
@@ -346,11 +431,11 @@ def gather_pdfs(query, max_papers, source, output_dir="corpus"):
             }
         )
 
-    write_manifest(output_dir, manifest_rows)
+    manifest_path = write_manifest(output_dir, manifest_rows)
 
     print(f"\n[DONE] Downloaded {downloaded}/{max_papers} PDFs to '{output_dir}/' "
           f"({len(manifest_rows)} attempted).")
-    print(f"Provenance (incl. DOIs) recorded in '{os.path.join(output_dir, MANIFEST_NAME)}'.")
+    print(f"Provenance (incl. DOIs) recorded in '{manifest_path}'.")
 
 
 def resolve_query(args, parser):
@@ -404,5 +489,7 @@ if __name__ == "__main__":
     parser.add_argument("--dir", type=str, default="corpus", help="Output directory")
 
     args = parser.parse_args()
+    if args.max_papers < 1:
+        parser.error("--max-papers must be a positive integer")
     query = resolve_query(args, parser)
     gather_pdfs(query, args.max_papers, args.source, args.dir)
